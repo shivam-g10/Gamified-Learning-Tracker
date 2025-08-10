@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Quest {
+  id         String   @id @default(uuid()) @db.Uuid
+  title      String
+  xp         Int
+  type       QuestType
+  category   String
+  done       Boolean  @default(false)
+  created_at DateTime @default(now())
+}
+
+enum QuestType {
+  topic
+  project
+  bonus
+}
+
+model AppState {
+  id            Int       @id @default(1)
+  streak        Int       @default(0)
+  last_check_in DateTime? @db.Date
+  focus         String[]  @db.Uuid
+}
+
+
