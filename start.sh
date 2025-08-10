@@ -20,5 +20,5 @@ pnpm prisma migrate deploy
 echo "Seeding database with initial data..."
 pnpm run db:seed
 
-echo "Starting Next.js app..."
-exec node node_modules/next/dist/bin/next start -p 3000
+echo "Starting Next.js app on port ${PORT:-3000}..."
+exec node node_modules/next/dist/bin/next start -p ${PORT:-3000}

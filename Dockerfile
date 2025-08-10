@@ -61,7 +61,7 @@ RUN chown -R nextjs:nodejs /app
 
 USER 1001
 
-EXPOSE 3000
+EXPOSE ${PORT:-3000}
 
 CMD ["./start.sh"]
 
