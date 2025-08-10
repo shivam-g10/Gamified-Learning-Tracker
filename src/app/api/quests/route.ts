@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
               ],
             }
           : {},
-        type ? { type: type as any } : {},
+        type ? { type: type as 'topic' | 'project' | 'bonus' } : {},
         category ? { category: { equals: category, mode: 'insensitive' } } : {},
         done !== undefined ? { done } : {},
       ],

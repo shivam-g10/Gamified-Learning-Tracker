@@ -8,8 +8,8 @@ pnpm prisma generate
 echo "Waiting for database..."
 echo "Testing database connection..."
 
-# Try to connect to database using a shell-compatible method
-while ! echo "SELECT 1;" | pnpm prisma db execute --stdin > /dev/null 2>&1; do
+# Try to connect to database using PostgreSQL client
+while ! pg_isready -h db -p 5432 -U postgres > /dev/null 2>&1; do
   echo "Database connection failed, retrying in 1 second..."
   sleep 1
 done

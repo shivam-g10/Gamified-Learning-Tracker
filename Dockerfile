@@ -1,20 +1,20 @@
 # Install dependencies only when needed
-FROM node:21-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 # Install OpenSSL dependencies for Prisma and update packages
 RUN apk update && apk add --no-cache openssl && apk upgrade
 # Install pnpm
-RUN npm install -g pnpm@9.12.2
+RUN npm install -g pnpm@latest
 COPY package.json pnpm-lock.yaml* ./
 RUN pnpm install --frozen-lockfile || pnpm install
 
 # Rebuild the source code only when needed
-FROM node:21-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 # Install OpenSSL dependencies for Prisma and update packages
 RUN apk update && apk add --no-cache openssl && apk upgrade
 # Install pnpm
-RUN npm install -g pnpm@9.12.2
+RUN npm install -g pnpm@latest
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Set DATABASE_URL for Prisma client generation with a fallback
@@ -34,13 +34,13 @@ RUN echo "=== .next contents ===" && ls -la /app/.next || echo "No .next directo
 RUN echo "=== public contents ===" && ls -la /app/public || echo "No public directory"
 
 # Production image, copy all the files and run next
-FROM node:21-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 # Install OpenSSL dependencies for Prisma runtime and update packages
-RUN apk update && apk add --no-cache openssl && apk upgrade
+RUN apk update && apk add --no-cache openssl postgresql-client && apk upgrade
 # Install pnpm
-RUN npm install -g pnpm@9.12.2
+RUN npm install -g pnpm@latest
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
 # Copy files from builder with verification

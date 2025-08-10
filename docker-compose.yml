@@ -1,7 +1,6 @@
-version: '3.9'
 services:
   db:
-    image: postgres:16
+    image: postgres:17
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -42,9 +41,10 @@ services:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-tracker}?schema=public
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
-    # No external port mapping needed - Coolify handles proxying
-    # ports:
-    #   - '0:3000'
+    # Port mapping for local development (only expose when needed)
+    # Comment out or remove HOST_PORT in production to disable external access
+    ports:
+      - '${HOST_PORT:-3000}:${PORT:-3000}'
     # Restart policy for production
     restart: unless-stopped
     # Network isolation
@@ -52,7 +52,7 @@ services:
     #   - app-network
     # Health check for web service
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:3000/api/health']
+      test: ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000}/health || exit 1']
       interval: 30s
       timeout: 10s
       retries: 3
