@@ -1,0 +1,13 @@
+/* TEAM */
+    Developer: Gamified Learning Tracker Team
+    Contact: shivam@kodingkorp.com
+    From: Internet
+
+/* SITE */
+    Last update: 2024
+    Language: English
+    Doctype: HTML5
+    IDE: VS Code, Cursor
+    Standards: HTML5, CSS3, TypeScript
+    Components: Next.js, PostgreSQL, Prisma, Docker
+    Software: Node.js, pnpm
