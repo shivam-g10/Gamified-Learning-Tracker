@@ -1,10 +1,18 @@
-import { Quest } from '../lib/types';
+import { Quest, Book, Course } from '../lib/types';
+
+export interface ChallengeItem {
+  id: string;
+  title: string;
+  type: 'quest' | 'book' | 'course';
+  category: string;
+  xp: number;
+}
 
 export class ChallengeService {
   /**
    * Gets a random unfinished quest for challenges
    */
-  static async getRandomChallenge(): Promise<Quest | null> {
+  static async getRandomChallenge(): Promise<ChallengeItem | null> {
     try {
       const response = await fetch('/api/random-challenge');
 
@@ -20,23 +28,52 @@ export class ChallengeService {
   }
 
   /**
-   * Checks if a quest can be added to focus
+   * Checks if a quest can be added to focus (only 1 quest allowed)
    */
-  static canAddToFocus(currentFocusCount: number): boolean {
-    return currentFocusCount < 3;
+  static canAddQuestToFocus(currentFocusState: any): boolean {
+    return !currentFocusState?.quest;
   }
 
   /**
-   * Gets focus limit error message
+   * Checks if a book can be added to focus (only 1 book allowed)
    */
-  static getFocusLimitMessage(): string {
-    return 'Focus queue is full (3/3). Remove a quest to add another.';
+  static canAddBookToFocus(currentFocusState: any): boolean {
+    return !currentFocusState?.book;
+  }
+
+  /**
+   * Checks if a course can be added to focus (only 1 course allowed)
+   */
+  static canAddCourseToFocus(currentFocusState: any): boolean {
+    return !currentFocusState?.course;
+  }
+
+  /**
+   * Gets focus limit error message for quests
+   */
+  static getQuestFocusLimitMessage(): string {
+    return 'You already have a quest in focus. Complete or remove it first.';
+  }
+
+  /**
+   * Gets focus limit error message for books
+   */
+  static getBookFocusLimitMessage(): string {
+    return 'You already have a book in focus. Complete or remove it first.';
+  }
+
+  /**
+   * Gets focus limit error message for courses
+   */
+  static getCourseFocusLimitMessage(): string {
+    return 'You already have a course in focus. Complete or remove it first.';
   }
 
   /**
    * Gets challenge success message
    */
-  static getChallengeSuccessMessage(quest: Quest): string {
-    return `Challenge accepted! "${quest.title}" added to focus.`;
+  static getChallengeSuccessMessage(item: ChallengeItem): string {
+    const typeText = item.type === 'quest' ? 'quest' : item.type;
+    return `Challenge accepted! "${item.title}" added to focus.`;
   }
 }

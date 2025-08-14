@@ -17,6 +17,7 @@ import {
   ChallengeService,
   SearchService,
 } from '../services';
+import { ChallengeItem } from '../services/challenge-service';
 import {
   Card,
   CardContent,
@@ -75,7 +76,9 @@ export default function HomePage() {
   const [coursePlatformFilter, setCoursePlatformFilter] = useState('all');
 
   // Challenge modal state
-  const [challengeQuest, setChallengeQuest] = useState<Quest | null>(null);
+  const [challengeItem, setChallengeItem] = useState<ChallengeItem | null>(
+    null
+  );
   const [isChallengeModalOpen, setIsChallengeModalOpen] = useState(false);
 
   // Tab navigation state
@@ -426,41 +429,57 @@ export default function HomePage() {
     try {
       const challenge = await ChallengeService.getRandomChallenge();
       if (!challenge) {
-        toast.info('All quests are done — nice!');
+        toast.info('All learning items are completed — nice!');
         return;
       }
 
-      // Check focus limit before showing challenge
-      const currentFocusCount = AppStateService.getFocusCount(
-        appState?.focus || []
-      );
-      if (!ChallengeService.canAddToFocus(currentFocusCount)) {
-        toast.error(ChallengeService.getFocusLimitMessage());
+      // Check focus limit based on challenge type
+      let canAdd = false;
+      let errorMessage = '';
+
+      switch (challenge.type) {
+        case 'quest':
+          canAdd = ChallengeService.canAddQuestToFocus(focusState);
+          errorMessage = ChallengeService.getQuestFocusLimitMessage();
+          break;
+        case 'book':
+          canAdd = ChallengeService.canAddBookToFocus(focusState);
+          errorMessage = ChallengeService.getBookFocusLimitMessage();
+          break;
+        case 'course':
+          canAdd = ChallengeService.canAddCourseToFocus(focusState);
+          errorMessage = ChallengeService.getCourseFocusLimitMessage();
+          break;
+      }
+
+      if (!canAdd) {
+        toast.error(errorMessage);
         return;
       }
 
-      setChallengeQuest(challenge);
+      setChallengeItem(challenge);
       setIsChallengeModalOpen(true);
     } catch (error) {
       console.error('Failed to get random challenge:', error);
       toast.error('Failed to get random challenge. Please try again.');
     }
-  }, [appState]);
+  }, [focusState]);
 
   const handleChallengeAccept = useCallback(
-    async (quest: Quest) => {
-      if (!appState) return;
-
+    async (challenge: ChallengeItem) => {
       try {
-        await AppStateService.toggleQuestFocus(quest.id, appState.focus || []);
-        await mutateState();
-        toast.success(ChallengeService.getChallengeSuccessMessage(quest));
+        // Add the challenge to focus based on its type
+        await handleUpdateFocus(
+          challenge.type as 'quest' | 'book' | 'course',
+          challenge.id
+        );
+        toast.success(ChallengeService.getChallengeSuccessMessage(challenge));
       } catch (error) {
         console.error('Failed to add challenge to focus:', error);
         toast.error('Failed to add challenge to focus. Please try again.');
       }
     },
-    [appState, mutateState]
+    [handleUpdateFocus]
   );
 
   return (
@@ -556,6 +575,34 @@ export default function HomePage() {
                 className='h-3 progress-shimmer'
               />
             </div>
+
+            {/* Badges Section - Small and Thin */}
+            <div className='pt-2 border-t border-border'>
+              <div className='flex items-center justify-between mb-2'>
+                <span className='text-sm font-medium text-muted-foreground'>
+                  Badges
+                </span>
+                <span className='text-xs text-muted-foreground'>
+                  {badgeThresholds.filter(b => b.earned).length}/
+                  {badgeThresholds.length} earned
+                </span>
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                {badgeThresholds.map(({ threshold, name, earned, color }) => (
+                  <div
+                    key={threshold}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-md border text-xs ${
+                      earned
+                        ? `${color} text-white border-transparent`
+                        : 'bg-muted/30 border-muted text-muted-foreground'
+                    }`}
+                  >
+                    <span className='font-medium'>{name}</span>
+                    {earned && <Sparkles className='w-3 h-3 text-white' />}
+                  </div>
+                ))}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -569,30 +616,6 @@ export default function HomePage() {
           onNavigateToTab={setActiveTab}
           onToggleQuestDone={handleToggleDone}
         />
-
-        {/* Badges Section - Restored */}
-        <Card>
-          <CardHeader>
-            <CardTitle className='text-lg'>Badges</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='flex flex-wrap gap-3'>
-              {badgeThresholds.map(({ threshold, name, earned, color }) => (
-                <div
-                  key={threshold}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
-                    earned
-                      ? `${color} text-white border-transparent`
-                      : 'bg-muted/30 border-muted text-muted-foreground'
-                  }`}
-                >
-                  <span className='text-sm font-medium'>{name}</span>
-                  {earned && <Sparkles className='w-3 w-3 text-white' />}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Main Content with Tabs */}
         <Card>
@@ -790,11 +813,11 @@ export default function HomePage() {
 
       {/* Challenge Modal */}
       <ChallengeModal
-        quest={challengeQuest}
+        challenge={challengeItem}
         isOpen={isChallengeModalOpen}
         onClose={() => {
           setIsChallengeModalOpen(false);
-          setChallengeQuest(null);
+          setChallengeItem(null);
         }}
         onAccept={handleChallengeAccept}
       />

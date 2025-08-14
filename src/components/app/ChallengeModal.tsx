@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Quest } from '../../lib/types';
+import { ChallengeItem } from '../../services/challenge-service';
 import { Button } from '../ui/button';
 import {
   Dialog,
@@ -11,26 +11,52 @@ import {
 import { Badge } from '../ui/badge';
 
 interface ChallengeModalProps {
-  quest: Quest | null;
+  challenge: ChallengeItem | null;
   isOpen: boolean;
   onClose: () => void;
-  onAccept: (quest: Quest) => void;
+  onAccept: (challenge: ChallengeItem) => void;
 }
 
 export function ChallengeModal({
-  quest,
+  challenge,
   isOpen,
   onClose,
   onAccept,
 }: ChallengeModalProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  if (!quest) return null;
+  if (!challenge) return null;
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'quest':
+        return '⚔️';
+      case 'book':
+        return '📚';
+      case 'course':
+        return '🎓';
+      default:
+        return '🎯';
+    }
+  };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'quest':
+        return 'Quest';
+      case 'book':
+        return 'Book';
+      case 'course':
+        return 'Course';
+      default:
+        return 'Challenge';
+    }
+  };
 
   const handleAccept = async () => {
     setIsLoading(true);
     try {
-      await onAccept(quest);
+      await onAccept(challenge);
       onClose();
     } finally {
       setIsLoading(false);
@@ -48,32 +74,36 @@ export function ChallengeModal({
         </DialogHeader>
 
         <div className='space-y-6 py-4'>
-          {/* Challenge Title - More Prominent */}
+          {/* Challenge Type Badge */}
           <div className='text-center'>
-            <h3 className='text-xl font-bold text-foreground leading-tight'>
-              {quest.title}
-            </h3>
-          </div>
-
-          {/* Quest Metadata - Better Organized */}
-          <div className='flex items-center justify-center gap-3 flex-wrap'>
             <Badge
               variant='outline'
               className='border-primary/30 text-primary bg-primary/10 px-3 py-1 text-sm font-medium'
             >
-              {quest.category}
+              {getTypeIcon(challenge.type)} {getTypeLabel(challenge.type)}
             </Badge>
+          </div>
+
+          {/* Challenge Title - More Prominent */}
+          <div className='text-center'>
+            <h3 className='text-xl font-bold text-foreground leading-tight'>
+              {challenge.title}
+            </h3>
+          </div>
+
+          {/* Challenge Metadata - Better Organized */}
+          <div className='flex items-center justify-center gap-3 flex-wrap'>
             <Badge
               variant='outline'
               className='border-accent/30 text-accent bg-accent/10 px-3 py-1 text-sm font-medium'
             >
-              {quest.type}
+              {challenge.category}
             </Badge>
             <Badge
               variant='default'
               className='bg-secondary text-secondary-foreground px-3 py-1 text-sm font-medium shadow-sm'
             >
-              +{quest.xp} XP
+              +{challenge.xp} XP
             </Badge>
           </div>
 
@@ -83,8 +113,8 @@ export function ChallengeModal({
               Ready to take on this challenge?
             </div>
             <div className='text-sm text-muted-foreground leading-relaxed max-w-md mx-auto'>
-              Adding this quest to your focus will help you prioritize your
-              learning and track your progress more effectively.
+              Adding this {challenge.type} to your focus will help you
+              prioritize your learning and track your progress more effectively.
             </div>
           </div>
         </div>
