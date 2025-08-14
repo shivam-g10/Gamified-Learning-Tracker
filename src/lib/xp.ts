@@ -10,5 +10,3 @@ export function totalXpToLevel(totalXp: number) {
 export function badgeThresholds(): number[] {
   return [150, 400, 800, 1200, 2000];
 }
-
-

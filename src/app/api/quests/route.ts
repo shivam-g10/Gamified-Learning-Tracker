@@ -44,5 +44,3 @@ export async function POST(req: NextRequest) {
   });
   return NextResponse.json(quest, { status: 201 });
 }
-
-

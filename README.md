@@ -30,6 +30,7 @@ A full-stack gamified learning tracker built with Next.js and PostgreSQL. Track 
 ### Security Notice
 
 ⚠️ **Important**: This application is configured with security best practices:
+
 - Database is isolated and not accessible from outside the Docker network
 - Use strong, unique passwords in production
 - Never commit `.env` files to version control
@@ -37,18 +38,21 @@ A full-stack gamified learning tracker built with Next.js and PostgreSQL. Track 
 ### Option 1: Docker (Recommended)
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/yourusername/Gamified-Learning-Tracker.git
 cd Gamified-Learning-Tracker
 ```
 
 2. Create environment file:
+
 ```bash
 cp env.example .env
 # Edit .env and set secure passwords
 ```
 
 3. Start the application:
+
 ```bash
 docker compose up --build
 ```
@@ -58,6 +62,7 @@ docker compose up --build
 ### Option 2: Local Development
 
 1. Clone and install dependencies:
+
 ```bash
 git clone https://github.com/yourusername/Gamified-Learning-Tracker.git
 cd Gamified-Learning-Tracker
@@ -65,12 +70,14 @@ pnpm install
 ```
 
 2. Set up environment:
+
 ```bash
 cp env.example .env
 # Edit .env with your database configuration
 ```
 
 3. Set up the database:
+
 ```bash
 pnpm prisma generate
 pnpm prisma db push
@@ -78,9 +85,32 @@ pnpm run db:seed
 ```
 
 4. Run the development server:
+
 ```bash
 pnpm dev
 ```
+
+### Option 3: Development with Quality Tools
+
+For contributors and developers who want to ensure code quality:
+
+1. Follow the [Development Setup Guide](./DEVELOPMENT_SETUP.md) for detailed instructions
+2. Install dependencies and set up pre-commit hooks:
+
+```bash
+pnpm install
+pnpm run prepare
+```
+
+3. Verify the setup:
+
+```bash
+pnpm run lint
+pnpm run format:check
+pnpm run type-check
+```
+
+**Note**: The project includes automatic code formatting, linting, and commit message validation. See the development setup guide for complete details.
 
 ## 🛠️ Tech Stack
 
@@ -214,5 +244,3 @@ If you have any questions or need help:
 ---
 
 ⭐ **Star this repository if you found it helpful!**
-
-

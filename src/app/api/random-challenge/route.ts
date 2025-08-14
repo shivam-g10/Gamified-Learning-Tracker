@@ -9,5 +9,3 @@ export async function GET() {
   const idx = Math.floor(Math.random() * quests.length);
   return NextResponse.json(quests[idx]);
 }
-
-

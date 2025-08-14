@@ -20,11 +20,6 @@
     "db:seed": "tsx prisma/seed.ts",
     "postinstall": "husky init"
   },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,md,yml,yaml}": [
-      "prettier --write"
-    ]
-  },
   "dependencies": {
     "@prisma/client": "^6.13.0",
     "clsx": "^2.1.1",
@@ -37,17 +32,32 @@
     "seed": "tsx prisma/seed.ts"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "@eslint/js": "^9.33.0",
+    "@next/eslint-plugin-next": "^15.4.6",
     "@tailwindcss/postcss": "^4.1.11",
     "@types/node": "^24.2.1",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
+    "@typescript-eslint/eslint-plugin": "^8.39.1",
+    "@typescript-eslint/parser": "^8.39.1",
     "autoprefixer": "^10.4.19",
     "eslint": "^9.33.0",
     "eslint-config-next": "^15.4.6",
+    "globals": "^15.15.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
     "postcss": "^8.4.38",
+    "prettier": "^3.3.3",
     "prisma": "^6.13.0",
     "tailwindcss": "^4.1.11",
     "tsx": "^4.7.1",
     "typescript": "^5.4.5"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }

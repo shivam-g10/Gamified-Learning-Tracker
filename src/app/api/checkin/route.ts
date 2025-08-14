@@ -19,10 +19,16 @@ export async function POST() {
   });
 
   const today = todayDateString();
-  const last = state.last_check_in ? state.last_check_in.toISOString().slice(0, 10) : null;
+  const last = state.last_check_in
+    ? state.last_check_in.toISOString().slice(0, 10)
+    : null;
 
   if (last === today) {
-    return NextResponse.json({ streak: state.streak, last_check_in: state.last_check_in, changed: false });
+    return NextResponse.json({
+      streak: state.streak,
+      last_check_in: state.last_check_in,
+      changed: false,
+    });
   }
 
   const updated = await prisma.appState.update({
@@ -30,7 +36,9 @@ export async function POST() {
     data: { streak: state.streak + 1, last_check_in: new Date(today) },
   });
 
-  return NextResponse.json({ streak: updated.streak, last_check_in: updated.last_check_in, changed: true });
+  return NextResponse.json({
+    streak: updated.streak,
+    last_check_in: updated.last_check_in,
+    changed: true,
+  });
 }
-
-

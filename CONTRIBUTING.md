@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Gamified Learning Tracker! This d
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - Git
 - Docker (optional, for containerized development)
