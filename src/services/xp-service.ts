@@ -24,9 +24,16 @@ export class XPService {
     const currentLevelXp = level * this.XP_PER_LEVEL;
     const progress = totalXp - currentLevelXp;
     const nextLevelXp = this.XP_PER_LEVEL;
-    const pct = Math.min(100, Math.round((progress / nextLevelXp) * 100));
+    const pct = Math.min(100, Math.round((progress / this.XP_PER_LEVEL) * 100));
 
     return { level, progress, nextLevelXp, pct };
+  }
+
+  /**
+   * Alias for calculateLevelInfo for backward compatibility
+   */
+  static totalXpToLevel(totalXp: number): LevelInfo {
+    return this.calculateLevelInfo(totalXp);
   }
 
   /**
@@ -115,6 +122,26 @@ export class XPService {
    */
   static getUnreachedBadgeThresholds(totalXp: number): number[] {
     return this.BADGE_THRESHOLDS.filter(threshold => threshold > totalXp);
+  }
+
+  /**
+   * Gets the name of a badge for a given threshold
+   */
+  static getBadgeName(threshold: number): string {
+    switch (threshold) {
+      case 150:
+        return 'Bronze';
+      case 400:
+        return 'Silver';
+      case 800:
+        return 'Gold';
+      case 1200:
+        return 'Epic';
+      case 2000:
+        return 'Legendary';
+      default:
+        return `${threshold} XP`;
+    }
   }
 
   /**

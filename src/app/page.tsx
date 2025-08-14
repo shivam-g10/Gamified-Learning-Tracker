@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Quest } from '../lib/types';
 import { useQuests, useAppState } from '../lib/hooks';
 import { QuestService, AppStateService, CreateQuestData } from '../services';
@@ -10,8 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card';
+import { Progress } from '../components/ui/progress';
 import { Button } from '../components/ui/button';
-import { Target } from 'lucide-react';
+import { Target, Flame } from 'lucide-react';
 import {
   Badges,
   FocusChips,
@@ -33,6 +34,7 @@ export default function HomePage() {
     'title' | 'xp' | 'category' | 'type' | 'created_at' | 'done'
   >('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [previousTotalXp, setPreviousTotalXp] = useState(0);
 
   // Calculated values using services
   const totalXp = useMemo(
@@ -55,6 +57,22 @@ export default function HomePage() {
 
     return QuestService.sortQuests(filteredQuests, sortBy, sortOrder);
   }, [quests, search, filterType, filterCategory, sortBy, sortOrder]);
+
+  // Track XP changes for animations
+  useEffect(() => {
+    if (totalXp !== previousTotalXp) {
+      setPreviousTotalXp(totalXp);
+    }
+  }, [totalXp, previousTotalXp]);
+
+  // Calculate level info
+  const levelInfo = useMemo(() => {
+    const level = Math.floor(totalXp / 150) + 1;
+    const progress = totalXp % 150;
+    const nextLevelXp = 150;
+    const pct = Math.round((progress / nextLevelXp) * 100);
+    return { level, progress, nextLevelXp, pct };
+  }, [totalXp]);
 
   // Event handlers using services
   const handleAddQuest = useCallback(
@@ -111,6 +129,8 @@ export default function HomePage() {
     try {
       await AppStateService.recordDailyCheckIn();
       await mutateState();
+      // Show success toast
+      console.log('🔥 Streak +1 — see you tomorrow!');
     } catch (error) {
       console.error('Failed to record daily check-in:', error);
     }
@@ -142,69 +162,108 @@ export default function HomePage() {
 
   return (
     <div className='flex gap-6'>
-      {/* Main Content - Prioritized Layout */}
+      {/* Main Content - Gamified Layout */}
       <div className='flex-1 space-y-6'>
-        {/* Compact Overview Row */}
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-          <Card className='bg-card border-border'>
-            <CardContent className='p-4'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <div className='text-sm text-muted-foreground mb-1'>
-                    Level
+        {/* Overview Section - Single Block with Prominent Progress */}
+        <Card>
+          <CardHeader>
+            <CardTitle className='text-xl'>Learning Progress</CardTitle>
+          </CardHeader>
+          <CardContent className='space-y-6'>
+            {/* Main Progress Bar */}
+            <div className='space-y-3'>
+              <div className='flex justify-between items-center'>
+                <div className='flex items-center gap-3'>
+                  <div className='text-3xl font-bold text-foreground'>
+                    Level {levelInfo.level}
                   </div>
-                  <div className='text-2xl font-bold text-foreground'>0</div>
-                  <div className='text-xs text-muted-foreground'>0/150 XP</div>
+                  <div className='text-sm text-muted-foreground'>
+                    {levelInfo.progress}/{levelInfo.nextLevelXp} XP to next
+                    level
+                  </div>
                 </div>
-                <Button
-                  onClick={handleRandomChallenge}
-                  variant='outline'
-                  size='sm'
-                >
-                  <Target className='w-4 h-4 mr-1' />
-                  Challenge
-                </Button>
+                <div className='text-right'>
+                  <div className='text-2xl font-bold text-foreground'>
+                    {totalXp}
+                  </div>
+                  <div className='text-sm text-muted-foreground'>Total XP</div>
+                </div>
               </div>
-            </CardContent>
-          </Card>
 
-          <Card className='bg-card border-border'>
-            <CardContent className='p-4'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <div className='text-sm text-muted-foreground mb-1'>
-                    Streak
-                  </div>
-                  <div className='text-2xl font-bold text-foreground'>0</div>
-                  <div className='text-xs text-muted-foreground'>
-                    🔥 Keep it going!
-                  </div>
+              {/* Prominent Progress Bar */}
+              <div className='relative'>
+                <Progress
+                  value={levelInfo.pct}
+                  className='h-4 rounded-full bg-muted'
+                />
+                <div
+                  className='absolute inset-0 rounded-full progress-shimmer'
+                  style={{
+                    background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)`,
+                    backgroundSize: '200% 100%',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Stats Row */}
+            <div className='grid grid-cols-3 gap-4'>
+              {/* Streak */}
+              <div className='text-center p-3 bg-muted/30 rounded-lg'>
+                <div className='flex items-center justify-center gap-2 mb-2'>
+                  <Flame className='w-5 h-5 text-secondary flame-breathe' />
+                  <span className='text-sm font-medium'>Streak</span>
+                </div>
+                <div className='text-2xl font-bold text-foreground mb-2'>
+                  {appState?.streak || 0}
                 </div>
                 <Button
                   onClick={handleDailyCheckIn}
                   variant='outline'
                   size='sm'
+                  className='w-full bg-secondary/10 border-secondary/20 text-secondary hover:bg-secondary/20 hover:border-secondary/40'
                 >
                   Check-in
                 </Button>
               </div>
-            </CardContent>
-          </Card>
 
-          <Card className='bg-card border-border'>
-            <CardContent className='p-4'>
-              <div>
-                <div className='text-sm text-muted-foreground mb-1'>
-                  Total XP
+              {/* Challenge */}
+              <div className='text-center p-3 bg-muted/30 rounded-lg'>
+                <div className='flex items-center justify-center gap-2 mb-2'>
+                  <Target className='w-5 h-5 text-primary' />
+                  <span className='text-sm font-medium'>Challenge</span>
                 </div>
-                <div className='text-2xl font-bold text-foreground'>0</div>
-                <div className='text-xs text-muted-foreground'>0 / ∞ XP</div>
+                <div className='text-2xl font-bold text-foreground mb-2'>
+                  Ready
+                </div>
+                <Button
+                  onClick={handleRandomChallenge}
+                  variant='outline'
+                  size='sm'
+                  className='w-full bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40'
+                >
+                  Roll Dice
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
 
-        {/* Focus Section - Now Priority */}
+              {/* Focus Count */}
+              <div className='text-center p-3 bg-muted/30 rounded-lg'>
+                <div className='flex items-center justify-center gap-2 mb-2'>
+                  <span className='text-lg'>🎯</span>
+                  <span className='text-sm font-medium'>Focus</span>
+                </div>
+                <div className='text-2xl font-bold text-foreground mb-2'>
+                  {AppStateService.getFocusCount(appState?.focus || [])}/3
+                </div>
+                <div className='text-xs text-muted-foreground'>
+                  Quests focused
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Focus Panel */}
         <Card>
           <CardHeader>
             <CardTitle className='flex items-center gap-2'>
@@ -223,14 +282,14 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        {/* Quests Section - Main Priority */}
+        {/* Quests List with Add Quest */}
         <Card>
           <CardHeader>
             <div className='flex items-center justify-between'>
               <div className='flex items-center gap-2'>
-                <span>Quests</span>
+                <span className='text-lg font-semibold'>Quests</span>
                 {sortBy !== 'created_at' && (
-                  <span className='text-sm text-neutral-400 font-normal'>
+                  <span className='text-sm text-muted-foreground font-normal'>
                     (sorted by {sortBy} {sortOrder === 'asc' ? '↑' : '↓'})
                   </span>
                 )}
@@ -254,7 +313,7 @@ export default function HomePage() {
             />
 
             {/* Quest List */}
-            <div className='divide-y divide-border bg-muted/30 border border-border overflow-hidden'>
+            <div className='divide-y divide-border bg-muted/30 border border-border overflow-hidden rounded-lg'>
               {filtered?.map((q: Quest) => (
                 <QuestRow
                   key={q.id}
@@ -268,12 +327,9 @@ export default function HomePage() {
               {filtered && filtered.length === 0 && (
                 <div className='text-center py-12 text-muted-foreground'>
                   <div className='text-4xl mb-3'>🎯</div>
-                  <div className='text-lg font-medium mb-2'>
-                    No quests found
-                  </div>
+                  <div className='text-lg font-medium mb-2'>No quests yet</div>
                   <div className='text-sm'>
-                    Try adjusting your search or filters, or add a new quest
-                    above!
+                    Add your first quest to start earning XP
                   </div>
                 </div>
               )}
@@ -282,9 +338,9 @@ export default function HomePage() {
         </Card>
       </div>
 
-      {/* Right Sidebar - Compact Stats */}
+      {/* Right Sidebar - Stats & Progress */}
       <div className='w-80 flex-shrink-0 space-y-4'>
-        {/* Badges - Compact */}
+        {/* Badges */}
         <Card>
           <CardHeader>
             <CardTitle>Badges</CardTitle>

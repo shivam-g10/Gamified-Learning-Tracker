@@ -1,8 +1,8 @@
-import '@/app/globals.css';
+import './globals.css';
 import { ReactNode } from 'react';
 import { Metadata, Viewport } from 'next';
-import { ThemeProvider } from '@/components/theme-provider';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { ThemeProvider } from '../components/theme-provider';
+import { ThemeToggle } from '../components/theme-toggle';
 
 export const metadata: Metadata = {
   title: 'Gamified Learning Tracker',
@@ -119,7 +119,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               </div>
             </div>
           </header>
-          <main className='container-narrow py-6 bg-background text-foreground'>
+          <main className='container-narrow py-6 text-foreground'>
             {children}
           </main>
           <footer className='container-narrow py-8 text-sm text-muted-foreground bg-background'>

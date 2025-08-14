@@ -813,295 +813,430 @@ if (!title || typeof xp !== 'number' || xp < 0 || !type || !category) {
 - **Rate Limiting**: Built-in protection
 - **CORS Configuration**: Cross-origin security
 
-## 🐳 Enhanced Docker Implementation
+## 🎨 Recent UI Refactor: Gamified Learning Tracker Transformation
 
-### Development Environment
+### Overview
 
-The project now includes a dedicated development Docker configuration (`docker-compose.dev.yml`) that provides:
+The application has undergone a comprehensive UI/UX refactor to transform it from a basic CS tracker into a "Gamified Learning Tracker" with a "Simple & Inviting" feel. This refactor focused exclusively on the frontend presentation layer while maintaining all existing API contracts and data structures.
 
-- **Hot Reloading**: Source code changes trigger automatic rebuilds
-- **Watch Mode**: File watching with smart rebuild strategies
-- **Volume Mounting**: Direct access to source code and configuration files
-- **Development Dependencies**: Faster builds using the deps stage
-- **Database Access**: Local PostgreSQL access on port 5433
+### Design System Implementation
 
-#### Development Configuration
+#### Mint Arcade Brand Skin
 
-```yaml
-# docker-compose.dev.yml
-services:
-  web:
-    build:
-      context: .
-      target: deps # Use deps stage for faster development builds
-    volumes:
-      - ./src:/app/src
-      - ./prisma:/app/prisma
-      - ./package.json:/app/package.json
-      - ./next.config.js:/app/next.config.js
-      - ./tailwind.config.js:/app/tailwind.config.js
-      - ./tsconfig.json:/app/tsconfig.json
-    command: sh -c "npx prisma generate && npx prisma db push --accept-data-loss && npx prisma db seed && pnpm dev"
-    develop:
-      watch:
-        - action: rebuild
-          path: ./src
-          ignore: [node_modules/, .next/, .git/]
-```
+The new design system introduces a cohesive "Mint Arcade" brand identity with:
 
-### Multi-stage Build
+- **Primary Colors**: Mint green (`#21E6B6`) for main actions and CTAs
+- **Secondary Colors**: Amber gold (`#FFC745`) for XP and rewards
+- **Accent Colors**: Purple (`#A176FF`) for achievements and special elements
+- **Semantic Tokens**: Full shadcn/ui compatibility with automatic light/dark mode switching
 
-```dockerfile
-# Dependencies stage
-FROM node:21-alpine AS deps
-# ... dependency installation
+#### Color Palette Implementation
 
-# Builder stage
-FROM node:21-alpine AS builder
-# ... application building
+```css
+/* src/app/globals.css */
+:root {
+  --background: 48 33% 97%; /* Creamy off-white */
+  --primary: 160 84% 39%; /* Mint green */
+  --secondary: 160 84% 39%; /* Mint green */
+  --accent: 47 96% 53%; /* Amber gold */
+  --success: 10 185 129; /* Emerald green */
+  --destructive: 244 63% 75; /* Rose red */
+}
 
-# Production stage
-FROM node:21-alpine AS runner
-# ... production deployment
-```
-
-### Security Features
-
-- **Non-root User**: Runs as nextjs user (UID 1001)
-- **Minimal Base Image**: Alpine Linux for security
-- **Dependency Scanning**: Regular security updates
-- **Network Isolation**: Internal communication only
-
-### Health Checks
-
-```yaml
-healthcheck:
-        test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
-  interval: 30s
-  timeout: 10s
-  retries: 3
-  start_period: 40s
-```
-
-## 📱 Responsive Design
-
-### Mobile-First Approach
-
-- **Grid System**: Responsive grid layouts
-- **Flexbox**: Flexible component arrangements
-- **Media Queries**: Device-specific styling
-- **Touch Targets**: Mobile-optimized interactions
-
-### Breakpoint Strategy
-
-- **Small**: Mobile devices (< 768px)
-- **Medium**: Tablets (768px - 1024px)
-- **Large**: Desktop (> 1024px)
-
-## 🔧 Enhanced Development Features
-
-### Code Quality Tools
-
-The project now includes comprehensive code quality tools that run automatically:
-
-- **ESLint v9**: Latest ESLint with Next.js and TypeScript rules
-- **Prettier**: Automatic code formatting
-- **Husky v9**: Git hooks for pre-commit and commit-msg
-- **commitlint**: Conventional commit message validation
-- **lint-staged**: Run linters only on staged files
-
-#### Pre-commit Hooks
-
-```json
-// package.json
-"lint-staged": {
-  "*.{js,jsx,ts,tsx,json,md,yml,yaml}": [
-    "prettier --write"
-  ]
+.dark {
+  --background: 220 13% 8%; /* Charcoal dark gray */
+  --card: 220 13% 10%; /* Darker charcoal */
+  --border: 220 13% 18%; /* Subtle borders */
 }
 ```
 
-#### Commit Message Standards
+### Component Refactoring
 
-The project follows [Conventional Commits](https://www.conventionalcommits.org/) standards:
+#### 1. Overview Section Consolidation
 
-- `feat`: New features
-- `fix`: Bug fixes
-- `docs`: Documentation changes
-- `style`: Code style changes
-- `refactor`: Code refactoring
-- `perf`: Performance improvements
-- `test`: Adding or updating tests
-- `chore`: Maintenance tasks
-
-### TypeScript Integration
-
-- **Full Type Safety**: Comprehensive type definitions
-- **Interface Definitions**: Clear data contracts
-- **Error Prevention**: Compile-time error checking
-- **Developer Experience**: Enhanced IDE support
-
-### Development Tools
-
-- **ESLint**: Code quality enforcement
-- **Prettier**: Code formatting
-- **TypeScript**: Static type checking
-- **Hot Reload**: Fast development iteration
-
-## 📊 Monitoring & Observability
-
-### Health Checks
-
-- **API Endpoints**: Service health monitoring
-- **Database Connectivity**: Connection status
-- **Service Status**: Application health
-- **Performance Metrics**: Response time tracking
-
-### Error Handling
-
-- **Graceful Degradation**: Fallback mechanisms
-- **User Feedback**: Clear error messages
-- **Logging**: Comprehensive error tracking
-- **Recovery**: Automatic error recovery
-
-## 🚀 Deployment Features
-
-### Coolify Integration
-
-- **Dynamic Port Allocation**: Automatic port assignment
-- **Subdomain Support**: Automatic proxy configuration
-- **Environment Variables**: Flexible configuration
-- **Health Monitoring**: Built-in health checks
-
-### Production Readiness
-
-- **Environment Configuration**: Production settings
-- **Database Migrations**: Schema management
-- **Backup Strategy**: Data protection
-- **Scaling Support**: Horizontal scaling ready
-
-## 🎯 Enhanced Main Page Implementation
-
-### Modern UI Architecture
-
-The main page (`src/app/page.tsx`) has been completely refactored to use:
-
-- **shadcn/ui Components**: Modern, accessible UI components
-- **Custom Hooks**: Clean separation of data fetching logic
-- **Enhanced State Management**: Better component organization
-- **Improved UX**: Better visual hierarchy and user feedback
-
-#### Component Structure
+**Before**: Three separate cards (Level, Streak, Total XP)
+**After**: Single consolidated overview block with prominent progress bar
 
 ```typescript
-// Main page with enhanced organization
-export default function HomePage() {
-  const { quests, mutateQuests } = useQuests();
-  const { appState, mutateState } = useAppState();
-
-  // State management for search, filters, and sorting
-  const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
-  const [sortBy, setSortBy] = useState<
-    'title' | 'xp' | 'category' | 'type' | 'created_at' | 'done'
-  >('created_at');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-}
-```
-
-#### Enhanced Quest Management
-
-- **Advanced Filtering**: Type, category, and completion status filters
-- **Smart Sorting**: Multi-criteria sorting with visual indicators
-- **Real-time Search**: Instant search across title and category
-- **Focus System**: Visual focus management with badges
-- **Progress Tracking**: Category-based progress visualization
-
-#### Improved User Experience
-
-- **Responsive Design**: Mobile-first approach with proper breakpoints
-- **Visual Feedback**: Hover states, transitions, and loading indicators
-- **Accessibility**: Proper ARIA labels and keyboard navigation
-- **Performance**: Optimized rendering with useMemo and useCallback
-
-### Quest Row Component
-
-```typescript
-function QuestRow({ q }: { q: Quest }) {
-  return (
-    <div className='flex items-center gap-4 py-4 px-3 rounded-lg hover:bg-neutral-900/30 transition-all duration-200 group'>
-      <input
-        type='checkbox'
-        checked={q.done}
-        onChange={() => toggleDone(q)}
-        className='w-4 h-4 rounded border-neutral-600 bg-neutral-800 text-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
-      />
-      {/* Quest content with badges and actions */}
+// src/app/page.tsx - New consolidated layout
+<div className="bg-card border border-border rounded-lg p-6 mb-6">
+  <div className="flex items-center justify-between mb-4">
+    <div>
+      <h2 className="text-2xl font-bold text-foreground">
+        Level {levelInfo.level}
+      </h2>
+      <p className="text-muted-foreground">
+        {levelInfo.progress}/{levelInfo.nextLevelXp} XP to next level
+      </p>
     </div>
-  );
-}
+    <div className="text-right">
+      <div className="text-3xl font-bold text-foreground">{totalXp}</div>
+      <div className="text-sm text-muted-foreground">Total XP</div>
+    </div>
+  </div>
+
+  {/* Prominent Progress Bar */}
+  <div className="mb-4">
+    <Progress value={levelInfo.pct} className="h-3 progress-shimmer" />
+  </div>
+
+  {/* Action Row */}
+  <div className="flex items-center gap-4">
+    <div className="flex items-center gap-2">
+      <Flame className="w-5 h-5 text-accent flame-breathe" />
+      <span className="text-foreground font-medium">{appState?.streak || 0}</span>
+      <Button onClick={handleCheckin} size="sm">Check-in</Button>
+    </div>
+    <div className="flex items-center gap-2">
+      <Target className="w-5 h-5 text-accent" />
+      <span className="text-foreground font-medium">Ready</span>
+      <Button onClick={handleRandomChallenge} size="sm">Roll Dice</Button>
+    </div>
+    <div className="flex items-center gap-2 ml-auto">
+      <Target className="w-5 h-5 text-primary" />
+      <span className="text-foreground font-medium">
+        {focusCount}/3
+      </span>
+      <span className="text-sm text-muted-foreground">Quests focused</span>
+    </div>
+  </div>
+</div>
 ```
 
-### Add Quest Form
+#### 2. Enhanced Badge System
+
+**Before**: Basic text-based badges
+**After**: Tiered badge system with sparkle effects
 
 ```typescript
-function AddQuestForm() {
-  const [pending, setPending] = useState(false);
+// src/components/app/Badges.tsx
+const badgeConfig = [
+  { threshold: 150, name: 'Bronze', color: 'bg-amber-600' },
+  { threshold: 400, name: 'Silver', color: 'bg-gray-400' },
+  { threshold: 800, name: 'Gold', color: 'bg-yellow-500' },
+  { threshold: 1200, name: 'Epic', color: 'bg-purple-600' },
+  { threshold: 2000, name: 'Legendary', color: 'bg-orange-600' }
+];
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setPending(true);
-    const fd = new FormData(e.currentTarget);
-    await addQuest(fd);
-    e.currentTarget.reset();
-    setPending(false);
+// Sparkle effect for unlocked badges
+{hasReached && (
+  <Sparkles className="w-3 h-3 text-white ml-1" />
+)}
+```
+
+#### 3. Custom Progress Bars
+
+**Before**: Basic shadcn/ui Progress component
+**After**: Custom progress bars with better visual hierarchy
+
+```typescript
+// src/components/app/CategoryProgress.tsx
+const getProgressColor = (percentage: number) => {
+  if (percentage >= 100) return 'bg-success/60'; // More subtle when full
+  if (percentage >= 75) return 'bg-accent/70';
+  if (percentage >= 50) return 'bg-secondary/70';
+  if (percentage >= 25) return 'bg-primary/70';
+  return 'bg-muted-foreground/30';
+};
+
+// Custom progress bar implementation
+<div className="w-full h-2 bg-muted/50 rounded-full overflow-hidden">
+  <div
+    className={`h-full ${getProgressColor(percentage)} transition-all duration-300 ease-out rounded-full`}
+    style={{ width: `${percentage}%` }}
+  />
+</div>
+```
+
+#### 4. Compact Focus Panel
+
+**Before**: Large focus elements with excessive padding
+**After**: Compact, focused design with reduced spacing
+
+```typescript
+// src/components/app/FocusChips.tsx
+<div className="flex items-center gap-2 p-2 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors group">
+  <div className="flex-1 min-w-0">
+    <div className="font-medium text-foreground text-xs truncate">
+      {q.title}
+    </div>
+    <div className="flex items-center gap-1 mt-1">
+      <Badge variant='outline' className='text-xs border-primary/30 text-primary px-1 py-0 h-4'>
+        {q.category}
+      </Badge>
+      <Badge variant='outline' className='text-xs border-accent/30 text-accent px-1 py-0 h-4'>
+        {q.type}
+      </Badge>
+      <Badge variant='default' className='bg-secondary text-secondary-foreground text-xs px-1 py-0 h-4'>
+        +{q.xp} XP
+      </Badge>
+    </div>
+  </div>
+</div>
+```
+
+#### 5. Enhanced Quest Cards
+
+**Before**: Basic quest display
+**After**: Gamified quest cards with XP animations
+
+```typescript
+// src/components/app/QuestRow.tsx
+<div className="flex items-center gap-4 py-4 px-3 rounded-lg hover:bg-neutral-900/30 transition-all duration-200 group">
+  {/* XP Stripe */}
+  <div className="w-1 h-12 bg-secondary rounded-full" />
+
+  {/* Quest Content */}
+  <div className="flex-1 min-w-0">
+    <div className={`font-medium text-foreground line-clamp-2 ${
+      q.done ? 'line-through text-muted-foreground' : ''
+    }`}>
+      {q.title}
+    </div>
+
+    {/* Badges */}
+    <div className="flex items-center gap-2 mt-2">
+      <Badge variant="outline" className="text-xs">
+        {q.category}
+      </Badge>
+      <Badge variant="outline" className="text-xs">
+        {q.type}
+      </Badge>
+      <Badge variant="default" className="bg-secondary text-secondary-foreground text-xs">
+        +{q.xp} XP
+      </Badge>
+    </div>
+  </div>
+
+  {/* XP Gain Animation */}
+  {showXpGain && (
+    <div className="xp-float text-secondary font-medium text-sm">
+      +{q.xp} XP
+    </div>
+  )}
+</div>
+```
+
+### Micro-Interactions Implementation
+
+#### 1. Progress Bar Shimmer
+
+```css
+/* src/app/globals.css */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
   }
+  100% {
+    background-position: 200% 0;
+  }
+}
 
-  return (
-    <form onSubmit={onSubmit} className='grid grid-cols-1 md:grid-cols-5 gap-4'>
-      {/* Form fields with proper validation and styling */}
-    </form>
+.progress-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
   );
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-shimmer {
+    animation: none;
+  }
 }
 ```
 
-## 📦 Package and Script Updates
+#### 2. XP Float Animation
 
-### Enhanced Dependencies
+```css
+@keyframes float-up {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+}
 
-The project has been updated with the latest stable versions:
-
-- **Next.js**: 15.4.6 (latest)
-- **React**: 19.1.1 (latest)
-- **TypeScript**: 5.4.5 (latest)
-- **Tailwind CSS**: 4.1.11 (latest)
-- **Prisma**: 6.13.0 (latest)
-
-### New Development Scripts
-
-```json
-// package.json
-"scripts": {
-  "docker:dev": "docker compose -f docker-compose.dev.yml up --build",
-  "docker:dev:watch": "docker compose -f docker-compose.dev.yml up --build --watch",
-  "docker:prod": "docker compose up --build",
-  "docker:down": "docker compose down",
-  "docker:clean": "docker compose down -v --remove-orphans"
+.xp-float {
+  animation: float-up 0.5s ease-out forwards;
 }
 ```
 
-### Code Quality Scripts
+#### 3. Flame Breathe Animation
 
-```json
-"scripts": {
-  "lint": "next lint",
-  "lint:fix": "next lint --fix",
-  "format": "prettier --write .",
-  "format:check": "prettier --check .",
-  "type-check": "tsc --noEmit"
+```css
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.98);
+  }
+}
+
+.flame-breathe {
+  animation: breathe 2.4s ease-in-out infinite;
 }
 ```
+
+### Accessibility Enhancements
+
+#### 1. Reduced Motion Support
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  .progress-shimmer,
+  .flame-breathe,
+  .xp-float {
+    animation: none;
+  }
+}
+```
+
+#### 2. Focus Ring Improvements
+
+```css
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+```
+
+#### 3. Contrast Compliance
+
+- **Light Mode**: AA contrast compliance maintained
+- **Dark Mode**: Enhanced charcoal background for better contrast
+- **Color Usage**: Semantic tokens ensure consistent contrast ratios
+
+### Responsive Design Improvements
+
+#### 1. Mobile-First Approach
+
+```typescript
+// Responsive grid layouts
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  {/* Content adapts to screen size */}
+    </div>
+```
+
+#### 2. Touch-Friendly Interactions
+
+```typescript
+// Larger touch targets for mobile
+<Button
+  size="sm"
+  className="h-10 px-4" // Minimum 44px touch target
+  onClick={handleAction}
+>
+  Action
+</Button>
+```
+
+### Performance Optimizations
+
+#### 1. CSS-in-JS Elimination
+
+- **Before**: Inline styles and dynamic CSS generation
+- **After**: Static CSS classes with Tailwind utilities
+
+#### 2. Component Memoization
+
+```typescript
+const levelInfo = useMemo(() => totalXpToLevel(totalXp), [totalXp]);
+
+const filteredQuests = useMemo(
+  () => filterAndSortQuests(quests, search, filters, sortBy, sortOrder),
+  [quests, search, filters, sortBy, sortOrder]
+);
+```
+
+#### 3. Efficient Re-renders
+
+```typescript
+const handleQuestToggle = useCallback(
+  async (quest: Quest) => {
+    // Optimized event handler
+  },
+  [mutateQuests]
+);
+```
+
+### Development Workflow Improvements
+
+#### 1. Component Architecture
+
+- **Thin Views**: Components focus on presentation only
+- **Service Layer**: Business logic moved to service functions
+- **Type Safety**: Strict TypeScript with no `any` types
+
+#### 2. Code Quality Tools
+
+- **ESLint v9**: Latest linting rules
+- **Prettier**: Consistent code formatting
+- **Husky v9**: Pre-commit hooks
+- **commitlint**: Conventional commit standards
+
+### Testing and Validation
+
+#### 1. Visual Regression Testing
+
+- **Before/After Screenshots**: Document visual changes
+- **Cross-browser Testing**: Ensure consistency across browsers
+- **Mobile Testing**: Responsive design validation
+
+#### 2. Accessibility Testing
+
+- **WCAG AA Compliance**: Automated and manual testing
+- **Keyboard Navigation**: Full keyboard accessibility
+- **Screen Reader Support**: Proper ARIA labels and semantics
+
+### Migration Strategy
+
+#### 1. Incremental Implementation
+
+- **Phase 1**: Core design system and color palette
+- **Phase 2**: Component refactoring and animations
+- **Phase 3**: Layout optimization and responsive improvements
+- **Phase 4**: Accessibility enhancements and performance tuning
+
+#### 2. Backward Compatibility
+
+- **API Contracts**: No changes to existing endpoints
+- **Data Models**: Prisma schema remains unchanged
+- **State Management**: SWR integration preserved
+
+### Results and Impact
+
+#### 1. User Experience Improvements
+
+- **Visual Appeal**: Modern, gamified interface
+- **Usability**: Clearer visual hierarchy and CTAs
+- **Performance**: Faster rendering and interactions
+- **Accessibility**: Better contrast and keyboard support
+
+#### 2. Developer Experience
+
+- **Maintainability**: Cleaner component architecture
+- **Consistency**: Unified design system
+- **Tooling**: Modern development tools and workflows
+- **Documentation**: Comprehensive implementation guides
+
+#### 3. Technical Benefits
+
+- **Performance**: Optimized rendering and animations
+- **Scalability**: Modular component system
+- **Accessibility**: WCAG AA compliance
+- **Responsiveness**: Mobile-first design approach
+
+---
 
 ## 🎯 Current Implementation Status
 
@@ -1120,6 +1255,9 @@ The project has been updated with the latest stable versions:
 - **Modern UI**: shadcn/ui components with responsive design
 - **Code Quality**: ESLint, Prettier, Husky, and commitlint
 - **Development Environment**: Docker with hot reloading and watch mode
+- **UI Refactor**: Complete transformation to Gamified Learning Tracker
+- **Design System**: Mint Arcade brand skin with semantic tokens
+- **Micro-interactions**: Shimmer, XP animations, and accessibility features
 
 ### 🔄 In Progress
 
@@ -1129,7 +1267,7 @@ The project has been updated with the latest stable versions:
 
 ### 🔮 Future Implementation Considerations
 
-### Potential Enhancements
+#### Potential Enhancements
 
 - **User Authentication**: Multi-user support
 - **Data Export**: Progress reporting
@@ -1140,7 +1278,7 @@ The project has been updated with the latest stable versions:
 - **Webhooks**: External integrations
 - **Real-time Updates**: WebSocket support
 
-### Scalability Considerations
+#### Scalability Considerations
 
 - **Database Sharding**: Horizontal scaling
 - **Caching Layer**: Redis integration

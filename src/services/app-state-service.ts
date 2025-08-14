@@ -1,4 +1,4 @@
-import { AppState } from '@/lib/types';
+import { AppState } from '../lib/types';
 
 export interface UpdateAppStateData {
   streak?: number;

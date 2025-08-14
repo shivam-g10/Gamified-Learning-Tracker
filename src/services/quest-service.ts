@@ -1,4 +1,4 @@
-import { Quest } from '@/lib/types';
+import { Quest } from '../lib/types';
 
 export interface CreateQuestData {
   title: string;
