@@ -1,13 +1,13 @@
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../components/ui/select';
+} from '../ui/select';
 import { Search, ArrowUpDown } from 'lucide-react';
 
 interface SearchAndFiltersProps {
@@ -48,7 +48,7 @@ export function SearchAndFilters({
           placeholder='Search quests by title or category...'
           value={search}
           onChange={e => onSearchChange(e.target.value)}
-          className='pl-10'
+          className='pl-12'
         />
       </div>
 

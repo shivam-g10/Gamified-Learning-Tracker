@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../components/ui/select';
+} from '../ui/select';
 import { CreateQuestData } from '../../services';
 
 interface AddQuestFormProps {
@@ -47,7 +47,7 @@ export function AddQuestForm({ onSubmit }: AddQuestFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className='grid grid-cols-1 md:grid-cols-5 gap-4'
+      className='grid grid-cols-1 md:grid-cols-4 gap-4'
     >
       <div className='space-y-2'>
         <Label className='text-sm text-neutral-300 font-medium'>Title</Label>

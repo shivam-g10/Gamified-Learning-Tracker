@@ -1,6 +1,6 @@
 import { Quest } from '@/lib/types';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 import { Target, Trash2 } from 'lucide-react';
 
 interface QuestRowProps {

@@ -1,5 +1,5 @@
 import { Quest, AppState } from '../../lib/types';
-import { Badge } from '../components/ui/badge';
+import { Badge } from '../ui/badge';
 import { AppStateService } from '../../services';
 
 interface FocusChipsProps {

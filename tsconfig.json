@@ -18,7 +18,8 @@
       "@/components/*": ["./src/components/*"],
       "@/lib/*": ["./src/lib/*"],
       "@/app/*": ["./src/app/*"],
-      "@/services/*": ["./src/services/*"]
+      "@/services/*": ["./src/services/*"],
+      "@/ui/*": ["./src/components/ui/*"]
     },
     "types": ["node"],
     "plugins": [

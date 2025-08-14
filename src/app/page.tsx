@@ -9,7 +9,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from '../components/components/ui/card';
+} from '../components/ui/card';
 import {
   Overview,
   Badges,
@@ -140,106 +140,116 @@ export default function HomePage() {
   );
 
   return (
-    <div className='space-y-6'>
-      <Overview
-        totalXp={totalXp}
-        streak={appState?.streak ?? 0}
-        lastCheckIn={appState?.last_check_in ?? null}
-        onRandomChallenge={handleRandomChallenge}
-        onDailyCheckIn={handleDailyCheckIn}
-      />
+    <div className='flex gap-6'>
+      {/* Main Content */}
+      <div className='flex-1 space-y-6'>
+        <Overview
+          totalXp={totalXp}
+          streak={appState?.streak ?? 0}
+          lastCheckIn={appState?.last_check_in ?? null}
+          onRandomChallenge={handleRandomChallenge}
+          onDailyCheckIn={handleDailyCheckIn}
+        />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Badges</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Badges totalXp={totalXp} />
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Badges</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Badges totalXp={totalXp} />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Focus</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FocusChips
-            quests={quests || []}
-            appState={appState || null}
-            onToggleFocus={handleToggleFocus}
-          />
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Focus</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FocusChips
+              quests={quests || []}
+              appState={appState || null}
+              onToggleFocus={handleToggleFocus}
+            />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Add Quest</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AddQuestForm onSubmit={handleAddQuest} />
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Add Quest</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AddQuestForm onSubmit={handleAddQuest} />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <span>Quests</span>
-            {sortBy !== 'created_at' && (
-              <span className='text-sm text-neutral-400 font-normal'>
-                (sorted by {sortBy} {sortOrder === 'asc' ? '↑' : '↓'})
-              </span>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <SearchAndFilters
-            search={search}
-            filterType={filterType}
-            filterCategory={filterCategory}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            categories={categories}
-            onSearchChange={setSearch}
-            onFilterTypeChange={setFilterType}
-            onFilterCategoryChange={setFilterCategory}
-            onSortByChange={setSortBy}
-            onSortOrderChange={setSortOrder}
-          />
+        <Card>
+          <CardHeader>
+            <CardTitle className='flex items-center gap-2'>
+              <span>Quests</span>
+              {sortBy !== 'created_at' && (
+                <span className='text-sm text-neutral-400 font-normal'>
+                  (sorted by {sortBy} {sortOrder === 'asc' ? '↑' : '↓'})
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <SearchAndFilters
+              search={search}
+              filterType={filterType}
+              filterCategory={filterCategory}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              categories={categories}
+              onSearchChange={setSearch}
+              onFilterTypeChange={setFilterType}
+              onFilterCategoryChange={setFilterCategory}
+              onSortByChange={setSortBy}
+              onSortOrderChange={setSortOrder}
+            />
 
-          {/* Quest List */}
-          <div className='divide-y divide-neutral-800/50 bg-neutral-900/20 rounded-lg border border-neutral-800/30 overflow-hidden'>
-            {filtered?.map((q: Quest) => (
-              <QuestRow
-                key={q.id}
-                quest={q}
-                isInFocus={isQuestInFocus(q.id)}
-                onToggleDone={handleToggleDone}
-                onToggleFocus={handleToggleFocus}
-                onDelete={handleDeleteQuest}
-              />
-            ))}
-            {filtered && filtered.length === 0 && (
-              <div className='text-center py-12 text-neutral-500'>
-                <div className='text-4xl mb-3'>🎯</div>
-                <div className='text-lg font-medium mb-2'>No quests found</div>
-                <div className='text-sm'>
-                  Try adjusting your search or filters, or add a new quest
-                  above!
+            {/* Quest List */}
+            <div className='divide-y divide-neutral-800/50 bg-neutral-900/20 rounded-lg border border-neutral-800/30 overflow-hidden'>
+              {filtered?.map((q: Quest) => (
+                <QuestRow
+                  key={q.id}
+                  quest={q}
+                  isInFocus={isQuestInFocus(q.id)}
+                  onToggleDone={handleToggleDone}
+                  onToggleFocus={handleToggleFocus}
+                  onDelete={handleDeleteQuest}
+                />
+              ))}
+              {filtered && filtered.length === 0 && (
+                <div className='text-center py-12 text-neutral-500'>
+                  <div className='text-4xl mb-3'>🎯</div>
+                  <div className='text-lg font-medium mb-2'>
+                    No quests found
+                  </div>
+                  <div className='text-sm'>
+                    Try adjusting your search or filters, or add a new quest
+                    above!
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Category Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CategoryProgress quests={quests || []} />
-        </CardContent>
-      </Card>
+      {/* Sticky Sidebar */}
+      <div className='w-80 flex-shrink-0'>
+        <div className='sticky top-6'>
+          <Card>
+            <CardHeader>
+              <CardTitle>Category Progress</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CategoryProgress quests={quests || []} />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
