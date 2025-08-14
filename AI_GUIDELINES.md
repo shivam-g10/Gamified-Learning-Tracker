@@ -84,6 +84,15 @@ This document establishes mandatory guidelines for all AI agents, developers, an
 
 ### 1. Code Generation Standards
 
+#### Git Operations Requirements
+
+**MANDATORY**: AI agents MUST ask for explicit user confirmation before making any Git commits.
+
+- **Never commit without permission**: Always ask "Should I commit these changes?"
+- **Present changes clearly**: Show what will be committed and why
+- **Wait for approval**: Do not proceed until user explicitly approves
+- **Document exceptions**: Only commit without permission in critical emergencies
+
 #### TypeScript Requirements
 
 - **Strict Mode**: Always use `strict: true` in tsconfig
@@ -223,6 +232,48 @@ interface ApiResponse<T> {
 - **Documentation**: Verify documentation is updated
 - **Guidelines**: Check compliance with these guidelines
 
+### 3. Git Operations and Commits
+
+#### Commit Confirmation Requirement
+
+**MANDATORY**: AI agents MUST ask for explicit user confirmation before making any Git commits, including:
+
+- **Initial Commits**: First commit of new features or changes
+- **Feature Commits**: Commits implementing new functionality
+- **Refactor Commits**: Commits restructuring existing code
+- **Documentation Commits**: Commits updating documentation
+- **Format Commits**: Commits fixing code formatting
+- **Any Other Commits**: All Git operations that modify repository history
+
+#### Confirmation Process
+
+1. **Present Changes**: Show user what will be committed
+2. **Explain Purpose**: Clearly state why the commit is needed
+3. **Request Permission**: Ask "Should I commit these changes?"
+4. **Wait for Response**: Do not proceed until user explicitly approves
+5. **Execute Only After Approval**: Commit only after receiving confirmation
+
+#### Examples of Required Confirmations
+
+```
+❌ INCORRECT - No confirmation:
+"I'll commit these changes now."
+
+✅ CORRECT - With confirmation:
+"I have the following changes ready to commit:
+- Added service layer architecture
+- Separated business logic from components
+- Updated TypeScript types
+
+Should I commit these changes?"
+```
+
+#### Exception Cases
+
+- **No Commits Without Permission**: Never commit without explicit user approval
+- **Emergency Situations**: Only in critical system failures (document and explain afterward)
+- **User-Initiated Commits**: When user explicitly says "commit this" or similar
+
 #### Review Checklist
 
 - [ ] Code follows TypeScript standards
@@ -348,6 +399,7 @@ export function getXpForNextLevel(currentXp: number): number;
 - [ ] Handle edge cases appropriately
 - [ ] Keep components thin and move logic to services
 - [ ] Follow clean code principles
+- [ ] **ALWAYS ask for confirmation before committing changes**
 
 ### For Human Contributors
 

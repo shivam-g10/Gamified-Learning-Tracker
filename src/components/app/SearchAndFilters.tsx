@@ -28,10 +28,10 @@ interface SearchAndFiltersProps {
 
 export function SearchAndFilters({
   search,
-  filterType,
-  filterCategory,
-  sortBy,
-  sortOrder,
+  filterType = 'all',
+  filterCategory = 'all',
+  sortBy = 'created_at',
+  sortOrder = 'desc',
   categories,
   onSearchChange,
   onFilterTypeChange,
@@ -65,7 +65,7 @@ export function SearchAndFilters({
                 <SelectValue placeholder='All Types' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value=''>All Types</SelectItem>
+                <SelectItem value='all'>All Types</SelectItem>
                 <SelectItem value='topic'>Topic</SelectItem>
                 <SelectItem value='project'>Project</SelectItem>
                 <SelectItem value='bonus'>Bonus</SelectItem>
@@ -85,7 +85,7 @@ export function SearchAndFilters({
                 <SelectValue placeholder='All Categories' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value=''>All Categories</SelectItem>
+                <SelectItem value='all'>All Categories</SelectItem>
                 {categories.map(c => (
                   <SelectItem key={c} value={c}>
                     {c}

@@ -118,10 +118,14 @@ export class QuestService {
       ) {
         return false;
       }
-      if (filterType && q.type !== filterType) {
+      if (filterType && filterType !== 'all' && q.type !== filterType) {
         return false;
       }
-      if (filterCategory && q.category !== filterCategory) {
+      if (
+        filterCategory &&
+        filterCategory !== 'all' &&
+        q.category !== filterCategory
+      ) {
         return false;
       }
       return true;

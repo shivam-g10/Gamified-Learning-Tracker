@@ -26,8 +26,8 @@ export default function HomePage() {
 
   // State management for search, filters, and sorting
   const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
+  const [filterType, setFilterType] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState<
     'title' | 'xp' | 'category' | 'type' | 'created_at' | 'done'
   >('created_at');
