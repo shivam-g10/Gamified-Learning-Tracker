@@ -33,7 +33,33 @@ npx husky init
 
 **Note**: If you're setting up an existing project, the hooks should already be configured. If you need to reset them, run `npx husky init` again.
 
-### 3. Verify Installation
+### 3. Environment Setup
+
+Set up your environment variables for local development:
+
+```bash
+# Copy the example environment file
+cp env.example .env
+
+# The .env file contains sensible defaults for local development
+# You can modify values if needed (e.g., change ports to avoid conflicts)
+```
+
+**Environment Variables Included:**
+
+- **Database**: PostgreSQL connection with default credentials
+- **Ports**: App (3000) and Database (5433) ports
+- **Development Mode**: NODE_ENV=development
+- **Auto-generated DATABASE_URL**: Ready to use connection string
+
+**Quick Start:**
+
+1. Copy `env.example` to `.env`
+2. Start development: `docker-compose -f docker-compose.dev.yml up`
+3. Access app at: http://localhost:3000
+4. Database accessible at: localhost:5433
+
+### 4. Verify Installation
 
 Check that all tools are properly installed:
 
