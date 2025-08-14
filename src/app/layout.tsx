@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { Metadata, Viewport } from 'next';
 import { ThemeProvider } from '../components/theme-provider';
 import { ThemeToggle } from '../components/theme-toggle';
+import { Toaster } from '../components/ui/sonner';
 
 export const metadata: Metadata = {
   title: 'Gamified Learning Tracker',
@@ -125,6 +126,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <footer className='container-narrow py-8 text-sm text-muted-foreground bg-background'>
             Built with Next.js + Postgres + Docker
           </footer>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

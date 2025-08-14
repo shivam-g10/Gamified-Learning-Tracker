@@ -59,7 +59,7 @@ export class CategoryBadgeService {
       const badges = Object.entries(this.CATEGORY_BADGE_THRESHOLDS);
       const earnedBadge = badges
         .reverse() // Start from highest threshold
-        .find(([badgeName, threshold]) => percentage >= threshold); // eslint-disable-line @typescript-eslint/no-unused-vars
+        .find(([_badgeName, threshold]) => percentage >= threshold); // eslint-disable-line @typescript-eslint/no-unused-vars
 
       const badgeName =
         (earnedBadge?.[0] as CategoryBadge['badge']) || 'Bronze';
@@ -89,7 +89,7 @@ export class CategoryBadgeService {
 
     const { percentage } = categoryProgress;
     const nextBadge = Object.entries(this.CATEGORY_BADGE_THRESHOLDS).find(
-      ([badgeName, threshold]) => percentage < threshold
+      ([_badgeName, threshold]) => percentage < threshold
     ); // eslint-disable-line @typescript-eslint/no-unused-vars
 
     if (!nextBadge) return null;
@@ -118,7 +118,7 @@ export class CategoryBadgeService {
     const { percentage } = categoryProgress;
     const earnedBadge = Object.entries(this.CATEGORY_BADGE_THRESHOLDS)
       .reverse() // Start from highest threshold
-      .find(([badgeName, threshold]) => percentage >= threshold); // eslint-disable-line @typescript-eslint/no-unused-vars
+      .find(([_badgeName, threshold]) => percentage >= threshold); // eslint-disable-line @typescript-eslint/no-unused-vars
 
     if (!earnedBadge) return null;
 
