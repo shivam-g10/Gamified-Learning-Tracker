@@ -1,14 +1,21 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { Quest } from '../lib/types';
-import { useQuests, useAppState } from '../lib/hooks';
+import { Quest, Book, Course, FocusState } from '../lib/types';
+import {
+  useQuests,
+  useAppState,
+  useBooks,
+  useCourses,
+  useFocusState,
+} from '../lib/hooks';
 import {
   QuestService,
   AppStateService,
   CreateQuestData,
   CategoryBadgeService,
   ChallengeService,
+  SearchService,
 } from '../services';
 import {
   Card,
@@ -33,16 +40,22 @@ import {
 import { Flame, Sparkles, ChevronDown, Dices } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  FocusChips,
   AddQuestDialog,
   QuestRow,
   SearchAndFilters,
   ChallengeModal,
+  FocusRow,
+  BooksList,
+  CoursesList,
+  TabbedContent,
 } from '../components/app';
 
 export default function HomePage() {
   const { quests, mutateQuests } = useQuests();
   const { appState, mutateState } = useAppState();
+  const { books, mutateBooks } = useBooks();
+  const { courses, mutateCourses } = useCourses();
+  const { focusState, mutateFocusState } = useFocusState();
 
   // State management for search, filters, and sorting
   const [search, setSearch] = useState('');
@@ -54,9 +67,21 @@ export default function HomePage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [previousTotalXp, setPreviousTotalXp] = useState(0);
 
+  // Search and filter state for books and courses
+  const [bookSearch, setBookSearch] = useState('');
+  const [bookStatusFilter, setBookStatusFilter] = useState('all');
+  const [courseSearch, setCourseSearch] = useState('');
+  const [courseStatusFilter, setCourseStatusFilter] = useState('all');
+  const [coursePlatformFilter, setCoursePlatformFilter] = useState('all');
+
   // Challenge modal state
   const [challengeQuest, setChallengeQuest] = useState<Quest | null>(null);
   const [isChallengeModalOpen, setIsChallengeModalOpen] = useState(false);
+
+  // Tab navigation state
+  const [activeTab, setActiveTab] = useState<'quests' | 'books' | 'courses'>(
+    'quests'
+  );
 
   // Calculated values using services
   const totalXp = useMemo(
@@ -64,18 +89,20 @@ export default function HomePage() {
     [quests]
   );
 
-  const categories = useMemo(
-    () => QuestService.getUniqueCategories(quests || []),
-    [quests]
-  );
+  // Get unique categories from all learning items
+  const categories = useMemo(() => {
+    return CategoryBadgeService.getUniqueCategories(
+      quests || [],
+      books || [],
+      courses || []
+    );
+  }, [quests, books, courses]);
 
   const filtered = useMemo(() => {
-    const filteredQuests = QuestService.filterQuests(
-      quests || [],
-      search,
-      filterType,
-      filterCategory
-    );
+    const filteredQuests = SearchService.searchQuests(quests || [], search, {
+      type: filterType,
+      category: filterCategory,
+    });
 
     return QuestService.sortQuests(filteredQuests, sortBy, sortOrder);
   }, [quests, search, filterType, filterCategory, sortBy, sortOrder]);
@@ -127,8 +154,12 @@ export default function HomePage() {
 
   // Calculate category progress and badges using service
   const categoryProgress = useMemo(() => {
-    return CategoryBadgeService.getCategoryProgress(quests || []);
-  }, [quests]);
+    return CategoryBadgeService.getCategoryProgress(
+      quests || [],
+      books || [],
+      courses || []
+    );
+  }, [quests, books, courses]);
 
   // Event handlers using services
   const handleAddQuest = useCallback(
@@ -175,38 +206,209 @@ export default function HomePage() {
     [mutateQuests]
   );
 
-  const handleToggleFocus = useCallback(
-    async (quest: Quest) => {
-      if (!appState) return;
+  // New handlers for Books and Courses
+  const handleAddBook = useCallback(async () => {
+    // TODO: Implement book creation dialog
+    toast.info('Book creation coming soon!');
+  }, []);
 
-      const currentFocusCount = AppStateService.getFocusCount(
-        appState.focus || []
-      );
+  const handleEditBook = useCallback(async (book: Book) => {
+    // TODO: Implement book editing dialog
+    toast.info('Book editing coming soon!');
+  }, []);
 
-      // Check if trying to add to focus when already at limit
-      if (
-        !appState.focus?.includes(quest.id) &&
-        !ChallengeService.canAddToFocus(currentFocusCount)
-      ) {
-        toast.error(ChallengeService.getFocusLimitMessage());
-        return;
-      }
-
+  const handleDeleteBook = useCallback(
+    async (bookId: string) => {
       try {
-        await AppStateService.toggleQuestFocus(quest.id, appState.focus || []);
-        await mutateState();
+        const response = await fetch(`/api/books/${bookId}`, {
+          method: 'DELETE',
+        });
 
-        if (appState.focus?.includes(quest.id)) {
-          toast.success('Quest removed from focus.');
+        if (response.ok) {
+          await mutateBooks();
+          toast.success('Book deleted successfully!');
         } else {
-          toast.success('Quest added to focus!');
+          throw new Error('Failed to delete book');
+        }
+      } catch (error) {
+        console.error('Failed to delete book:', error);
+        toast.error('Failed to delete book. Please try again.');
+      }
+    },
+    [mutateBooks]
+  );
+
+  const handleLogBookProgress = useCallback(async (book: Book) => {
+    // TODO: Implement book progress logging dialog
+    toast.info('Book progress logging coming soon!');
+  }, []);
+
+  const handleAddCourse = useCallback(async () => {
+    // TODO: Implement course creation dialog
+    toast.info('Course creation coming soon!');
+  }, []);
+
+  const handleEditCourse = useCallback(async (course: Course) => {
+    // TODO: Implement course editing dialog
+    toast.info('Course editing coming soon!');
+  }, []);
+
+  const handleDeleteCourse = useCallback(
+    async (courseId: string) => {
+      try {
+        const response = await fetch(`/api/courses/${courseId}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          await mutateCourses();
+          toast.success('Course deleted successfully!');
+        } else {
+          throw new Error('Failed to delete course');
+        }
+      } catch (error) {
+        console.error('Failed to delete course:', error);
+        toast.error('Failed to delete course. Please try again.');
+      }
+    },
+    [mutateCourses]
+  );
+
+  const handleLogCourseProgress = useCallback(async (course: Course) => {
+    // TODO: Implement course progress logging dialog
+    toast.info('Course progress logging coming soon!');
+  }, []);
+
+  // Focus management handlers
+  const handleUpdateFocus = useCallback(
+    async (type: 'quest' | 'book' | 'course', id: string | null) => {
+      try {
+        const response = await fetch('/api/focus', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type,
+            id,
+            action: id === null ? 'remove' : 'switch',
+          }),
+        });
+
+        if (response.ok) {
+          await mutateFocusState();
+          toast.success(`${type} focus updated successfully!`);
+        } else {
+          throw new Error('Failed to update focus');
+        }
+      } catch (error) {
+        console.error('Failed to update focus:', error);
+        toast.error('Failed to update focus. Please try again.');
+      }
+    },
+    [mutateFocusState]
+  );
+
+  const handleToggleQuestFocus = useCallback(
+    async (quest: Quest) => {
+      try {
+        const isCurrentlyFocused = focusState?.quest?.id === quest.id;
+        const action = isCurrentlyFocused ? 'remove' : 'switch';
+
+        const response = await fetch('/api/focus', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'quest',
+            id: isCurrentlyFocused ? null : quest.id,
+            action,
+          }),
+        });
+
+        if (response.ok) {
+          await mutateFocusState();
+          toast.success(
+            isCurrentlyFocused
+              ? 'Quest removed from focus'
+              : 'Quest added to focus!'
+          );
+        } else {
+          throw new Error('Failed to update focus');
         }
       } catch (error) {
         console.error('Failed to toggle quest focus:', error);
         toast.error('Failed to update focus. Please try again.');
       }
     },
-    [appState, mutateState]
+    [focusState, mutateFocusState]
+  );
+
+  const handleToggleBookFocus = useCallback(
+    async (book: Book) => {
+      try {
+        const isCurrentlyFocused = focusState?.book?.id === book.id;
+        const action = isCurrentlyFocused ? 'remove' : 'switch';
+
+        const response = await fetch('/api/focus', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'book',
+            id: isCurrentlyFocused ? null : book.id,
+            action,
+          }),
+        });
+
+        if (response.ok) {
+          await mutateFocusState();
+          toast.success(
+            isCurrentlyFocused
+              ? 'Book removed from focus'
+              : 'Book added to focus!'
+          );
+        } else {
+          throw new Error('Failed to update focus');
+        }
+      } catch (error) {
+        console.error('Failed to toggle book focus:', error);
+        toast.error('Failed to update focus. Please try again.');
+      }
+    },
+    [focusState, mutateFocusState]
+  );
+
+  const handleToggleCourseFocus = useCallback(
+    async (course: Course) => {
+      try {
+        const isCurrentlyFocused = focusState?.course?.id === course.id;
+        const action = isCurrentlyFocused ? 'remove' : 'switch';
+
+        const response = await fetch('/api/focus', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'course',
+            id: isCurrentlyFocused ? null : course.id,
+            action,
+          }),
+        });
+
+        if (response.ok) {
+          await mutateFocusState();
+          toast.success(
+            isCurrentlyFocused
+              ? 'Course removed from focus'
+              : 'Course added to focus!'
+          );
+        } else {
+          throw new Error('Failed to update focus');
+        }
+      } catch (error) {
+        console.error('Failed to toggle course focus:', error);
+        toast.error('Failed to update focus. Please try again.');
+      }
+    },
+    [focusState, mutateFocusState]
   );
 
   const handleDailyCheckIn = useCallback(async () => {
@@ -261,19 +463,10 @@ export default function HomePage() {
     [appState, mutateState]
   );
 
-  // Check if quest is in focus
-  const isQuestInFocus = useCallback(
-    (questId: string): boolean => {
-      if (!appState) return false;
-      return AppStateService.isQuestInFocus(questId, appState.focus || []);
-    },
-    [appState]
-  );
-
   return (
     <>
       <div className='space-y-6'>
-        {/* Compact Overview Section */}
+        {/* Original Overview Section - Restored */}
         <Card>
           <CardHeader className='pb-4'>
             <div className='flex items-center justify-between'>
@@ -298,34 +491,24 @@ export default function HomePage() {
                           appState?.last_check_in &&
                           new Date(appState.last_check_in).toDateString() ===
                             new Date().toDateString()
-                            ? 'bg-muted/30 border-muted-foreground/30 text-muted-foreground hover:bg-muted/50 hover:border-muted-foreground/50 active:bg-muted/70'
-                            : 'bg-secondary text-secondary-foreground border-secondary shadow-lg shadow-secondary/20 hover:bg-secondary/90 active:bg-secondary/80 focus:bg-secondary/90'
+                            ? 'bg-green-600 text-white border-green-600 hover:bg-green-700'
+                            : 'hover:bg-muted/50 hover:border-muted-foreground/50'
                         }`}
                       >
-                        <Flame
-                          className={`w-4 h-4 mr-1 transition-all duration-200 ${
-                            appState?.last_check_in &&
-                            new Date(appState.last_check_in).toDateString() ===
-                              new Date().toDateString()
-                              ? 'text-secondary animate-pulse'
-                              : 'text-white'
-                          }`}
-                        />
                         Check-in
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>
-                        {appState?.last_check_in &&
-                        new Date(appState.last_check_in).toDateString() ===
-                          new Date().toDateString()
-                          ? 'Already checked in today! 🔥'
-                          : 'Record your daily learning progress'}
-                      </p>
+                      {appState?.last_check_in &&
+                      new Date(appState.last_check_in).toDateString() ===
+                        new Date().toDateString()
+                        ? 'Already checked in today!'
+                        : 'Record your daily progress'}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
 
+                {/* Random Challenge Button */}
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -333,218 +516,274 @@ export default function HomePage() {
                         onClick={handleRandomChallenge}
                         variant='outline'
                         size='sm'
-                        className='bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40 active:bg-primary/30 focus:bg-primary/20 focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all duration-200'
+                        className='transition-all duration-200 focus:ring-2 focus:ring-ring focus:ring-offset-2 hover:bg-muted/50 hover:border-muted-foreground/50'
                       >
-                        <Dices className='w-4 h-4' />
+                        <Dices className='w-4 h-4 mr-1' />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Get a random challenge</p>
+                      Get a random quest challenge
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
             </div>
           </CardHeader>
-          <CardContent className='space-y-4'>
-            {/* Main Progress Bar */}
-            <div className='space-y-3'>
-              <div className='flex justify-between items-center'>
-                <div className='flex items-center gap-3'>
-                  <div className='text-2xl font-bold text-foreground'>
-                    Level {levelInfo.level}
-                  </div>
-                  <div className='text-sm text-muted-foreground'>
-                    {levelInfo.progress}/{levelInfo.nextLevelXp} XP to next
-                    level
-                  </div>
-                </div>
-                <div className='text-right'>
-                  <div className='text-xl font-bold text-foreground'>
-                    {totalXp}
-                  </div>
-                  <div className='text-sm text-muted-foreground'>Total XP</div>
-                </div>
-              </div>
 
-              {/* Prominent Progress Bar */}
-              <div className='relative'>
-                <Progress
-                  value={levelInfo.pct}
-                  className='h-3 rounded-full bg-muted'
-                />
-                <div
-                  className='absolute inset-0 rounded-full progress-shimmer'
-                  style={{
-                    background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)`,
-                    backgroundSize: '200% 100%',
-                  }}
-                />
+          <CardContent className='space-y-4'>
+            {/* Level and XP Display */}
+            <div className='flex items-center justify-between'>
+              <div>
+                <h2 className='text-2xl font-bold text-foreground'>
+                  Level {levelInfo.level}
+                </h2>
+                <p className='text-muted-foreground'>
+                  {levelInfo.progress}/{levelInfo.nextLevelXp} XP to next level
+                </p>
+              </div>
+              <div className='text-right'>
+                <div className='text-3xl font-bold text-foreground'>
+                  {totalXp}
+                </div>
+                <div className='text-sm text-muted-foreground'>Total XP</div>
               </div>
             </div>
 
-            {/* Badges Section */}
-            <div className='border-t pt-4'>
-              <div className='flex items-center gap-2 mb-3'>
-                <span className='text-sm font-medium text-foreground'>
-                  Badges
-                </span>
-                <Sparkles className='w-4 h-4 text-accent' />
-              </div>
-              <div className='flex flex-wrap gap-2'>
-                {badgeThresholds
-                  .filter(({ earned }) => earned)
-                  .map(({ threshold, name, earned, color }) => (
-                    <div
-                      key={threshold}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
-                        earned
-                          ? `${color} text-white border-0`
-                          : 'bg-muted text-muted-foreground border border-muted-foreground/20'
-                      }`}
-                    >
-                      {name}
-                      {earned && (
-                        <Sparkles className='w-3 h-3 text-white ml-1 inline' />
-                      )}
-                    </div>
-                  ))}
-                {badgeThresholds.filter(({ earned }) => earned).length ===
-                  0 && (
-                  <div className='text-sm text-muted-foreground italic'>
-                    No badges earned yet. Keep learning to unlock your first
-                    badge!
-                  </div>
-                )}
-              </div>
+            {/* Progress Bar */}
+            <div className='mb-4'>
+              <Progress
+                value={levelInfo.pct}
+                className='h-3 progress-shimmer'
+              />
             </div>
           </CardContent>
         </Card>
 
-        {/* Focus Panel */}
+        {/* New Focus Row for 1+1+1 System */}
+        <FocusRow
+          focusState={focusState || {}}
+          quests={quests || []}
+          books={books || []}
+          courses={courses || []}
+          onUpdateFocus={handleUpdateFocus}
+          onNavigateToTab={setActiveTab}
+          onToggleQuestDone={handleToggleDone}
+        />
+
+        {/* Badges Section - Restored */}
         <Card>
           <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              🎯 Focus
-              <span className='text-sm font-normal text-muted-foreground'>
-                ({AppStateService.getFocusCount(appState?.focus || [])}/3)
-              </span>
-            </CardTitle>
+            <CardTitle className='text-lg'>Badges</CardTitle>
           </CardHeader>
           <CardContent>
-            <FocusChips
-              quests={quests || []}
-              appState={appState || null}
-              onToggleFocus={handleToggleFocus}
-            />
+            <div className='flex flex-wrap gap-3'>
+              {badgeThresholds.map(({ threshold, name, earned, color }) => (
+                <div
+                  key={threshold}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                    earned
+                      ? `${color} text-white border-transparent`
+                      : 'bg-muted/30 border-muted text-muted-foreground'
+                  }`}
+                >
+                  <span className='text-sm font-medium'>{name}</span>
+                  {earned && <Sparkles className='w-3 w-3 text-white' />}
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
-        {/* Quests List with Add Quest and Category Progress */}
+        {/* Main Content with Tabs */}
         <Card>
           <CardHeader>
             <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-2'>
-                <span className='text-lg font-semibold'>Quests</span>
-                {sortBy !== 'created_at' && (
-                  <span className='text-sm text-muted-foreground font-normal'>
-                    (sorted by {sortBy} {sortOrder === 'asc' ? '↑' : '↓'})
-                  </span>
-                )}
-              </div>
-              <AddQuestDialog onSubmit={handleAddQuest} />
+              <CardTitle className='text-lg'>Learning Items</CardTitle>
+              {/* Add Quest button only shows in Quests tab - will be handled by TabbedContent */}
             </div>
           </CardHeader>
-          <CardContent className='space-y-4'>
-            <SearchAndFilters
-              search={search}
-              filterType={filterType}
-              filterCategory={filterCategory}
-              sortBy={sortBy}
-              sortOrder={sortOrder}
-              categories={categories}
-              onSearchChange={setSearch}
-              onFilterTypeChange={setFilterType}
-              onFilterCategoryChange={setFilterCategory}
-              onSortByChange={setSortBy}
-              onSortOrderChange={setSortOrder}
-            />
-
-            {/* Category Progress Summary with Accordion */}
-            <Accordion type='single' collapsible className='w-full'>
-              <AccordionItem
-                value='category-progress'
-                className='border rounded-lg data-[state=open]:border-primary/40 data-[state=open]:shadow-[0_0_0_1px_rgba(33,230,182,0.4)] data-[state=open]:shadow-primary/20 transition-all duration-200'
-              >
-                <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-primary'>
-                  <div className='flex items-center gap-2'>
-                    <span className='text-sm font-medium text-foreground'>
-                      Category Progress
-                    </span>
-                    <span className='text-xs text-muted-foreground'>
-                      • Overall completion
-                    </span>
-                    <ChevronDown className='w-4 h-4 text-muted-foreground transition-transform duration-200' />
+          <CardContent>
+            <TabbedContent
+              quests={quests || []}
+              books={books || []}
+              courses={courses || []}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              questsContent={
+                <>
+                  <div className='flex items-center justify-between mb-4'>
+                    <h3 className='text-lg font-medium'>Quests</h3>
+                    <AddQuestDialog onSubmit={handleAddQuest} />
                   </div>
-                </AccordionTrigger>
-                <AccordionContent className='px-4 pb-4 pt-6'>
-                  <div className='space-y-4'>
-                    {/* Category Progress Grid */}
-                    <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
-                      {categoryProgress.map(({ category, percentage }) => (
-                        <div key={category} className='text-center'>
-                          <div className='text-xs text-muted-foreground mb-1'>
-                            {category}
-                          </div>
-                          <div className='text-lg font-bold text-foreground'>
-                            {percentage}%
-                          </div>
-                          <div className='w-full h-1.5 bg-muted rounded-full mt-1'>
-                            <div
-                              className={`h-full rounded-full transition-all duration-300 ${
-                                percentage >= 100
-                                  ? 'bg-success'
-                                  : percentage >= 75
-                                    ? 'bg-accent'
-                                    : percentage >= 50
-                                      ? 'bg-secondary'
-                                      : percentage >= 25
-                                        ? 'bg-primary'
-                                        : 'bg-muted-foreground/30'
-                              }`}
-                              style={{ width: `${Math.max(percentage, 1)}%` }}
-                            />
+                  <SearchAndFilters
+                    search={search}
+                    onSearchChange={setSearch}
+                    searchPlaceholder='Search quests by title or category...'
+                    filters={[
+                      {
+                        label: 'Type',
+                        value: filterType,
+                        options: [
+                          { value: 'all', label: 'All Types' },
+                          { value: 'topic', label: 'Topic' },
+                          { value: 'project', label: 'Project' },
+                          { value: 'bonus', label: 'Bonus' },
+                        ],
+                        onChange: setFilterType,
+                      },
+                      {
+                        label: 'Category',
+                        value: filterCategory,
+                        options: [
+                          { value: 'all', label: 'All Categories' },
+                          ...categories.map(category => ({
+                            value: category,
+                            label: category,
+                          })),
+                        ],
+                        onChange: setFilterCategory,
+                      },
+                    ]}
+                  />
+
+                  {/* Category Progress Summary with Accordion */}
+                  <Accordion type='single' collapsible className='w-full'>
+                    <AccordionItem
+                      value='category-progress'
+                      className='border rounded-lg data-[state=open]:border-primary/40 data-[state=open]:shadow-[0_0_0_1px_rgba(33,230,182,0.4)] data-[state=open]:shadow-primary/20 transition-all duration-200'
+                    >
+                      <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-primary'>
+                        <div className='flex items-center gap-2'>
+                          <span className='text-sm font-medium text-foreground'>
+                            Category Progress
+                          </span>
+                          <span className='text-xs text-muted-foreground'>
+                            • Overall completion
+                          </span>
+                          <ChevronDown className='w-4 h-4 text-muted-foreground transition-transform duration-200' />
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className='px-4 pb-4 pt-6'>
+                        <div className='space-y-4'>
+                          {/* Category Progress Grid */}
+                          <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
+                            {categoryProgress.map(
+                              ({ category, percentage }) => (
+                                <div key={category} className='text-center'>
+                                  <div className='text-xs text-muted-foreground mb-1'>
+                                    {category}
+                                  </div>
+                                  <div className='text-lg font-bold text-foreground'>
+                                    {percentage}%
+                                  </div>
+                                  <div className='w-full h-1.5 bg-muted rounded-full mt-1'>
+                                    <div
+                                      className={`h-full rounded-full transition-all duration-300 ${
+                                        percentage >= 100
+                                          ? 'bg-success'
+                                          : percentage >= 75
+                                            ? 'bg-accent'
+                                            : percentage >= 50
+                                              ? 'bg-secondary'
+                                              : percentage >= 25
+                                                ? 'bg-primary'
+                                                : 'bg-muted-foreground/30'
+                                      }`}
+                                      style={{
+                                        width: `${Math.max(percentage, 1)}%`,
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              )
+                            )}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
 
-            {/* Quest List */}
-            <div className='divide-y divide-border bg-muted/30 border border-border overflow-hidden rounded-lg'>
-              {filtered?.map((q: Quest) => (
-                <QuestRow
-                  key={q.id}
-                  quest={q}
-                  isInFocus={isQuestInFocus(q.id)}
-                  onToggleDone={handleToggleDone}
-                  onToggleFocus={handleToggleFocus}
-                  onDelete={handleDeleteQuest}
-                />
-              ))}
-              {filtered && filtered.length === 0 && (
-                <div className='text-center py-12 text-muted-foreground'>
-                  <div className='text-4xl mb-3'>🎯</div>
-                  <div className='text-lg font-medium mb-2'>No quests yet</div>
-                  <div className='text-sm'>
-                    Add your first quest to start earning XP
+                  {/* Quest List */}
+                  <div className='divide-y divide-border bg-muted/30 border border-border overflow-hidden rounded-lg'>
+                    {filtered?.map((q: Quest) => (
+                      <QuestRow
+                        key={q.id}
+                        quest={q}
+                        isInFocus={focusState?.quest?.id === q.id}
+                        onToggleDone={handleToggleDone}
+                        onToggleFocus={handleToggleQuestFocus}
+                        onDelete={handleDeleteQuest}
+                      />
+                    ))}
+                    {filtered && filtered.length === 0 && (
+                      <div className='text-center py-12 text-muted-foreground'>
+                        <div className='text-4xl mb-3'>🎯</div>
+                        <div className='text-lg font-medium mb-2'>
+                          No quests yet
+                        </div>
+                        <div className='text-sm'>
+                          Add your first quest to start earning XP
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
-            </div>
+                </>
+              }
+              booksContent={
+                <>
+                  <div className='flex items-center justify-between mb-4'>
+                    <h3 className='text-lg font-medium'>Books</h3>
+                    <Button onClick={handleAddBook} variant='outline' size='sm'>
+                      + Add Book
+                    </Button>
+                  </div>
+                  <BooksList
+                    books={books || []}
+                    search={bookSearch}
+                    statusFilter={bookStatusFilter}
+                    onAddBook={handleAddBook}
+                    onEditBook={handleEditBook}
+                    onDeleteBook={handleDeleteBook}
+                    onLogProgress={handleLogBookProgress}
+                    onToggleFocus={handleToggleBookFocus}
+                    getIsInFocus={bookId => focusState?.book?.id === bookId}
+                    onSearchChange={setBookSearch}
+                    onStatusFilterChange={setBookStatusFilter}
+                  />
+                </>
+              }
+              coursesContent={
+                <>
+                  <div className='flex items-center justify-between mb-4'>
+                    <h3 className='text-lg font-medium'>Courses</h3>
+                    <Button
+                      onClick={handleAddCourse}
+                      variant='outline'
+                      size='sm'
+                    >
+                      + Add Course
+                    </Button>
+                  </div>
+                  <CoursesList
+                    courses={courses || []}
+                    search={courseSearch}
+                    statusFilter={courseStatusFilter}
+                    platformFilter={coursePlatformFilter}
+                    onAddCourse={handleAddCourse}
+                    onEditCourse={handleEditCourse}
+                    onDeleteCourse={handleDeleteCourse}
+                    onLogProgress={handleLogCourseProgress}
+                    onToggleFocus={handleToggleCourseFocus}
+                    getIsInFocus={courseId =>
+                      focusState?.course?.id === courseId
+                    }
+                    onSearchChange={setCourseSearch}
+                    onStatusFilterChange={setCourseStatusFilter}
+                    onPlatformFilterChange={setCoursePlatformFilter}
+                  />
+                </>
+              }
+            />
           </CardContent>
         </Card>
       </div>

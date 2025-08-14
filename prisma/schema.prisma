@@ -23,11 +23,89 @@ enum QuestType {
   bonus
 }
 
+model Book {
+  id                    String                @id @default(uuid()) @db.Uuid
+  title                 String
+  author                String?
+  total_pages           Int                   @default(0)
+  current_page          Int                   @default(0)
+  status                BookStatus            @default(backlog)
+  cover_url             String?
+  description           String?
+  category              String                @default("Uncategorized")
+  tags                  String[]
+  started_at            DateTime?
+  finished_at           DateTime?
+  created_at            DateTime              @default(now())
+  updated_at            DateTime              @updatedAt
+  book_progress_entries BookProgressEntry[]
+}
+
+enum BookStatus {
+  backlog
+  reading
+  finished
+}
+
+model BookProgressEntry {
+  id         String   @id @default(uuid()) @db.Uuid
+  book_id    String   @db.Uuid
+  from_page  Int
+  to_page    Int
+  pages_read Int      @default(0)
+  notes      String?
+  created_at DateTime @default(now())
+  book       Book     @relation(fields: [book_id], references: [id], onDelete: Cascade)
+}
+
+model Course {
+  id                    String                 @id @default(uuid()) @db.Uuid
+  title                 String
+  platform              String?
+  url                   String?
+  total_units           Int                    @default(0)
+  completed_units       Int                    @default(0)
+  status                CourseStatus           @default(backlog)
+  description           String?
+  category              String                 @default("Uncategorized")
+  tags                  String[]
+  started_at            DateTime?
+  finished_at           DateTime?
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  course_progress_entries CourseProgressEntry[]
+}
+
+enum CourseStatus {
+  backlog
+  learning
+  finished
+}
+
+model CourseProgressEntry {
+  id          String   @id @default(uuid()) @db.Uuid
+  course_id   String   @db.Uuid
+  units_delta Int
+  notes       String?
+  created_at  DateTime @default(now())
+  course      Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+}
+
 model AppState {
   id            Int       @id @default(1)
   streak        Int       @default(0)
   last_check_in DateTime? @db.Date
   focus         String[]  @db.Uuid
+}
+
+model FocusSlot {
+  id         String   @id @default(uuid()) @db.Uuid
+  quest_id   String?  @db.Uuid
+  book_id    String?  @db.Uuid
+  course_id  String?  @db.Uuid
+  updated_at DateTime @updatedAt
+  
+  @@unique([quest_id, book_id, course_id])
 }
 
 

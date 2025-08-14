@@ -1519,6 +1519,12 @@ const handleQuestToggle = useCallback(
 - **Toast Notifications**: Sonner integration for user feedback
 - **Focus Validation**: Comprehensive validation preventing focus queue overflow
 - **Challenge Modal**: Clean, accessible modal for random challenges
+- **Books System**: Complete CRUD operations with progress tracking and XP calculations
+- **Courses System**: Complete CRUD operations with progress tracking and XP calculations
+- **New Focus System**: 1+1+1 limit (1 Quest + 1 Book + 1 Course) with validation
+- **Tabbed Interface**: Seamless switching between Quests, Books, and Courses
+- **Enhanced XP System**: Focus boost (20% bonus) for items in focus
+- **Progress Logging**: API endpoints for tracking book reading and course progress
 
 ### 🔄 In Progress
 
@@ -1547,90 +1553,367 @@ const handleQuestToggle = useCallback(
 - **Microservices**: Service decomposition
 - **Event Sourcing**: Event-driven architecture
 
-## 🐳 Docker Development Implementation
+---
 
-### Development Environment Configuration
+## 📚 Books, Courses & Focus System Implementation
 
-#### Docker Compose Development File
+### Overview
 
-```yaml
-# docker-compose.dev.yml
-services:
-  web:
-    build:
-      context: .
-      target: deps # Use deps stage for faster development builds
-    volumes:
-      # Mount source code for hot reloading
-      - ./src:/app/src
-      - ./prisma:/app/prisma
-      - ./package.json:/app/package.json
-      - ./next.config.js:/app/next.config.js
-      - ./tailwind.config.js:/app/tailwind.config.js
-      - ./tsconfig.json:/app/tsconfig.json
-    command: pnpm dev # Use development server
-    develop:
-      watch:
-        - action: rebuild
-          path: ./src
-          ignore: [node_modules/, .next/, .git/]
+The application now includes a comprehensive Books and Courses tracking system alongside the existing Quest system, all integrated through a new Focus management system that enforces a 1+1+1 limit (1 Quest + 1 Book + 1 Course in focus simultaneously).
+
+### Database Schema Updates
+
+#### New Tables
+
+**Books System**
+
+```prisma
+model Book {
+  id                    String                @id @default(uuid()) @db.Uuid
+  title                 String
+  author                String?
+  total_pages           Int                   @default(0)
+  current_page          Int                   @default(0)
+  status                BookStatus            @default(backlog)
+  cover_url             String?
+  description           String?
+  tags                  String[]
+  started_at            DateTime?
+  finished_at           DateTime?
+  created_at            DateTime              @default(now())
+  updated_at            DateTime              @updatedAt
+  book_progress_entries BookProgressEntry[]
+}
+
+model BookProgressEntry {
+  id         String   @id @default(uuid()) @db.Uuid
+  book_id    String   @db.Uuid
+  from_page  Int
+  to_page    Int
+  pages_read Int      @default(0)
+  notes      String?
+  created_at DateTime @default(now())
+  book       Book     @relation(fields: [book_id], references: [id], onDelete: Cascade)
+}
 ```
 
-#### Watch Mode Configuration
+**Courses System**
 
-- **File Watching**: Automatic detection of source code changes
-- **Smart Ignoring**: Excludes build artifacts and dependencies
-- **Rebuild Strategy**: Full container rebuilds for configuration changes
-- **Performance**: Uses deps build stage for faster development builds
+```prisma
+model Course {
+  id                    String                 @id @default(uuid()) @db.Uuid
+  title                 String
+  platform              String?
+  url                   String?
+  total_units           Int                    @default(0)
+  completed_units       Int                    @default(0)
+  status                CourseStatus           @default(backlog)
+  description           String?
+  tags                  String[]
+  started_at            DateTime?
+  finished_at           DateTime?
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  course_progress_entries CourseProgressEntry[]
+}
 
-#### Volume Mounting Strategy
-
-- **Source Code**: Immediate availability of changes
-- **Configuration Files**: Real-time configuration updates
-- **Database Schema**: Instant Prisma schema changes
-- **Excluded Paths**: Prevents conflicts with container files
-
-### Production vs Development
-
-#### Production Build
-
-```yaml
-# docker-compose.yml
-services:
-  web:
-    build:
-      context: .
-      # Full multi-stage build
-    environment:
-      NODE_ENV: production
-    # No volume mounting
-    # No external port exposure
+model CourseProgressEntry {
+  id          String   @id @default(uuid()) @db.Uuid
+  course_id   String   @db.Uuid
+  units_delta Int
+  notes       String?
+  created_at  DateTime @default(now())
+  course      Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+}
 ```
 
-#### Development Build
+**New Focus System**
 
-```yaml
-# docker-compose.dev.yml
-services:
-  web:
-    build:
-      context: .
-      target: deps # Faster builds
-    environment:
-      NODE_ENV: development
-    volumes:
-      # Source code mounting
-    ports:
-      - '3000:3000' # Local access
-    command: pnpm dev # Development server
+```prisma
+model FocusSlot {
+  id         String   @id @default(uuid()) @db.Uuid
+  quest_id   String?  @db.Uuid
+  book_id    String?  @db.Uuid
+  course_id  String?  @db.Uuid
+  updated_at DateTime @updatedAt
+
+  @@unique([quest_id, book_id, course_id])
+}
 ```
 
-### Performance Optimizations
+### Service Layer Architecture
 
-- **Build Stage Targeting**: Uses deps stage for development
-- **Volume Exclusion**: Prevents node_modules conflicts
-- **Hot Reloading**: Next.js development server with file watching
-- **Database Access**: Local PostgreSQL access on port 5433
+#### BookService
+
+Comprehensive book management with progress tracking:
+
+```typescript
+export class BookService {
+  static async createBook(data: CreateBookData): Promise<Book>;
+  static async getBooks(filters?: BookFilters): Promise<Book[]>;
+  static async logProgress(
+    bookId: string,
+    data: LogBookProgressData
+  ): Promise<BookProgressResult>;
+  static calculateSessionXP(pagesRead: number): number;
+  static calculateFinishBonus(totalPages: number): number;
+  static calculateProgressPercentage(
+    currentPage: number,
+    totalPages: number
+  ): number;
+}
+```
+
+#### CourseService
+
+Complete course management with learning progress:
+
+```typescript
+export class CourseService {
+  static async createCourse(data: CreateCourseData): Promise<Course>;
+  static async getCourses(filters?: CourseFilters): Promise<Course[]>;
+  static async logProgress(
+    courseId: string,
+    data: LogCourseProgressData
+  ): Promise<CourseProgressResult>;
+  static calculateSessionXP(unitsDelta: number): number;
+  static calculateFinishBonus(totalUnits: number): number;
+  static calculateProgressPercentage(
+    completedUnits: number,
+    totalUnits: number
+  ): number;
+}
+```
+
+#### FocusService
+
+New focus management enforcing the 1+1+1 rule:
+
+```typescript
+export class FocusService {
+  static async getFocusState(): Promise<FocusState>;
+  static async setFocus(
+    type: 'quest' | 'book' | 'course',
+    id: string
+  ): Promise<FocusState>;
+  static async removeFocus(
+    type: 'quest' | 'book' | 'course'
+  ): Promise<FocusState>;
+  static async canAddToFocus(
+    type: 'quest' | 'book' | 'course'
+  ): Promise<boolean>;
+  static async isInFocus(
+    type: 'quest' | 'book' | 'course',
+    id: string
+  ): Promise<boolean>;
+}
+```
+
+### Enhanced XP System
+
+#### Focus Boost Implementation
+
+Items in focus receive a 20% XP bonus on session progress:
+
+```typescript
+export class XPService {
+  static readonly FOCUS_BOOST_MULTIPLIER = 1.2;
+
+  static calculateBookSessionXP(
+    pagesRead: number,
+    isInFocus: boolean = false
+  ): number;
+  static calculateCourseSessionXP(
+    unitsDelta: number,
+    isInFocus: boolean = false
+  ): number;
+  static applyFocusBoost(baseXP: number, isInFocus: boolean): number;
+  static getFocusBoostPercentage(): number;
+}
+```
+
+#### XP Calculation Rules
+
+**Books**
+
+- **Session XP**: `ceil(pages_read / 5)` with optional focus boost
+- **Finish Bonus**: `min(50, ceil(total_pages / 10))`
+
+**Courses**
+
+- **Session XP**: `5 * units_delta` with optional focus boost
+- **Finish Bonus**: `10 + ceil(total_units / 2)`
+
+### API Endpoints
+
+#### Books API
+
+- `GET /api/books` - List books with filtering
+- `POST /api/books` - Create new book
+- `GET /api/books/[id]` - Get book details
+- `PATCH /api/books/[id]` - Update book
+- `DELETE /api/books/[id]` - Delete book
+- `POST /api/books/[id]/log` - Log reading progress
+
+#### Courses API
+
+- `GET /api/courses` - List courses with filtering
+- `POST /api/courses` - Create new course
+- `GET /api/courses/[id]` - Get course details
+- `PATCH /api/courses/[id]` - Update course
+- `DELETE /api/courses/[id]` - Delete course
+- `POST /api/courses/[id]/log` - Log learning progress
+
+#### Focus API
+
+- `GET /api/focus` - Get current focus state
+- `PUT /api/focus` - Update focus (set/remove/switch)
+- `DELETE /api/focus` - Clear all focus
+
+### UI Components
+
+#### FocusRow Component
+
+New focus management interface showing three slots:
+
+```typescript
+export function FocusRow({
+  focusState,
+  quests,
+  books,
+  courses,
+  onUpdateFocus,
+}: FocusRowProps) {
+  // Renders three focus slots with progress bars and actions
+  // Enforces 1+1+1 limit visually and functionally
+}
+```
+
+#### TabbedContent Component
+
+Seamless switching between different content types:
+
+```typescript
+export function TabbedContent({
+  quests,
+  books,
+  courses,
+  questsContent,
+  booksContent,
+  coursesContent,
+}: TabbedContentProps) {
+  // Provides tabs for Quests, Books, and Courses
+  // Maintains separate state for each tab
+}
+```
+
+#### BooksList & CoursesList Components
+
+Dedicated list views with filtering and actions:
+
+```typescript
+export function BooksList({
+  books,
+  onAddBook,
+  onEditBook,
+  onDeleteBook,
+  onLogProgress,
+  onSetFocus,
+}: BooksListProps);
+export function CoursesList({
+  courses,
+  onAddCourse,
+  onEditCourse,
+  onDeleteCourse,
+  onLogProgress,
+  onSetFocus,
+}: CoursesListProps);
+```
+
+### Focus Validation System
+
+#### Server-Side Validation
+
+The focus system enforces strict validation rules:
+
+1. **1+1+1 Limit**: Only one quest, one book, and one course can be in focus simultaneously
+2. **Type Exclusivity**: Setting focus on one type clears focus from other types
+3. **API Protection**: All focus operations validate limits before execution
+
+#### Client-Side Feedback
+
+Users receive immediate feedback on focus operations:
+
+- **Success Messages**: Clear confirmation of focus changes
+- **Error Handling**: Validation errors with helpful messages
+- **Visual Indicators**: Focus slots show current state and available actions
+
+### Progress Tracking Integration
+
+#### Book Progress
+
+- **Page Tracking**: From/to page ranges with validation
+- **Status Updates**: Automatic status changes (backlog → reading → finished)
+- **XP Calculation**: Session XP + finish bonus with focus boost
+
+#### Course Progress
+
+- **Unit Tracking**: Incremental unit completion
+- **Progress Validation**: Prevents exceeding total units
+- **Status Management**: Automatic learning state updates
+
+### Data Flow Architecture
+
+```
+User Action → API Endpoint → Service Layer → Database → Response → UI Update
+     ↓              ↓            ↓           ↓         ↓         ↓
+  Log Progress → /api/books/[id]/log → BookService.logProgress() → Prisma → Progress Result → FocusRow Update
+```
+
+### Performance Considerations
+
+#### Database Optimization
+
+- **Indexed Queries**: Efficient filtering by status, tags, and search terms
+- **Relation Loading**: Optimized progress entry loading
+- **Aggregation Queries**: Fast calculation of total progress
+
+#### Frontend Optimization
+
+- **State Management**: Efficient local state updates
+- **Component Memoization**: Prevents unnecessary re-renders
+- **Lazy Loading**: On-demand component loading for better performance
+
+### Security & Validation
+
+#### Input Validation
+
+- **Page Range Validation**: Ensures logical page progress
+- **Unit Validation**: Prevents negative or excessive unit completion
+- **Status Validation**: Enforces valid status transitions
+
+#### Data Integrity
+
+- **Cascade Deletion**: Progress entries removed with parent items
+- **Constraint Enforcement**: Database-level validation of focus limits
+- **Transaction Safety**: Atomic operations for complex updates
+
+### Future Enhancements
+
+#### Planned Features
+
+- **Progress Logging Modals**: Rich interfaces for logging progress
+- **Book/Course Creation Dialogs**: Full CRUD interfaces
+- **Advanced Filtering**: Tag-based and date-based filtering
+- **Progress Analytics**: Detailed reading and learning insights
+- **Export Functionality**: Progress reports and data export
+
+#### Integration Opportunities
+
+- **Challenge System**: Extend random challenges to books and courses
+- **Badge System**: New badges for reading and learning achievements
+- **Social Features**: Share reading lists and course progress
+- **Recommendations**: AI-powered content suggestions
 
 ---
 

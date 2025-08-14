@@ -17,6 +17,11 @@ export class XPService {
   static readonly BADGE_THRESHOLDS = [150, 400, 800, 1200, 2000] as const;
 
   /**
+   * Focus boost multiplier (20% bonus)
+   */
+  static readonly FOCUS_BOOST_MULTIPLIER = 1.2;
+
+  /**
    * Calculates level information from total XP
    */
   static calculateLevelInfo(totalXp: number): LevelInfo {
@@ -166,5 +171,70 @@ export class XPService {
    */
   static getTotalXpString(totalXp: number): string {
     return `${totalXp} / ∞ XP`;
+  }
+
+  // New methods for Books and Courses
+
+  /**
+   * Calculates XP for book reading session with optional focus boost
+   */
+  static calculateBookSessionXP(
+    pagesRead: number,
+    isInFocus: boolean = false
+  ): number {
+    const baseXP = Math.ceil(pagesRead / 5);
+    return isInFocus
+      ? Math.round(baseXP * this.FOCUS_BOOST_MULTIPLIER)
+      : baseXP;
+  }
+
+  /**
+   * Calculates finish bonus XP for books
+   */
+  static calculateBookFinishBonus(totalPages: number): number {
+    return Math.min(50, Math.ceil(totalPages / 10));
+  }
+
+  /**
+   * Calculates XP for course session with optional focus boost
+   */
+  static calculateCourseSessionXP(
+    unitsDelta: number,
+    isInFocus: boolean = false
+  ): number {
+    const baseXP = 5 * unitsDelta;
+    return isInFocus
+      ? Math.round(baseXP * this.FOCUS_BOOST_MULTIPLIER)
+      : baseXP;
+  }
+
+  /**
+   * Calculates finish bonus XP for courses
+   */
+  static calculateCourseFinishBonus(totalUnits: number): number {
+    return 10 + Math.ceil(totalUnits / 2);
+  }
+
+  /**
+   * Applies focus boost to XP if item is in focus
+   */
+  static applyFocusBoost(baseXP: number, isInFocus: boolean): number {
+    return isInFocus
+      ? Math.round(baseXP * this.FOCUS_BOOST_MULTIPLIER)
+      : baseXP;
+  }
+
+  /**
+   * Gets focus boost multiplier
+   */
+  static getFocusBoostMultiplier(): number {
+    return this.FOCUS_BOOST_MULTIPLIER;
+  }
+
+  /**
+   * Gets focus boost percentage
+   */
+  static getFocusBoostPercentage(): number {
+    return Math.round((this.FOCUS_BOOST_MULTIPLIER - 1) * 100);
   }
 }
