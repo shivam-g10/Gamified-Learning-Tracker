@@ -8,13 +8,14 @@ This document provides a detailed technical implementation guide for the Gamifie
 
 ### Technology Stack
 
-- **Frontend**: Next.js 14.2.5 with App Router
+- **Frontend**: Next.js 15.4.6 with App Router
 - **Backend**: Next.js API Routes
-- **Database**: PostgreSQL 16 with Prisma ORM
-- **Styling**: Tailwind CSS with custom component system
+- **Database**: PostgreSQL 17 with Prisma ORM
+- **Styling**: Tailwind CSS v4 with shadcn/ui components
 - **State Management**: SWR for data fetching and caching
-- **Containerization**: Docker with multi-stage builds
+- **Containerization**: Docker with multi-stage builds and development watch mode
 - **Package Manager**: pnpm for dependency management
+- **Code Quality**: ESLint v9, Prettier, Husky v9, commitlint
 
 ### Project Structure
 
@@ -26,10 +27,15 @@ src/
 │   ├── layout.tsx        # Root layout with metadata
 │   └── page.tsx          # Main application page
 ├── components/            # Reusable UI components
-│   └── ui.tsx            # Component library
+│   ├── components/        # shadcn/ui components
+│   │   └── ui/           # Individual UI components
+│   ├── lib/              # Component utilities
+│   └── ui.tsx            # Legacy component library
 └── lib/                  # Utility functions
     ├── db.ts             # Prisma client configuration
-    └── xp.ts             # XP and leveling calculations
+    ├── xp.ts             # XP and leveling calculations
+    ├── hooks.ts          # Custom React hooks
+    └── types.ts          # TypeScript type definitions
 ```
 
 ## 🎯 Core Features Implementation
@@ -423,9 +429,169 @@ function CategoryProgress() {
 - **Visual Progress Bars**: Intuitive progress visualization
 - **Real-time Updates**: Progress updates immediately on quest completion
 
-## 🎨 UI Component System
+### 9. Quest Sorting & Filtering System
 
-### Component Library (src/components/ui.tsx)
+#### Implementation Details
+
+- **Multi-criteria Sorting**: Sort by title, XP, category, type, completion status, or date created
+- **Bidirectional Sorting**: Ascending and descending order for all sort fields
+- **Smart Type Handling**: Different sorting logic for strings, numbers, and booleans
+- **Real-time Updates**: Sort changes immediately reflect in the UI
+- **Visual Indicators**: Clear display of current sort status
+
+#### Sorting Logic
+
+```typescript
+const filtered = useMemo(() => {
+  let filteredQuests = (quests || []).filter(q => {
+    // ... filtering logic
+  });
+
+  // Sort the filtered quests
+  const sortedQuests = [...filteredQuests].sort((a, b) => {
+    const aValue = a[sortBy];
+    const bValue = b[sortBy];
+
+    // Handle special cases
+    if (sortBy === 'done') {
+      // Sort done quests to the bottom
+      if (aValue === bValue) return 0;
+      return aValue ? 1 : -1;
+    }
+
+    // Handle string comparisons
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      const aLower = aValue.toLowerCase();
+      const bLower = bValue.toLowerCase();
+      if (aLower < bLower) return sortOrder === 'asc' ? -1 : 1;
+      if (aLower > bLower) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    }
+
+    // Handle numeric comparisons
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+    }
+
+    // Handle boolean comparisons
+    if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+      if (aValue === bValue) return 0;
+      return aValue ? 1 : -1;
+    }
+
+    return 0;
+  });
+
+  return sortedQuests;
+}, [quests, search, filterType, filterCategory, sortBy, sortOrder]);
+```
+
+#### UI Components
+
+- **Sort Field Selector**: Dropdown for choosing sort criteria
+- **Sort Order Toggle**: Button to switch between ascending/descending
+- **Visual Feedback**: Header shows current sort status
+- **Responsive Layout**: Controls adapt to different screen sizes
+
+#### State Management
+
+```typescript
+const [sortBy, setSortBy] = useState<
+  'title' | 'xp' | 'category' | 'type' | 'created_at' | 'done'
+>('created_at');
+const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+```
+
+## 🎨 Enhanced UI Component System
+
+### shadcn/ui Integration
+
+The project now uses shadcn/ui components for a modern, accessible, and consistent user interface. These components are built on top of Radix UI primitives and follow modern design patterns.
+
+#### Available Components
+
+- **Button**: Multiple variants (default, destructive, outline, secondary, ghost, link) with different sizes
+- **Card**: Flexible card containers with header, content, and title sections
+- **Input**: Form input fields with proper styling and focus states
+- **Select**: Dropdown select components with search and keyboard navigation
+- **Badge**: Status indicators and labels
+- **Label**: Accessible form labels
+
+#### Component Configuration
+
+```json
+// components.json
+{
+  "style": "new-york",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.js",
+    "css": "src/app/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true
+  },
+  "aliases": {
+    "components": "@/components/components",
+    "utils": "@/components/lib/utils",
+    "ui": "@/components/components/ui"
+  }
+}
+```
+
+### Custom Hooks System
+
+#### useQuests Hook
+
+```typescript
+// src/lib/hooks.ts
+export function useQuests() {
+  const { data: quests, mutate } = useSWR<Quest[]>('/api/quests', fetcher);
+  return { quests, mutateQuests: mutate };
+}
+```
+
+#### useAppState Hook
+
+```typescript
+export function useAppState() {
+  const { data: appState, mutate } = useSWR<AppState>(
+    '/api/app-state',
+    fetcher
+  );
+  return { appState, mutateState: mutate };
+}
+```
+
+### Type Safety Improvements
+
+#### Quest Type Definition
+
+```typescript
+// src/lib/types.ts
+export type Quest = {
+  id: string;
+  title: string;
+  xp: number;
+  type: 'topic' | 'project' | 'bonus';
+  category: string;
+  done: boolean;
+  created_at: string;
+};
+```
+
+#### AppState Type Definition
+
+```typescript
+export type AppState = {
+  id: number;
+  streak: number;
+  last_check_in: string | null;
+  focus: string[];
+};
+```
+
+### Legacy Component Library (src/components/ui.tsx)
 
 #### Card Component
 
@@ -647,7 +813,41 @@ if (!title || typeof xp !== 'number' || xp < 0 || !type || !category) {
 - **Rate Limiting**: Built-in protection
 - **CORS Configuration**: Cross-origin security
 
-## 🐳 Docker Implementation
+## 🐳 Enhanced Docker Implementation
+
+### Development Environment
+
+The project now includes a dedicated development Docker configuration (`docker-compose.dev.yml`) that provides:
+
+- **Hot Reloading**: Source code changes trigger automatic rebuilds
+- **Watch Mode**: File watching with smart rebuild strategies
+- **Volume Mounting**: Direct access to source code and configuration files
+- **Development Dependencies**: Faster builds using the deps stage
+- **Database Access**: Local PostgreSQL access on port 5433
+
+#### Development Configuration
+
+```yaml
+# docker-compose.dev.yml
+services:
+  web:
+    build:
+      context: .
+      target: deps # Use deps stage for faster development builds
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+      - ./package.json:/app/package.json
+      - ./next.config.js:/app/next.config.js
+      - ./tailwind.config.js:/app/tailwind.config.js
+      - ./tsconfig.json:/app/tsconfig.json
+    command: sh -c "npx prisma generate && npx prisma db push --accept-data-loss && npx prisma db seed && pnpm dev"
+    develop:
+      watch:
+        - action: rebuild
+          path: ./src
+          ignore: [node_modules/, .next/, .git/]
+```
 
 ### Multi-stage Build
 
@@ -676,7 +876,7 @@ FROM node:21-alpine AS runner
 
 ```yaml
 healthcheck:
-  test: ['CMD', 'curl', '-f', 'http://localhost:3000/api/health']
+        test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
   interval: 30s
   timeout: 10s
   retries: 3
@@ -698,7 +898,41 @@ healthcheck:
 - **Medium**: Tablets (768px - 1024px)
 - **Large**: Desktop (> 1024px)
 
-## 🔧 Development Features
+## 🔧 Enhanced Development Features
+
+### Code Quality Tools
+
+The project now includes comprehensive code quality tools that run automatically:
+
+- **ESLint v9**: Latest ESLint with Next.js and TypeScript rules
+- **Prettier**: Automatic code formatting
+- **Husky v9**: Git hooks for pre-commit and commit-msg
+- **commitlint**: Conventional commit message validation
+- **lint-staged**: Run linters only on staged files
+
+#### Pre-commit Hooks
+
+```json
+// package.json
+"lint-staged": {
+  "*.{js,jsx,ts,tsx,json,md,yml,yaml}": [
+    "prettier --write"
+  ]
+}
+```
+
+#### Commit Message Standards
+
+The project follows [Conventional Commits](https://www.conventionalcommits.org/) standards:
+
+- `feat`: New features
+- `fix`: Bug fixes
+- `docs`: Documentation changes
+- `style`: Code style changes
+- `refactor`: Code refactoring
+- `perf`: Performance improvements
+- `test`: Adding or updating tests
+- `chore`: Maintenance tasks
 
 ### TypeScript Integration
 
@@ -746,7 +980,154 @@ healthcheck:
 - **Backup Strategy**: Data protection
 - **Scaling Support**: Horizontal scaling ready
 
-## 🔮 Future Implementation Considerations
+## 🎯 Enhanced Main Page Implementation
+
+### Modern UI Architecture
+
+The main page (`src/app/page.tsx`) has been completely refactored to use:
+
+- **shadcn/ui Components**: Modern, accessible UI components
+- **Custom Hooks**: Clean separation of data fetching logic
+- **Enhanced State Management**: Better component organization
+- **Improved UX**: Better visual hierarchy and user feedback
+
+#### Component Structure
+
+```typescript
+// Main page with enhanced organization
+export default function HomePage() {
+  const { quests, mutateQuests } = useQuests();
+  const { appState, mutateState } = useAppState();
+
+  // State management for search, filters, and sorting
+  const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [sortBy, setSortBy] = useState<
+    'title' | 'xp' | 'category' | 'type' | 'created_at' | 'done'
+  >('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+}
+```
+
+#### Enhanced Quest Management
+
+- **Advanced Filtering**: Type, category, and completion status filters
+- **Smart Sorting**: Multi-criteria sorting with visual indicators
+- **Real-time Search**: Instant search across title and category
+- **Focus System**: Visual focus management with badges
+- **Progress Tracking**: Category-based progress visualization
+
+#### Improved User Experience
+
+- **Responsive Design**: Mobile-first approach with proper breakpoints
+- **Visual Feedback**: Hover states, transitions, and loading indicators
+- **Accessibility**: Proper ARIA labels and keyboard navigation
+- **Performance**: Optimized rendering with useMemo and useCallback
+
+### Quest Row Component
+
+```typescript
+function QuestRow({ q }: { q: Quest }) {
+  return (
+    <div className='flex items-center gap-4 py-4 px-3 rounded-lg hover:bg-neutral-900/30 transition-all duration-200 group'>
+      <input
+        type='checkbox'
+        checked={q.done}
+        onChange={() => toggleDone(q)}
+        className='w-4 h-4 rounded border-neutral-600 bg-neutral-800 text-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+      />
+      {/* Quest content with badges and actions */}
+    </div>
+  );
+}
+```
+
+### Add Quest Form
+
+```typescript
+function AddQuestForm() {
+  const [pending, setPending] = useState(false);
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setPending(true);
+    const fd = new FormData(e.currentTarget);
+    await addQuest(fd);
+    e.currentTarget.reset();
+    setPending(false);
+  }
+
+  return (
+    <form onSubmit={onSubmit} className='grid grid-cols-1 md:grid-cols-5 gap-4'>
+      {/* Form fields with proper validation and styling */}
+    </form>
+  );
+}
+```
+
+## 📦 Package and Script Updates
+
+### Enhanced Dependencies
+
+The project has been updated with the latest stable versions:
+
+- **Next.js**: 15.4.6 (latest)
+- **React**: 19.1.1 (latest)
+- **TypeScript**: 5.4.5 (latest)
+- **Tailwind CSS**: 4.1.11 (latest)
+- **Prisma**: 6.13.0 (latest)
+
+### New Development Scripts
+
+```json
+// package.json
+"scripts": {
+  "docker:dev": "docker compose -f docker-compose.dev.yml up --build",
+  "docker:dev:watch": "docker compose -f docker-compose.dev.yml up --build --watch",
+  "docker:prod": "docker compose up --build",
+  "docker:down": "docker compose down",
+  "docker:clean": "docker compose down -v --remove-orphans"
+}
+```
+
+### Code Quality Scripts
+
+```json
+"scripts": {
+  "lint": "next lint",
+  "lint:fix": "next lint --fix",
+  "format": "prettier --write .",
+  "format:check": "prettier --check .",
+  "type-check": "tsc --noEmit"
+}
+```
+
+## 🎯 Current Implementation Status
+
+### ✅ Completed Features
+
+- **Core Quest System**: Full CRUD operations with advanced filtering and sorting
+- **XP & Leveling**: 150 XP per level with progress tracking
+- **Badge System**: Milestone-based achievements (150, 400, 800, 1200, 2000 XP)
+- **Streak Tracking**: Daily check-ins with momentum building
+- **Focus Management**: Up to 3 quest focus areas with visual indicators
+- **Advanced Search**: Real-time search across title and category
+- **Smart Filtering**: Type, category, and completion status filters
+- **Multi-criteria Sorting**: Sort by any field with visual indicators
+- **Progress Analytics**: Category-based progress visualization
+- **Random Challenges**: Dynamic quest selection for variety
+- **Modern UI**: shadcn/ui components with responsive design
+- **Code Quality**: ESLint, Prettier, Husky, and commitlint
+- **Development Environment**: Docker with hot reloading and watch mode
+
+### 🔄 In Progress
+
+- **Component Library**: Expanding shadcn/ui component coverage
+- **Performance Optimization**: Further React optimization and memoization
+- **Accessibility**: Enhanced ARIA labels and keyboard navigation
+
+### 🔮 Future Implementation Considerations
 
 ### Potential Enhancements
 
@@ -766,6 +1147,91 @@ healthcheck:
 - **Load Balancing**: Traffic distribution
 - **Microservices**: Service decomposition
 - **Event Sourcing**: Event-driven architecture
+
+## 🐳 Docker Development Implementation
+
+### Development Environment Configuration
+
+#### Docker Compose Development File
+
+```yaml
+# docker-compose.dev.yml
+services:
+  web:
+    build:
+      context: .
+      target: deps # Use deps stage for faster development builds
+    volumes:
+      # Mount source code for hot reloading
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+      - ./package.json:/app/package.json
+      - ./next.config.js:/app/next.config.js
+      - ./tailwind.config.js:/app/tailwind.config.js
+      - ./tsconfig.json:/app/tsconfig.json
+    command: pnpm dev # Use development server
+    develop:
+      watch:
+        - action: rebuild
+          path: ./src
+          ignore: [node_modules/, .next/, .git/]
+```
+
+#### Watch Mode Configuration
+
+- **File Watching**: Automatic detection of source code changes
+- **Smart Ignoring**: Excludes build artifacts and dependencies
+- **Rebuild Strategy**: Full container rebuilds for configuration changes
+- **Performance**: Uses deps build stage for faster development builds
+
+#### Volume Mounting Strategy
+
+- **Source Code**: Immediate availability of changes
+- **Configuration Files**: Real-time configuration updates
+- **Database Schema**: Instant Prisma schema changes
+- **Excluded Paths**: Prevents conflicts with container files
+
+### Production vs Development
+
+#### Production Build
+
+```yaml
+# docker-compose.yml
+services:
+  web:
+    build:
+      context: .
+      # Full multi-stage build
+    environment:
+      NODE_ENV: production
+    # No volume mounting
+    # No external port exposure
+```
+
+#### Development Build
+
+```yaml
+# docker-compose.dev.yml
+services:
+  web:
+    build:
+      context: .
+      target: deps # Faster builds
+    environment:
+      NODE_ENV: development
+    volumes:
+      # Source code mounting
+    ports:
+      - '3000:3000' # Local access
+    command: pnpm dev # Development server
+```
+
+### Performance Optimizations
+
+- **Build Stage Targeting**: Uses deps stage for development
+- **Volume Exclusion**: Prevents node_modules conflicts
+- **Hot Reloading**: Next.js development server with file watching
+- **Database Access**: Local PostgreSQL access on port 5433
 
 ---
 

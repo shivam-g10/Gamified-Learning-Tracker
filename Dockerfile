@@ -2,7 +2,7 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 # Install OpenSSL dependencies for Prisma and update packages
-RUN apk update && apk add --no-cache openssl && apk upgrade
+RUN apk update && apk add --no-cache openssl curl && apk upgrade
 # Install pnpm
 RUN npm install -g pnpm@latest
 COPY package.json pnpm-lock.yaml* ./

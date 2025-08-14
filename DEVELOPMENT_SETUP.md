@@ -265,3 +265,50 @@ When contributing to this project:
 **Happy coding! 🎉**
 
 If you encounter any issues, check the troubleshooting section or open an issue in the repository.
+
+## 🐳 Docker Development
+
+### Quick Start with Docker
+
+For the fastest development experience using Docker with watch mode:
+
+```bash
+# Start development environment with automatic rebuilds
+pnpm run docker:dev:watch
+
+# Or start without watch mode
+pnpm run docker:dev
+```
+
+### Docker Development Features
+
+- **Hot Reloading**: Source code changes are immediately reflected
+- **Watch Mode**: Automatic container rebuilds when files change
+- **Volume Mounting**: Source code mounted for instant updates
+- **Database Access**: PostgreSQL 17 accessible on port 5433
+- **Consistent Environment**: Same setup across all team members
+
+### Docker Scripts
+
+| Script                      | Description                       |
+| --------------------------- | --------------------------------- |
+| `pnpm run docker:dev`       | Start development environment     |
+| `pnpm run docker:dev:watch` | Start development with watch mode |
+| `pnpm run docker:prod`      | Start production environment      |
+| `pnpm run docker:down`      | Stop all containers               |
+| `pnpm run docker:clean`     | Clean up volumes and containers   |
+
+### What Gets Watched
+
+The Docker watch mode automatically rebuilds when these files change:
+
+- **Source Code**: `./src/**/*`
+- **Database Schema**: `./prisma/**/*`
+- **Configuration**: `package.json`, `next.config.js`, `tailwind.config.js`
+- **TypeScript**: `tsconfig.json`
+
+### Development vs Production
+
+- **Development**: Uses `docker-compose.dev.yml` with hot reloading
+- **Production**: Uses `docker-compose.yml` with optimized builds
+- **Database**: Both use PostgreSQL 17 for consistency

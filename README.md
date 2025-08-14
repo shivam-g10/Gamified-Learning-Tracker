@@ -18,6 +18,9 @@ A full-stack gamified learning tracker built with Next.js and PostgreSQL. Track 
 - 🎲 **Random Challenges** - Get random quests to spice up your learning routine
 - 📱 **Responsive Design** - Works on all devices
 - 🎯 **Focus System** - Mark up to 3 quests as current focus areas
+- 🔍 **Advanced Search & Filtering** - Search by title/category, filter by type and category
+- 📊 **Smart Sorting** - Sort quests by title, XP, category, type, completion status, or date created
+- 🐳 **Docker Development** - Hot reloading and watch mode for efficient development
 
 ## 🚀 Quick Start
 
@@ -114,14 +117,16 @@ pnpm run type-check
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: [Next.js 14.2.5](https://nextjs.org/) with App Router
+- **Frontend**: [Next.js 15.4.6](https://nextjs.org/) with App Router
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Database**: [PostgreSQL 16](https://www.postgresql.org/)
+- **Database**: [PostgreSQL 17](https://www.postgresql.org/) (latest stable)
 - **ORM**: [Prisma](https://www.prisma.io/) for type-safe database access
-- **Containerization**: [Docker](https://www.docker.com/) + [Docker Compose](https://docs.docker.com/compose/)
+- **Containerization**: [Docker](https://www.docker.com/) + [Docker Compose](https://docs.docker.com/compose/) with Watch Mode
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **State Management**: [SWR](https://swr.vercel.app/) for data fetching
 - **Package Manager**: [pnpm](https://pnpm.io/) for fast, disk space efficient package management
+- **Code Quality**: ESLint v9, Prettier, Husky pre-commit hooks
+- **Development**: Hot reloading, automatic rebuilds, watch mode
 
 ## 📁 Project Structure
 
@@ -166,17 +171,39 @@ The application uses PostgreSQL with Prisma. The database schema includes:
 
 The application is containerized with multi-stage builds for optimal production images:
 
-- **deps stage**: Installs dependencies using Node 21
+- **deps stage**: Installs dependencies using Node 22
 - **builder stage**: Builds the application
 - **runner stage**: Production-ready image
 
+### Development with Docker
+
+For development with hot reloading and watch mode:
+
+```bash
+# Start development environment with watch mode
+pnpm run docker:dev:watch
+
+# Start development environment without watch mode
+pnpm run docker:dev
+
+# Start production environment
+pnpm run docker:prod
+
+# Stop all containers
+pnpm run docker:down
+
+# Clean up volumes and containers
+pnpm run docker:clean
+```
+
 ### Security Features
 
-- **Database isolation**: Database is not exposed to external ports
+- **Database isolation**: Database is not exposed to external ports in production
 - **Network isolation**: Services communicate only within Docker network
 - **Environment variables**: Secure credential management
 - **Health checks**: Automatic service monitoring
 - **Restart policies**: Production-ready reliability
+- **PostgreSQL 17**: Latest stable database version with enhanced performance
 
 ## 📊 API Endpoints
 
@@ -244,3 +271,21 @@ If you have any questions or need help:
 ---
 
 ⭐ **Star this repository if you found it helpful!**
+
+## 🔧 Available Scripts
+
+| Script                  | Description                            |
+| ----------------------- | -------------------------------------- |
+| `pnpm dev`              | Start development server               |
+| `pnpm build`            | Build for production                   |
+| `pnpm start`            | Start production server                |
+| `pnpm lint`             | Run ESLint checks                      |
+| `pnpm lint:fix`         | Fix ESLint issues automatically        |
+| `pnpm format`           | Format code with Prettier              |
+| `pnpm format:check`     | Check code formatting                  |
+| `pnpm type-check`       | Run TypeScript type checking           |
+| `pnpm docker:dev`       | Start Docker development environment   |
+| `pnpm docker:dev:watch` | Start Docker dev with watch mode       |
+| `pnpm docker:prod`      | Start Docker production environment    |
+| `pnpm docker:down`      | Stop all Docker containers             |
+| `pnpm docker:clean`     | Clean up Docker volumes and containers |
