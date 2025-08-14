@@ -43,13 +43,14 @@ export function SearchAndFilters({
     <div className='space-y-4'>
       {/* Search Bar - Full Width with Enhanced Styling */}
       <div className='relative'>
-        <Search className='absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 w-5 h-5' />
         <Input
+          name='search'
           placeholder='Search quests by title or category...'
           value={search}
           onChange={e => onSearchChange(e.target.value)}
-          className='pl-12'
+          className='!pl-12 !pr-4'
         />
+        <Search className='pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 opacity-50 select-none' />
       </div>
 
       {/* Filter and Sort Controls - Enhanced Layout */}
