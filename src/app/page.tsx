@@ -397,7 +397,17 @@ export default function HomePage() {
             </Select>
             <Select
               value={sortBy}
-              onChange={e => setSortBy(e.target.value as any)}
+              onChange={e =>
+                setSortBy(
+                  e.target.value as
+                    | 'title'
+                    | 'xp'
+                    | 'category'
+                    | 'type'
+                    | 'created_at'
+                    | 'done'
+                )
+              }
             >
               <option value='created_at'>Date Created</option>
               <option value='title'>Title</option>
