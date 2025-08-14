@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { GraduationCap, Plus, Edit, Trash2, ExternalLink } from 'lucide-react';
 import { SearchAndFilters, type FilterOption } from './SearchAndFilters';
+import { SearchService } from '@/services/search-service';
 import type { Course } from '@/lib/types';
 
 interface CoursesListProps {
@@ -40,7 +41,11 @@ export function CoursesList({
   onStatusFilterChange,
   onPlatformFilterChange,
 }: CoursesListProps) {
-  const filteredCourses = courses;
+  // Apply search and filters using SearchService
+  const filteredCourses = SearchService.searchCourses(courses, search, {
+    status: statusFilter === 'all' ? undefined : statusFilter,
+    platform: platformFilter === 'all' ? undefined : platformFilter,
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status) {

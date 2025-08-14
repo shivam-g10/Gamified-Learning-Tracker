@@ -4,6 +4,7 @@ export interface SearchFilters {
   status?: string;
   category?: string;
   type?: string;
+  platform?: string;
 }
 
 export class SearchService {
@@ -98,7 +99,15 @@ export class SearchService {
         filters.category === 'all' ||
         course.category === filters.category;
 
-      return matchesSearch && matchesStatus && matchesCategory;
+      // Platform filter
+      const matchesPlatform =
+        !filters.platform ||
+        filters.platform === 'all' ||
+        course.platform === filters.platform;
+
+      return (
+        matchesSearch && matchesStatus && matchesCategory && matchesPlatform
+      );
     });
   }
 
@@ -146,6 +155,9 @@ export class SearchService {
   static getCourseFilterOptions(courses: Course[]) {
     const statuses = [...new Set(courses.map(c => c.status))];
     const categories = [...new Set(courses.map(c => c.category))];
+    const platforms = [
+      ...new Set(courses.map(c => c.platform).filter(Boolean)),
+    ];
 
     return {
       statuses: statuses.map(status => ({
@@ -155,6 +167,10 @@ export class SearchService {
       categories: categories.map(category => ({
         value: category,
         label: category,
+      })),
+      platforms: platforms.map(platform => ({
+        value: platform,
+        label: platform,
       })),
     };
   }

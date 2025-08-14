@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { BookOpen, Plus, Edit, Trash2 } from 'lucide-react';
 import { SearchAndFilters, type FilterOption } from './SearchAndFilters';
+import { SearchService } from '@/services/search-service';
 import type { Book } from '@/lib/types';
 
 interface BooksListProps {
@@ -36,7 +37,10 @@ export function BooksList({
   onSearchChange,
   onStatusFilterChange,
 }: BooksListProps) {
-  const filteredBooks = books;
+  // Apply search and filters using SearchService
+  const filteredBooks = SearchService.searchBooks(books, search, {
+    status: statusFilter === 'all' ? undefined : statusFilter,
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
