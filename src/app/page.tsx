@@ -44,6 +44,10 @@ export default function HomePage() {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [sortBy, setSortBy] = useState<
+    'title' | 'xp' | 'category' | 'type' | 'created_at' | 'done'
+  >('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const totalXp = useMemo(
     () => (quests || []).filter(q => q.done).reduce((s, q) => s + q.xp, 0),
@@ -55,7 +59,7 @@ export default function HomePage() {
     [quests]
   );
   const filtered = useMemo(() => {
-    return (quests || []).filter(q => {
+    const filteredQuests = (quests || []).filter(q => {
       if (
         search &&
         !`${q.title} ${q.category}`.toLowerCase().includes(search.toLowerCase())
@@ -65,7 +69,45 @@ export default function HomePage() {
       if (filterCategory && q.category !== filterCategory) return false;
       return true;
     });
-  }, [quests, search, filterType, filterCategory]);
+
+    // Sort the filtered quests
+    const sortedQuests = [...filteredQuests].sort((a, b) => {
+      const aValue = a[sortBy];
+      const bValue = b[sortBy];
+
+      // Handle special cases
+      if (sortBy === 'done') {
+        // Sort done quests to the bottom
+        if (aValue === bValue) return 0;
+        return aValue ? 1 : -1;
+      }
+
+      // Handle string comparisons
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        const aLower = aValue.toLowerCase();
+        const bLower = bValue.toLowerCase();
+        if (aLower < bLower) return sortOrder === 'asc' ? -1 : 1;
+        if (aLower > bLower) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      }
+
+      // Handle numeric comparisons
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+
+      // Handle boolean comparisons
+      if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+        if (aValue === bValue) return 0;
+        return aValue ? 1 : -1;
+      }
+
+      // Default case - no change in order
+      return 0;
+    });
+
+    return sortedQuests;
+  }, [quests, search, filterType, filterCategory, sortBy, sortOrder]);
 
   async function addQuest(formData: FormData) {
     const title = String(formData.get('title') || '');
@@ -316,9 +358,18 @@ export default function HomePage() {
       </Section>
 
       <Section
-        title='Quests'
+        title={
+          <div className='flex items-center gap-2'>
+            <span>Quests</span>
+            {sortBy !== 'created_at' && (
+              <span className='text-sm text-neutral-400 font-normal'>
+                (sorted by {sortBy} {sortOrder === 'asc' ? '↑' : '↓'})
+              </span>
+            )}
+          </div>
+        }
         actions={
-          <div className='flex gap-2'>
+          <div className='flex gap-2 flex-wrap'>
             <Input
               placeholder='Search'
               value={search}
@@ -344,6 +395,24 @@ export default function HomePage() {
                 </option>
               ))}
             </Select>
+            <Select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value as any)}
+            >
+              <option value='created_at'>Date Created</option>
+              <option value='title'>Title</option>
+              <option value='xp'>XP</option>
+              <option value='category'>Category</option>
+              <option value='type'>Type</option>
+              <option value='done'>Completion Status</option>
+            </Select>
+            <Button
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className='px-3'
+              title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
+            >
+              {sortOrder === 'asc' ? '↑' : '↓'}
+            </Button>
           </div>
         }
       >
