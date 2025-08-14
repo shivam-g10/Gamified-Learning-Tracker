@@ -19,48 +19,42 @@ export function QuestRow({
   onDelete,
 }: QuestRowProps) {
   return (
-    <div className='flex items-center gap-4 py-4 px-3 rounded-lg hover:bg-neutral-900/30 transition-all duration-200 group border-b border-neutral-800/50 last:border-b-0'>
+    <div className='flex items-center gap-4 py-4 px-3 hover:bg-muted/50 transition-all duration-200 group border-b border-border last:border-b-0'>
       <input
         type='checkbox'
         checked={quest.done}
         onChange={() => onToggleDone(quest)}
-        className='w-4 h-4 rounded border-neutral-600 bg-neutral-800 text-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:ring-offset-0 transition-all duration-200'
+        className='w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-0 transition-all duration-200'
       />
 
       <div className='flex-1 min-w-0'>
         <div
-          className={`font-medium transition-all duration-200 ${quest.done ? 'line-through text-neutral-500' : 'text-neutral-100'}`}
+          className={`font-medium transition-all duration-200 ${quest.done ? 'line-through text-muted-foreground' : 'text-foreground'}`}
         >
           {quest.title}
         </div>
         <div className='flex items-center gap-2 mt-1'>
-          <Badge
-            variant='secondary'
-            className='bg-neutral-800 text-neutral-300 border-neutral-700'
-          >
-            {quest.category}
-          </Badge>
-          <Badge
-            variant='secondary'
-            className='bg-neutral-800 text-neutral-300 border-neutral-700'
-          >
-            {quest.type}
-          </Badge>
-          <Badge variant='default' className='bg-emerald-600 text-white'>
-            +{quest.xp} XP
-          </Badge>
+          <Badge variant='secondary'>{quest.category}</Badge>
+          <Badge variant='secondary'>{quest.type}</Badge>
+          <Badge variant='default'>+{quest.xp} XP</Badge>
         </div>
       </div>
 
       <div className='flex items-center gap-2'>
+        {/* Focus Badge - More Prominent */}
+        {isInFocus && (
+          <Badge variant='outline' className='px-2 py-1 text-xs font-medium'>
+            🎯 Focused
+          </Badge>
+        )}
+
         <Button
           onClick={() => onToggleFocus(quest)}
           variant={isInFocus ? 'default' : 'outline'}
           size='sm'
-          className={isInFocus ? 'bg-indigo-600 hover:bg-indigo-500' : ''}
         >
           <Target className='w-4 h-4 mr-1' />
-          {isInFocus ? 'Focused' : 'Focus'}
+          {isInFocus ? 'Unfocus' : 'Focus'}
         </Button>
 
         <Button

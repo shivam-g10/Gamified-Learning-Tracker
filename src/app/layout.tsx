@@ -1,6 +1,8 @@
 import '@/app/globals.css';
 import { ReactNode } from 'react';
 import { Metadata, Viewport } from 'next';
+import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export const metadata: Metadata = {
   title: 'Gamified Learning Tracker',
@@ -64,7 +66,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang='en' className='dark'>
+    <html lang='en' suppressHydrationWarning>
       <head>
         <link rel='icon' href='/favicon.svg' type='image/svg+xml' />
         <link rel='shortcut icon' href='/favicon.svg' />
@@ -98,20 +100,32 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body>
-        <header className='border-b border-neutral-800'>
-          <div className='container-narrow py-4 flex items-center justify-between'>
-            <h1 className='text-lg font-semibold'>
-              CS → Gamified Learning Tracker
-            </h1>
-            <a className='chip' href='/health'>
-              Health
-            </a>
-          </div>
-        </header>
-        <main className='container-narrow py-6'>{children}</main>
-        <footer className='container-narrow py-8 text-sm text-neutral-400'>
-          Built with Next.js + Postgres + Docker
-        </footer>
+        <ThemeProvider
+          attribute='class'
+          defaultTheme='system'
+          enableSystem
+          disableTransitionOnChange
+        >
+          <header className='border-b border-border bg-background'>
+            <div className='container-narrow py-4 flex items-center justify-between'>
+              <h1 className='text-lg font-semibold text-foreground'>
+                CS → Gamified Learning Tracker
+              </h1>
+              <div className='flex items-center gap-2'>
+                <ThemeToggle />
+                <a className='chip' href='/health'>
+                  Health
+                </a>
+              </div>
+            </div>
+          </header>
+          <main className='container-narrow py-6 bg-background text-foreground'>
+            {children}
+          </main>
+          <footer className='container-narrow py-8 text-sm text-muted-foreground bg-background'>
+            Built with Next.js + Postgres + Docker
+          </footer>
+        </ThemeProvider>
       </body>
     </html>
   );

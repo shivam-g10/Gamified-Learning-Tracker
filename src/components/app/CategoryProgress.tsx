@@ -1,5 +1,6 @@
 import { Quest } from '../../lib/types';
 import { QuestService } from '../../services';
+import { Progress } from '../ui/progress';
 
 interface CategoryProgressProps {
   quests: Quest[];
@@ -9,19 +10,14 @@ export function CategoryProgress({ quests }: CategoryProgressProps) {
   const categoryProgress = QuestService.getCategoryProgress(quests);
 
   return (
-    <div className='space-y-3'>
+    <div className='space-y-4'>
       {categoryProgress.map(({ category, percentage }) => (
-        <div key={category}>
-          <div className='flex justify-between text-sm mb-1'>
-            <span>{category}</span>
-            <span>{percentage}%</span>
+        <div key={category} className='space-y-2'>
+          <div className='flex justify-between text-sm'>
+            <span className='text-foreground font-medium'>{category}</span>
+            <span className='text-muted-foreground'>{percentage}%</span>
           </div>
-          <div className='h-2 bg-neutral-800 rounded'>
-            <div
-              className='h-2 bg-indigo-600 rounded'
-              style={{ width: `${percentage}%` }}
-            />
-          </div>
+          <Progress value={percentage} className='h-2' />
         </div>
       ))}
     </div>

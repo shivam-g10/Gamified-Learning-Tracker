@@ -10,11 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Target } from 'lucide-react';
 import {
-  Overview,
   Badges,
   FocusChips,
-  AddQuestForm,
+  AddQuestDialog,
   QuestRow,
   SearchAndFilters,
   CategoryProgress,
@@ -141,28 +142,77 @@ export default function HomePage() {
 
   return (
     <div className='flex gap-6'>
-      {/* Main Content */}
+      {/* Main Content - Prioritized Layout */}
       <div className='flex-1 space-y-6'>
-        <Overview
-          totalXp={totalXp}
-          streak={appState?.streak ?? 0}
-          lastCheckIn={appState?.last_check_in ?? null}
-          onRandomChallenge={handleRandomChallenge}
-          onDailyCheckIn={handleDailyCheckIn}
-        />
+        {/* Compact Overview Row */}
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+          <Card className='bg-card border-border'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <div className='text-sm text-muted-foreground mb-1'>
+                    Level
+                  </div>
+                  <div className='text-2xl font-bold text-foreground'>0</div>
+                  <div className='text-xs text-muted-foreground'>0/150 XP</div>
+                </div>
+                <Button
+                  onClick={handleRandomChallenge}
+                  variant='outline'
+                  size='sm'
+                >
+                  <Target className='w-4 h-4 mr-1' />
+                  Challenge
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
+          <Card className='bg-card border-border'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <div className='text-sm text-muted-foreground mb-1'>
+                    Streak
+                  </div>
+                  <div className='text-2xl font-bold text-foreground'>0</div>
+                  <div className='text-xs text-muted-foreground'>
+                    🔥 Keep it going!
+                  </div>
+                </div>
+                <Button
+                  onClick={handleDailyCheckIn}
+                  variant='outline'
+                  size='sm'
+                >
+                  Check-in
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className='bg-card border-border'>
+            <CardContent className='p-4'>
+              <div>
+                <div className='text-sm text-muted-foreground mb-1'>
+                  Total XP
+                </div>
+                <div className='text-2xl font-bold text-foreground'>0</div>
+                <div className='text-xs text-muted-foreground'>0 / ∞ XP</div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Focus Section - Now Priority */}
         <Card>
           <CardHeader>
-            <CardTitle>Badges</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badges totalXp={totalXp} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Focus</CardTitle>
+            <CardTitle className='flex items-center gap-2'>
+              🎯 Focus
+              <span className='text-sm font-normal text-muted-foreground'>
+                ({AppStateService.getFocusCount(appState?.focus || [])}/3)
+              </span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <FocusChips
@@ -173,25 +223,20 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
+        {/* Quests Section - Main Priority */}
         <Card>
           <CardHeader>
-            <CardTitle>Add Quest</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AddQuestForm onSubmit={handleAddQuest} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <span>Quests</span>
-              {sortBy !== 'created_at' && (
-                <span className='text-sm text-neutral-400 font-normal'>
-                  (sorted by {sortBy} {sortOrder === 'asc' ? '↑' : '↓'})
-                </span>
-              )}
-            </CardTitle>
+            <div className='flex items-center justify-between'>
+              <div className='flex items-center gap-2'>
+                <span>Quests</span>
+                {sortBy !== 'created_at' && (
+                  <span className='text-sm text-neutral-400 font-normal'>
+                    (sorted by {sortBy} {sortOrder === 'asc' ? '↑' : '↓'})
+                  </span>
+                )}
+              </div>
+              <AddQuestDialog onSubmit={handleAddQuest} />
+            </div>
           </CardHeader>
           <CardContent className='space-y-4'>
             <SearchAndFilters
@@ -209,7 +254,7 @@ export default function HomePage() {
             />
 
             {/* Quest List */}
-            <div className='divide-y divide-neutral-800/50 bg-neutral-900/20 rounded-lg border border-neutral-800/30 overflow-hidden'>
+            <div className='divide-y divide-border bg-muted/30 border border-border overflow-hidden'>
               {filtered?.map((q: Quest) => (
                 <QuestRow
                   key={q.id}
@@ -221,7 +266,7 @@ export default function HomePage() {
                 />
               ))}
               {filtered && filtered.length === 0 && (
-                <div className='text-center py-12 text-neutral-500'>
+                <div className='text-center py-12 text-muted-foreground'>
                   <div className='text-4xl mb-3'>🎯</div>
                   <div className='text-lg font-medium mb-2'>
                     No quests found
@@ -237,18 +282,27 @@ export default function HomePage() {
         </Card>
       </div>
 
-      {/* Sticky Sidebar */}
-      <div className='w-80 flex-shrink-0'>
-        <div className='sticky top-6'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Category Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CategoryProgress quests={quests || []} />
-            </CardContent>
-          </Card>
-        </div>
+      {/* Right Sidebar - Compact Stats */}
+      <div className='w-80 flex-shrink-0 space-y-4'>
+        {/* Badges - Compact */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Badges</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Badges totalXp={totalXp} />
+          </CardContent>
+        </Card>
+
+        {/* Category Progress */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Category Progress</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CategoryProgress quests={quests || []} />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

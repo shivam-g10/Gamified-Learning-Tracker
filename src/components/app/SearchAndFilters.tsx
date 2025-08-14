@@ -58,7 +58,7 @@ export function SearchAndFilters({
         {/* Filter Controls - Grouped with Labels */}
         <div className='flex flex-col sm:flex-row gap-3'>
           <div className='flex flex-col gap-1'>
-            <Label className='text-xs text-neutral-400 uppercase tracking-wide'>
+            <Label className='text-xs text-muted-foreground uppercase tracking-wide'>
               Type
             </Label>
             <Select value={filterType} onValueChange={onFilterTypeChange}>
@@ -75,7 +75,7 @@ export function SearchAndFilters({
           </div>
 
           <div className='flex flex-col gap-1'>
-            <Label className='text-xs text-neutral-400 uppercase tracking-wide'>
+            <Label className='text-xs text-muted-foreground uppercase tracking-wide'>
               Category
             </Label>
             <Select
@@ -98,12 +98,12 @@ export function SearchAndFilters({
         </div>
 
         {/* Visual Separator */}
-        <div className='hidden sm:block w-px h-8 bg-gradient-to-b from-transparent via-neutral-600 to-transparent'></div>
+        <div className='hidden sm:block w-px h-8 bg-border'></div>
 
         {/* Sort Controls - Enhanced with Better Visual Hierarchy */}
         <div className='flex flex-col sm:flex-row gap-3 items-start sm:items-center'>
           <div className='flex flex-col gap-1'>
-            <Label className='text-xs text-neutral-400 uppercase tracking-wide'>
+            <Label className='text-xs text-muted-foreground uppercase tracking-wide'>
               Sort by
             </Label>
             <div className='flex gap-2 items-center'>
