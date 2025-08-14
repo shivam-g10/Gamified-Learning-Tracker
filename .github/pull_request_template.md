@@ -1,32 +1,95 @@
-## Description
+## 🚀 Pull Request Description
 
-Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context.
+**Before submitting this PR, please ensure you have:**
 
-Fixes # (issue)
+- [ ] Read the [AI Guidelines](../docs/AI_GUIDELINES.md) if you're an AI agent
+- [ ] Followed the [Contributing Guide](../docs/CONTRIBUTING.md)
+- [ ] Updated relevant documentation in the `docs/` folder
+- [ ] Tested your changes locally
+- [ ] Run `pnpm type-check` and `pnpm build` successfully
 
-## Type of change
+---
 
-Please delete options that are not relevant.
+## 📋 PR Details
 
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] This change requires a documentation update
+### Type of Change
 
-## How Has This Been Tested?
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+- [ ] Performance improvement
+- [ ] Refactoring
+- [ ] Other (please describe)
 
-Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration.
+### Description
 
-- [ ] Test A
-- [ ] Test B
+<!-- Provide a clear and concise description of the changes -->
 
-## Checklist:
+### Related Issue
 
-- [ ] My code follows the style guidelines of this project
-- [ ] I have performed a self-review of my own code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes
-- [ ] Any dependent changes have been merged and published in downstream modules
+<!-- Link to the issue this PR addresses -->
+
+Closes #(issue number)
+
+### Changes Made
+
+<!-- List the main changes made in this PR -->
+
+-
+-
+-
+
+### Testing
+
+<!-- Describe how you tested your changes -->
+
+- [ ] Local development testing
+- [ ] Type checking passed
+- [ ] Build successful
+- [ ] Manual testing of functionality
+- [ ] Cross-browser testing (if applicable)
+
+### Screenshots
+
+<!-- If applicable, add screenshots to show the changes -->
+
+---
+
+## 📚 Documentation Updates
+
+- [ ] Updated relevant documentation in `docs/` folder
+- [ ] Added new documentation if needed
+- [ ] Updated README.md if project structure changed
+- [ ] Updated AI_AGENT_ENTRY.md if guidelines changed
+
+### Files Modified
+
+<!-- List the documentation files that were updated -->
+
+-
+-
+
+---
+
+## 🔍 Code Quality Checklist
+
+- [ ] Code follows project style guidelines
+- [ ] TypeScript types are properly defined
+- [ ] No console.log statements in production code
+- [ ] Error handling is implemented where appropriate
+- [ ] Accessibility considerations addressed (if UI changes)
+
+---
+
+## 📖 Related Documentation
+
+- [AI Guidelines](../docs/AI_GUIDELINES.md)
+- [Contributing Guide](../docs/CONTRIBUTING.md)
+- [Development Setup](../docs/DEVELOPMENT_SETUP.md)
+- [Implementation Details](../docs/IMPLEMENTATION.md)
+- [Design System](../docs/DESIGN_SYSTEM.md)
+
+---
+
+**Note**: For AI agents, ensure all changes comply with the guidelines and you have explicit permission to commit changes.

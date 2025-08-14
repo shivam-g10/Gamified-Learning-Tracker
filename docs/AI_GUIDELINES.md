@@ -1,5 +1,7 @@
 # AI Guidelines for Gamified Learning Tracker
 
+> **📚 Documentation Structure**: This file is part of the comprehensive documentation system. AI agents should start with `../AI_AGENT_ENTRY.md` in the root directory, then read this file along with other documentation in the `docs/` folder.
+
 ## 📋 Document Information
 
 - **Version**: 1.0.0

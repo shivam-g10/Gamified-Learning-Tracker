@@ -8,6 +8,16 @@
 
 A full-stack gamified learning tracker built with Next.js and PostgreSQL. Track your learning progress with XP, levels, streaks, badges, and interactive quests.
 
+## 📚 Documentation & Guidelines
+
+**🤖 AI Agents & Contributors**: Start with our comprehensive documentation system:
+
+- **[📋 AI Guidelines](./docs/AI_GUIDELINES.md)** - **MANDATORY** reading for all AI interactions
+- **[📖 Documentation Index](./docs/README.md)** - Complete documentation overview
+- **[🤝 Contributing Guide](./docs/CONTRIBUTING.md)** - Contribution standards and workflow
+
+**📁 All documentation is organized in the `docs/` folder for easy navigation.**
+
 ## ✨ Features
 
 - 🎯 **Quest Management** - Create and track learning objectives
@@ -97,7 +107,7 @@ pnpm dev
 
 For contributors and developers who want to ensure code quality:
 
-1. Follow the [Development Setup Guide](./DEVELOPMENT_SETUP.md) for detailed instructions
+1. Follow the [Development Setup Guide](./docs/DEVELOPMENT_SETUP.md) for detailed instructions
 2. Install dependencies and set up pre-commit hooks:
 
 ```bash
@@ -231,13 +241,25 @@ pnpm run docker:clean
 
 We welcome contributions! Please feel free to submit a Pull Request.
 
+### 📚 Documentation First
+
+**Before contributing, please read our comprehensive documentation:**
+
+- **[📋 AI Guidelines](./docs/AI_GUIDELINES.md)** - **REQUIRED** for AI agents and contributors
+- **[🤝 Contributing Guide](./docs/CONTRIBUTING.md)** - Detailed contribution standards
+- **[🚀 Development Setup](./docs/DEVELOPMENT_SETUP.md)** - Local development environment
+- **[📖 Implementation Details](./docs/IMPLEMENTATION.md)** - Technical architecture
+- **[🎨 Design System](./docs/DESIGN_SYSTEM.md)** - UI/UX guidelines
+
 ### Development Workflow
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. **Read the documentation** in the `docs/` folder
+2. Fork the repository
+3. Create a feature branch (`git checkout -b feature/amazing-feature`)
+4. Follow the coding standards and guidelines
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
 ### Code Style
 
@@ -247,6 +269,7 @@ We welcome contributions! Please feel free to submit a Pull Request.
 - Write meaningful commit messages
 - Use pnpm as the package manager
 - Ensure pnpm-lock.yaml is committed to version control
+- **Follow the established project architecture and patterns**
 
 ## 📝 License
 
@@ -264,9 +287,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you have any questions or need help:
 
-- Open an [issue](https://github.com/yourusername/Gamified-Learning-Tracker/issues)
-- Check the [documentation](https://github.com/yourusername/Gamified-Learning-Tracker/wiki)
-- Join our [discussions](https://github.com/yourusername/Gamified-Learning-Tracker/discussions)
+- **📚 Check our documentation** in the [`docs/`](./docs/) folder
+- **🐛 Open an issue** using our [issue template](.github/ISSUE_TEMPLATE.md)
+- **🤝 Submit a PR** following our [contributing guidelines](./docs/CONTRIBUTING.md)
+- **📖 Read the [AI Guidelines](./docs/AI_GUIDELINES.md)** if you're an AI agent
 
 ---
 
