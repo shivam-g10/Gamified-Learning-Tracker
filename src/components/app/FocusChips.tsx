@@ -1,7 +1,7 @@
 import { Quest, AppState } from '../../lib/types';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { X } from 'lucide-react';
+import { X, Target } from 'lucide-react';
 import { AppStateService } from '../../services';
 
 interface FocusChipsProps {
@@ -22,40 +22,46 @@ export function FocusChips({
   const focusCount = AppStateService.getFocusCount(appState.focus || []);
 
   return (
-    <div className='space-y-4'>
-      {/* Focus Quests - Capsule Style */}
+    <div className='space-y-3'>
+      {/* Focus Quests - Compact Grid Layout */}
       {focusQuests.length > 0 ? (
-        <div className='space-y-3'>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
           {focusQuests.map(q => (
             <div
               key={q.id}
-              className='flex items-center gap-2 p-2 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors group'
+              className='group relative p-3 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-lg hover:from-primary/10 hover:to-primary/15 transition-all duration-200'
             >
-              {/* Quest Info */}
-              <div className='flex-1 min-w-0'>
-                <div className='font-medium text-foreground text-xs truncate'>
-                  {q.title}
-                </div>
-                <div className='flex items-center gap-1 mt-1'>
-                  <Badge
-                    variant='outline'
-                    className='text-xs border-primary/30 text-primary px-1 py-0 h-4'
-                  >
-                    {q.category}
-                  </Badge>
-                  <Badge
-                    variant='outline'
-                    className='text-xs border-accent/30 text-accent px-1 py-0 h-4'
-                  >
-                    {q.type}
-                  </Badge>
-                  <Badge
-                    variant='default'
-                    className='bg-secondary text-secondary-foreground text-xs px-1 py-0 h-4'
-                  >
-                    +{q.xp} XP
-                  </Badge>
-                </div>
+              {/* Quest Title */}
+              <div className='font-medium text-foreground text-sm mb-2 line-clamp-2'>
+                {q.title}
+              </div>
+
+              {/* Quest Badges */}
+              <div className='flex items-center gap-1.5 mb-3 flex-wrap'>
+                <Badge
+                  variant='outline'
+                  className='text-xs border-primary/30 text-primary px-1.5 py-0.5 h-5'
+                >
+                  {q.category}
+                </Badge>
+                <Badge
+                  variant='outline'
+                  className='text-xs border-accent/30 text-accent px-1.5 py-0.5 h-5'
+                >
+                  {q.type}
+                </Badge>
+                <Badge
+                  variant='default'
+                  className='bg-secondary text-secondary-foreground text-xs px-1.5 py-0.5 h-5'
+                >
+                  +{q.xp} XP
+                </Badge>
+              </div>
+
+              {/* Focus Indicator */}
+              <div className='flex items-center gap-1.5 text-xs text-primary/70'>
+                <Target className='w-3 h-3' />
+                <span>Focused</span>
               </div>
 
               {/* Remove Button */}
@@ -63,7 +69,7 @@ export function FocusChips({
                 onClick={() => onToggleFocus(q)}
                 variant='ghost'
                 size='sm'
-                className='opacity-0 group-hover:opacity-100 hover:bg-primary/20 hover:text-primary rounded-full p-1 h-6 w-6'
+                className='absolute top-2 right-2 opacity-0 group-hover:opacity-100 hover:bg-primary/30 hover:text-primary active:bg-primary/40 focus:bg-primary/30 focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full p-1 h-6 w-6 transition-all duration-200'
               >
                 <X className='w-3 h-3' />
               </Button>
@@ -82,7 +88,7 @@ export function FocusChips({
 
       {/* Focus Limit Warning */}
       {focusCount >= 3 && (
-        <div className='text-xs text-muted-foreground text-center py-2 bg-muted/30 rounded-lg'>
+        <div className='text-xs text-muted-foreground text-center py-2 bg-muted/30 rounded-lg border border-muted-foreground/20'>
           Focus queue is full. Remove a quest to add another.
         </div>
       )}

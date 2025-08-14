@@ -3,7 +3,12 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Quest } from '../lib/types';
 import { useQuests, useAppState } from '../lib/hooks';
-import { QuestService, AppStateService, CreateQuestData } from '../services';
+import {
+  QuestService,
+  AppStateService,
+  CreateQuestData,
+  CategoryBadgeService,
+} from '../services';
 import {
   Card,
   CardContent,
@@ -12,14 +17,24 @@ import {
 } from '../components/ui/card';
 import { Progress } from '../components/ui/progress';
 import { Button } from '../components/ui/button';
-import { Target, Flame } from 'lucide-react';
 import {
-  Badges,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../components/ui/tooltip';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../components/ui/accordion';
+import { Flame, Sparkles, ChevronDown, Dice6 } from 'lucide-react';
+import {
   FocusChips,
   AddQuestDialog,
   QuestRow,
   SearchAndFilters,
-  CategoryProgress,
 } from '../components/app';
 
 export default function HomePage() {
@@ -65,7 +80,7 @@ export default function HomePage() {
     }
   }, [totalXp, previousTotalXp]);
 
-  // Calculate level info
+  // Calculate level info using service
   const levelInfo = useMemo(() => {
     const level = Math.floor(totalXp / 150) + 1;
     const progress = totalXp % 150;
@@ -73,6 +88,40 @@ export default function HomePage() {
     const pct = Math.round((progress / nextLevelXp) * 100);
     return { level, progress, nextLevelXp, pct };
   }, [totalXp]);
+
+  // Calculate badge thresholds using service
+  const badgeThresholds = useMemo(() => {
+    const thresholds = [150, 400, 800, 1200, 2000];
+    return thresholds.map(threshold => ({
+      threshold,
+      name:
+        threshold === 150
+          ? 'Bronze'
+          : threshold === 400
+            ? 'Silver'
+            : threshold === 800
+              ? 'Gold'
+              : threshold === 1200
+                ? 'Epic'
+                : 'Legendary',
+      earned: totalXp >= threshold,
+      color:
+        threshold === 150
+          ? 'bg-amber-600'
+          : threshold === 400
+            ? 'bg-gray-500'
+            : threshold === 800
+              ? 'bg-yellow-500'
+              : threshold === 1200
+                ? 'bg-purple-600'
+                : 'bg-orange-600',
+    }));
+  }, [totalXp]);
+
+  // Calculate category progress and badges using service
+  const categoryProgress = useMemo(() => {
+    return CategoryBadgeService.getCategoryProgress(quests || []);
+  }, [quests]);
 
   // Event handlers using services
   const handleAddQuest = useCallback(
@@ -161,205 +210,279 @@ export default function HomePage() {
   );
 
   return (
-    <div className='flex gap-6'>
-      {/* Main Content - Gamified Layout */}
-      <div className='flex-1 space-y-6'>
-        {/* Overview Section - Single Block with Prominent Progress */}
-        <Card>
-          <CardHeader>
-            <CardTitle className='text-xl'>Learning Progress</CardTitle>
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            {/* Main Progress Bar */}
-            <div className='space-y-3'>
-              <div className='flex justify-between items-center'>
-                <div className='flex items-center gap-3'>
-                  <div className='text-3xl font-bold text-foreground'>
-                    Level {levelInfo.level}
-                  </div>
-                  <div className='text-sm text-muted-foreground'>
-                    {levelInfo.progress}/{levelInfo.nextLevelXp} XP to next
-                    level
-                  </div>
-                </div>
-                <div className='text-right'>
-                  <div className='text-2xl font-bold text-foreground'>
-                    {totalXp}
-                  </div>
-                  <div className='text-sm text-muted-foreground'>Total XP</div>
-                </div>
-              </div>
-
-              {/* Prominent Progress Bar */}
-              <div className='relative'>
-                <Progress
-                  value={levelInfo.pct}
-                  className='h-4 rounded-full bg-muted'
-                />
-                <div
-                  className='absolute inset-0 rounded-full progress-shimmer'
-                  style={{
-                    background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)`,
-                    backgroundSize: '200% 100%',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Stats Row */}
-            <div className='grid grid-cols-3 gap-4'>
-              {/* Streak */}
-              <div className='text-center p-3 bg-muted/30 rounded-lg'>
-                <div className='flex items-center justify-center gap-2 mb-2'>
-                  <Flame className='w-5 h-5 text-secondary flame-breathe' />
-                  <span className='text-sm font-medium'>Streak</span>
-                </div>
-                <div className='text-2xl font-bold text-foreground mb-2'>
+    <div className='space-y-6'>
+      {/* Compact Overview Section */}
+      <Card>
+        <CardHeader className='pb-4'>
+          <div className='flex items-center justify-between'>
+            <CardTitle className='text-lg'>Learning Progress</CardTitle>
+            <div className='flex items-center gap-2'>
+              {/* Streak Display */}
+              <div className='flex items-center gap-2 px-3 py-1 bg-muted/30 rounded-lg'>
+                <Flame className='w-4 h-4 text-secondary' />
+                <span className='text-sm font-medium text-foreground'>
                   {appState?.streak || 0}
-                </div>
-                <Button
-                  onClick={handleDailyCheckIn}
-                  variant='outline'
-                  size='sm'
-                  className='w-full bg-secondary/10 border-secondary/20 text-secondary hover:bg-secondary/20 hover:border-secondary/40'
-                >
-                  Check-in
-                </Button>
+                </span>
               </div>
 
-              {/* Challenge */}
-              <div className='text-center p-3 bg-muted/30 rounded-lg'>
-                <div className='flex items-center justify-center gap-2 mb-2'>
-                  <Target className='w-5 h-5 text-primary' />
-                  <span className='text-sm font-medium'>Challenge</span>
-                </div>
-                <div className='text-2xl font-bold text-foreground mb-2'>
-                  Ready
-                </div>
-                <Button
-                  onClick={handleRandomChallenge}
-                  variant='outline'
-                  size='sm'
-                  className='w-full bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40'
-                >
-                  Roll Dice
-                </Button>
-              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={handleDailyCheckIn}
+                      variant='outline'
+                      size='sm'
+                      className={`transition-all duration-200 focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
+                        appState?.last_check_in &&
+                        new Date(appState.last_check_in).toDateString() ===
+                          new Date().toDateString()
+                          ? 'bg-muted/30 border-muted-foreground/30 text-muted-foreground hover:bg-muted/50 hover:border-muted-foreground/50 active:bg-muted/70'
+                          : 'bg-secondary text-secondary-foreground border-secondary shadow-lg shadow-secondary/20 hover:bg-secondary/90 active:bg-secondary/80 focus:bg-secondary/90'
+                      }`}
+                    >
+                      <Flame
+                        className={`w-4 h-4 mr-1 transition-all duration-200 ${
+                          appState?.last_check_in &&
+                          new Date(appState.last_check_in).toDateString() ===
+                            new Date().toDateString()
+                            ? 'text-secondary animate-pulse'
+                            : 'text-white'
+                        }`}
+                      />
+                      Check-in
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {appState?.last_check_in &&
+                      new Date(appState.last_check_in).toDateString() ===
+                        new Date().toDateString()
+                        ? 'Already checked in today! 🔥'
+                        : 'Record your daily learning progress'}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
-              {/* Focus Count */}
-              <div className='text-center p-3 bg-muted/30 rounded-lg'>
-                <div className='flex items-center justify-center gap-2 mb-2'>
-                  <span className='text-lg'>🎯</span>
-                  <span className='text-sm font-medium'>Focus</span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={handleRandomChallenge}
+                      variant='outline'
+                      size='sm'
+                      className='bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40 active:bg-primary/30 focus:bg-primary/20 focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all duration-200'
+                    >
+                      <Dice6 className='w-4 h-4' />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Get a random challenge</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className='space-y-4'>
+          {/* Main Progress Bar */}
+          <div className='space-y-3'>
+            <div className='flex justify-between items-center'>
+              <div className='flex items-center gap-3'>
+                <div className='text-2xl font-bold text-foreground'>
+                  Level {levelInfo.level}
                 </div>
-                <div className='text-2xl font-bold text-foreground mb-2'>
-                  {AppStateService.getFocusCount(appState?.focus || [])}/3
+                <div className='text-sm text-muted-foreground'>
+                  {levelInfo.progress}/{levelInfo.nextLevelXp} XP to next level
                 </div>
-                <div className='text-xs text-muted-foreground'>
-                  Quests focused
+              </div>
+              <div className='text-right'>
+                <div className='text-xl font-bold text-foreground'>
+                  {totalXp}
                 </div>
+                <div className='text-sm text-muted-foreground'>Total XP</div>
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Focus Panel */}
-        <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              🎯 Focus
-              <span className='text-sm font-normal text-muted-foreground'>
-                ({AppStateService.getFocusCount(appState?.focus || [])}/3)
+            {/* Prominent Progress Bar */}
+            <div className='relative'>
+              <Progress
+                value={levelInfo.pct}
+                className='h-3 rounded-full bg-muted'
+              />
+              <div
+                className='absolute inset-0 rounded-full progress-shimmer'
+                style={{
+                  background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)`,
+                  backgroundSize: '200% 100%',
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Badges Section */}
+          <div className='border-t pt-4'>
+            <div className='flex items-center gap-2 mb-3'>
+              <span className='text-sm font-medium text-foreground'>
+                Badges
               </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FocusChips
-              quests={quests || []}
-              appState={appState || null}
-              onToggleFocus={handleToggleFocus}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Quests List with Add Quest */}
-        <Card>
-          <CardHeader>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-2'>
-                <span className='text-lg font-semibold'>Quests</span>
-                {sortBy !== 'created_at' && (
-                  <span className='text-sm text-muted-foreground font-normal'>
-                    (sorted by {sortBy} {sortOrder === 'asc' ? '↑' : '↓'})
-                  </span>
-                )}
-              </div>
-              <AddQuestDialog onSubmit={handleAddQuest} />
+              <Sparkles className='w-4 h-4 text-accent' />
             </div>
-          </CardHeader>
-          <CardContent className='space-y-4'>
-            <SearchAndFilters
-              search={search}
-              filterType={filterType}
-              filterCategory={filterCategory}
-              sortBy={sortBy}
-              sortOrder={sortOrder}
-              categories={categories}
-              onSearchChange={setSearch}
-              onFilterTypeChange={setFilterType}
-              onFilterCategoryChange={setFilterCategory}
-              onSortByChange={setSortBy}
-              onSortOrderChange={setSortOrder}
-            />
-
-            {/* Quest List */}
-            <div className='divide-y divide-border bg-muted/30 border border-border overflow-hidden rounded-lg'>
-              {filtered?.map((q: Quest) => (
-                <QuestRow
-                  key={q.id}
-                  quest={q}
-                  isInFocus={isQuestInFocus(q.id)}
-                  onToggleDone={handleToggleDone}
-                  onToggleFocus={handleToggleFocus}
-                  onDelete={handleDeleteQuest}
-                />
-              ))}
-              {filtered && filtered.length === 0 && (
-                <div className='text-center py-12 text-muted-foreground'>
-                  <div className='text-4xl mb-3'>🎯</div>
-                  <div className='text-lg font-medium mb-2'>No quests yet</div>
-                  <div className='text-sm'>
-                    Add your first quest to start earning XP
+            <div className='flex flex-wrap gap-2'>
+              {badgeThresholds
+                .filter(({ earned }) => earned)
+                .map(({ threshold, name, earned, color }) => (
+                  <div
+                    key={threshold}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                      earned
+                        ? `${color} text-white border-0`
+                        : 'bg-muted text-muted-foreground border border-muted-foreground/20'
+                    }`}
+                  >
+                    {name}
+                    {earned && (
+                      <Sparkles className='w-3 h-3 text-white ml-1 inline' />
+                    )}
                   </div>
+                ))}
+              {badgeThresholds.filter(({ earned }) => earned).length === 0 && (
+                <div className='text-sm text-muted-foreground italic'>
+                  No badges earned yet. Keep learning to unlock your first
+                  badge!
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Right Sidebar - Stats & Progress */}
-      <div className='w-80 flex-shrink-0 space-y-4'>
-        {/* Badges */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Badges</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badges totalXp={totalXp} />
-          </CardContent>
-        </Card>
+      {/* Focus Panel */}
+      <Card>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-2'>
+            🎯 Focus
+            <span className='text-sm font-normal text-muted-foreground'>
+              ({AppStateService.getFocusCount(appState?.focus || [])}/3)
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FocusChips
+            quests={quests || []}
+            appState={appState || null}
+            onToggleFocus={handleToggleFocus}
+          />
+        </CardContent>
+      </Card>
 
-        {/* Category Progress */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Category Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CategoryProgress quests={quests || []} />
-          </CardContent>
-        </Card>
-      </div>
+      {/* Quests List with Add Quest and Category Progress */}
+      <Card>
+        <CardHeader>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-2'>
+              <span className='text-lg font-semibold'>Quests</span>
+              {sortBy !== 'created_at' && (
+                <span className='text-sm text-muted-foreground font-normal'>
+                  (sorted by {sortBy} {sortOrder === 'asc' ? '↑' : '↓'})
+                </span>
+              )}
+            </div>
+            <AddQuestDialog onSubmit={handleAddQuest} />
+          </div>
+        </CardHeader>
+        <CardContent className='space-y-4'>
+          <SearchAndFilters
+            search={search}
+            filterType={filterType}
+            filterCategory={filterCategory}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            categories={categories}
+            onSearchChange={setSearch}
+            onFilterTypeChange={setFilterType}
+            onFilterCategoryChange={setFilterCategory}
+            onSortByChange={setSortBy}
+            onSortOrderChange={setSortOrder}
+          />
+
+          {/* Category Progress Summary with Accordion */}
+          <Accordion type='single' collapsible className='w-full'>
+            <AccordionItem
+              value='category-progress'
+              className='border rounded-lg data-[state=open]:border-primary/40 data-[state=open]:shadow-[0_0_0_1px_rgba(33,230,182,0.4)] data-[state=open]:shadow-primary/20 transition-all duration-200'
+            >
+              <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-primary'>
+                <div className='flex items-center gap-2'>
+                  <span className='text-sm font-medium text-foreground'>
+                    Category Progress
+                  </span>
+                  <span className='text-xs text-muted-foreground'>
+                    • Overall completion
+                  </span>
+                  <ChevronDown className='w-4 h-4 text-muted-foreground transition-transform duration-200' />
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className='px-4 pb-4 pt-6'>
+                <div className='space-y-4'>
+                  {/* Category Progress Grid */}
+                  <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
+                    {categoryProgress.map(({ category, percentage }) => (
+                      <div key={category} className='text-center'>
+                        <div className='text-xs text-muted-foreground mb-1'>
+                          {category}
+                        </div>
+                        <div className='text-lg font-bold text-foreground'>
+                          {percentage}%
+                        </div>
+                        <div className='w-full h-1.5 bg-muted rounded-full mt-1'>
+                          <div
+                            className={`h-full rounded-full transition-all duration-300 ${
+                              percentage >= 100
+                                ? 'bg-success'
+                                : percentage >= 75
+                                  ? 'bg-accent'
+                                  : percentage >= 50
+                                    ? 'bg-secondary'
+                                    : percentage >= 25
+                                      ? 'bg-primary'
+                                      : 'bg-muted-foreground/30'
+                            }`}
+                            style={{ width: `${Math.max(percentage, 1)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
+          {/* Quest List */}
+          <div className='divide-y divide-border bg-muted/30 border border-border overflow-hidden rounded-lg'>
+            {filtered?.map((q: Quest) => (
+              <QuestRow
+                key={q.id}
+                quest={q}
+                isInFocus={isQuestInFocus(q.id)}
+                onToggleDone={handleToggleDone}
+                onToggleFocus={handleToggleFocus}
+                onDelete={handleDeleteQuest}
+              />
+            ))}
+            {filtered && filtered.length === 0 && (
+              <div className='text-center py-12 text-muted-foreground'>
+                <div className='text-4xl mb-3'>🎯</div>
+                <div className='text-lg font-medium mb-2'>No quests yet</div>
+                <div className='text-sm'>
+                  Add your first quest to start earning XP
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

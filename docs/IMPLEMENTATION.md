@@ -27,16 +27,34 @@ src/
 │   ├── layout.tsx        # Root layout with metadata
 │   └── page.tsx          # Main application page
 ├── components/            # Reusable UI components
-│   ├── components/        # shadcn/ui components
-│   │   └── ui/           # Individual UI components
-│   ├── lib/              # Component utilities
-│   └── ui.tsx            # Legacy component library
-└── lib/                  # Utility functions
-    ├── db.ts             # Prisma client configuration
-    ├── xp.ts             # XP and leveling calculations
-    ├── hooks.ts          # Custom React hooks
-    └── types.ts          # TypeScript type definitions
+│   ├── ui/               # shadcn/ui components
+│   └── app/              # App-specific components
+├── lib/                  # Utility functions and types
+│   ├── db.ts             # Prisma client configuration
+│   ├── hooks.ts          # Custom React hooks
+│   └── types.ts          # TypeScript type definitions
+└── services/             # Business logic services
+    ├── quest-service.ts   # Quest management logic
+    ├── xp-service.ts      # XP and leveling logic
+    ├── app-state-service.ts # App state management
+    └── category-badge-service.ts # Category progress and badges
 ```
+
+### Service Layer Architecture
+
+The application follows a clean service layer architecture where:
+
+- **Components**: Handle only presentation and user interaction
+- **Services**: Contain all business logic and data operations
+- **Hooks**: Provide data access and state management
+- **Types**: Define clear interfaces for data structures
+
+#### Service Layer Benefits
+
+- **Separation of Concerns**: UI logic separated from business logic
+- **Testability**: Services can be unit tested independently
+- **Reusability**: Business logic can be reused across components
+- **Maintainability**: Clear structure makes code easier to maintain
 
 ## 🎯 Core Features Implementation
 
@@ -99,73 +117,96 @@ async function addQuest(formData: FormData) {
 
 #### XP Calculation Logic
 
-```typescript
-// src/lib/xp.ts
-export function totalXpToLevel(totalXp: number) {
-  const level = Math.floor(totalXp / 150);
-  const currentLevelXp = level * 150;
-  const progress = totalXp - currentLevelXp;
-  const nextLevelXp = 150;
-  const pct = Math.min(100, Math.round((progress / nextLevelXp) * 100));
+The XP system uses a level-based progression where each level requires 150 XP:
 
-  return { level, progress, nextLevelXp, pct };
+```typescript
+// Level calculation
+const level = Math.floor(totalXp / 150) + 1;
+const progress = totalXp % 150;
+const percentage = Math.round((progress / 150) * 100);
+```
+
+#### Badge System
+
+XP-based badges are awarded at specific thresholds:
+
+- **Bronze**: 150 XP
+- **Silver**: 400 XP
+- **Gold**: 800 XP
+- **Epic**: 1200 XP
+- **Legendary**: 2000 XP
+
+### 3. Updated UI Structure & Layout
+
+#### Overview Section (Full-Width)
+
+The overview section has been restructured for better information hierarchy:
+
+- **Header**: Learning Progress title with action buttons (Check-in, Random Challenge)
+- **Progress Display**: Level, XP progress, and prominent progress bar with shimmer effect
+- **Stats Row**: Streak display and focus count (removed from overview)
+- **Badges**: Shows only earned badges with empty state when none earned
+
+#### Action Button States
+
+All interactive buttons now provide clear visual feedback:
+
+- **Focus States**: Clear focus rings (`focus:ring-2 focus:ring-ring focus:ring-offset-2`)
+- **Hover States**: Solid background changes instead of ghostly effects
+- **Active States**: Darker backgrounds for clicked states
+- **Transitions**: Smooth animations for all state changes
+
+#### Focus Management
+
+- **Dedicated Section**: Focus panel separate from overview
+- **Compact Design**: Grid layout for focused quests
+- **Visual Indicators**: Clear focus badges and remove buttons
+
+#### Category Progress
+
+- **Accordion Layout**: Collapsible section to save space
+- **Progress Bars**: Fixed visibility issues at 100% completion
+- **Glow Effect**: Active accordion has glowing border for clear state indication
+
+### 4. Service Layer Implementation
+
+#### Category Badge Service
+
+New service for managing category completion badges:
+
+```typescript
+export class CategoryBadgeService {
+  static readonly CATEGORY_BADGE_THRESHOLDS = {
+    Bronze: 25,
+    Silver: 50,
+    Gold: 75,
+    Platinum: 90,
+    Diamond: 100,
+  };
+
+  static getCategoryProgress(quests: Quest[]): CategoryProgress[];
+  static getCategoryBadges(quests: Quest[]): CategoryBadge[];
 }
 ```
 
-#### Implementation Details
+#### Quest Service
 
-- **Level Threshold**: 150 XP per level (configurable)
-- **Progress Calculation**: Shows progress within current level
-- **Percentage Display**: Visual progress indicators
-- **Real-time Updates**: XP calculations update immediately on quest completion
-
-#### Frontend Display
+Enhanced quest management with filtering and sorting:
 
 ```typescript
-const totalXp = useMemo(() =>
-  (quests || []).filter(q => q.done).reduce((s, q) => s + q.xp, 0),
-  [quests]
-);
-const levelInfo = totalXpToLevel(totalXp);
-
-// Progress bar implementation
-<div className="h-2 bg-neutral-800 rounded">
-  <div className="h-2 bg-emerald-500 rounded"
-       style={{ width: `${levelInfo.pct}%` }} />
-</div>
-```
-
-### 3. Badge & Achievement System
-
-#### Badge Thresholds
-
-```typescript
-export function badgeThresholds(): number[] {
-  return [150, 400, 800, 1200, 2000];
-}
-```
-
-#### Implementation Details
-
-- **Milestone-based**: Badges unlock at specific XP thresholds
-- **Visual Feedback**: Badges highlight when thresholds are reached
-- **Dynamic Display**: Badge status updates in real-time
-- **Responsive Design**: Badges adapt to different screen sizes
-
-#### Frontend Implementation
-
-```typescript
-function Badges() {
-  const thresholds = badgeThresholds();
-  return (
-    <div className="flex flex-wrap gap-2">
-      {thresholds.map((t) => (
-        <span key={t} className={`chip ${totalXp >= t ? 'border-indigo-500 text-indigo-300' : ''}`}>
-          🏅 {t} XP
-        </span>
-      ))}
-    </div>
-  );
+export class QuestService {
+  static filterQuests(
+    quests: Quest[],
+    search: string,
+    filterType: string,
+    filterCategory: string
+  ): Quest[];
+  static sortQuests(
+    quests: Quest[],
+    sortBy: keyof Quest,
+    sortOrder: 'asc' | 'desc'
+  ): Quest[];
+  static getCategoryProgress(quests: Quest[]): CategoryProgress[];
 }
 ```
 
