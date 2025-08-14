@@ -15,6 +15,11 @@
     "migrate:status": "prisma migrate status",
     "db:seed": "tsx prisma/seed.ts"
   },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
   "dependencies": {
     "@prisma/client": "^6.13.0",
     "clsx": "^2.1.1",
@@ -23,7 +28,6 @@
     "react-dom": "^19.1.1",
     "swr": "^2.2.5"
   },
-
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },

@@ -12,11 +12,13 @@ This directory contains static assets that are served directly by Next.js.
 ## Well-Known Files
 
 The following well-known files are served from `public/.well-known/`:
+
 - `/.well-known/security.txt` - Security policy information
 
 ## Note
 
 Next.js automatically generates the following files from the corresponding TypeScript files:
+
 - `/robots.txt` from `src/app/robots.ts`
 - `/sitemap.xml` from `src/app/sitemap.ts`
 

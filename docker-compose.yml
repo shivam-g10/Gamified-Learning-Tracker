@@ -5,7 +5,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-tracker}
-      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+      POSTGRES_INITDB_ARGS: '--auth-host=scram-sha-256'
     # Remove external port exposure - database only accessible internally
     # ports:
     #   - '5433:5432'
@@ -30,7 +30,7 @@ services:
     #   - app-network
 
   web:
-    build: 
+    build:
       context: .
       args:
         DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-tracker}?schema=public
@@ -52,7 +52,11 @@ services:
     #   - app-network
     # Health check for web service
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000}/health || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000}/health || exit 1',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -73,5 +77,3 @@ volumes:
   db-data:
     # Volume security
     driver: local
-
-
