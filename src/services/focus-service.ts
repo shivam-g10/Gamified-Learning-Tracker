@@ -66,7 +66,11 @@ export class FocusService {
     } else {
       // Update existing focus slot - only update the specific type
       // This allows one of each category to be focused
-      const updateData: any = {};
+      const updateData: {
+        quest_id?: string | null;
+        book_id?: string | null;
+        course_id?: string | null;
+      } = {};
       updateData[`${type}_id`] = id;
 
       await prisma.focusSlot.update({
@@ -91,7 +95,11 @@ export class FocusService {
       return {};
     }
 
-    const updateData: any = {};
+    const updateData: {
+      quest_id?: string | null;
+      book_id?: string | null;
+      course_id?: string | null;
+    } = {};
     updateData[`${type}_id`] = null;
 
     await prisma.focusSlot.update({
@@ -183,7 +191,11 @@ export class FocusService {
     }
 
     // Update the specific type
-    const updateData: any = {};
+    const updateData: {
+      quest_id?: string | null;
+      book_id?: string | null;
+      course_id?: string | null;
+    } = {};
     updateData[`${type}_id`] = newId;
 
     await prisma.focusSlot.update({

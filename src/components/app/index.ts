@@ -1,4 +1,5 @@
 export { AddQuestDialog } from './AddQuestDialog';
+export { AddOrEditBookDialog } from './AddOrEditBookDialog';
 export { AddQuestForm } from './AddQuestForm';
 export { Badges } from './Badges';
 export { CategoryProgress } from './CategoryProgress';

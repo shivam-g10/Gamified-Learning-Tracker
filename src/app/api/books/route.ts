@@ -32,12 +32,28 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { title, author, total_pages, description, tags, cover_url } = body;
+    const {
+      title,
+      author,
+      total_pages,
+      category,
+      description,
+      tags,
+      cover_url,
+    } = body;
 
     // Validation
-    if (!title || typeof total_pages !== 'number' || total_pages < 0) {
+    if (
+      !title ||
+      typeof total_pages !== 'number' ||
+      total_pages < 0 ||
+      !category
+    ) {
       return NextResponse.json(
-        { error: 'Invalid payload. Title and total_pages are required.' },
+        {
+          error:
+            'Invalid payload. Title, total_pages, and category are required.',
+        },
         { status: 400 }
       );
     }
@@ -46,6 +62,7 @@ export async function POST(req: NextRequest) {
       title,
       author,
       total_pages,
+      category,
       description,
       tags,
       cover_url,

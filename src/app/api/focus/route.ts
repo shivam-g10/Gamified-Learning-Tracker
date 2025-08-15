@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { FocusService } from '@/services/focus-service';
+import type { FocusState } from '@/lib/types';
 
 export async function GET() {
   try {
@@ -25,7 +26,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    let focusState: any;
+    let focusState: FocusState;
 
     if (action === 'remove') {
       focusState = await FocusService.removeFocus(type);

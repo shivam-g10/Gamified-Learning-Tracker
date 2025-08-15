@@ -85,6 +85,7 @@ export type CreateBookData = {
   title: string;
   author?: string;
   total_pages: number;
+  category: string;
   description?: string;
   tags?: string[];
   cover_url?: string;
@@ -96,6 +97,7 @@ export type UpdateBookData = {
   total_pages?: number;
   current_page?: number;
   status?: 'backlog' | 'reading' | 'finished';
+  category?: string;
   description?: string;
   tags?: string[];
   cover_url?: string;

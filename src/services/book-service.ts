@@ -17,6 +17,7 @@ export class BookService {
         title: data.title,
         author: data.author,
         total_pages: data.total_pages,
+        category: data.category,
         description: data.description,
         tags: data.tags || [],
         cover_url: data.cover_url,
@@ -39,6 +40,7 @@ export class BookService {
         OR?: Array<{
           title?: { contains: string; mode: 'insensitive' };
           author?: { contains: string; mode: 'insensitive' };
+          category?: { contains: string; mode: 'insensitive' };
           description?: { contains: string; mode: 'insensitive' };
         }>;
         tags?: { hasSome: string[] };
@@ -53,6 +55,7 @@ export class BookService {
         whereClause.OR = [
           { title: { contains: filters.search, mode: 'insensitive' } },
           { author: { contains: filters.search, mode: 'insensitive' } },
+          { category: { contains: filters.search, mode: 'insensitive' } },
           { description: { contains: filters.search, mode: 'insensitive' } },
         ];
       }

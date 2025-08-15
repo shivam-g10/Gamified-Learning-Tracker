@@ -33,7 +33,16 @@ export class CourseService {
     tags?: string[];
     platform?: string;
   }): Promise<Course[]> {
-    const where: any = {};
+    const where: {
+      status?: 'backlog' | 'learning' | 'finished';
+      OR?: Array<{
+        title?: { contains: string; mode: 'insensitive' };
+        description?: { contains: string; mode: 'insensitive' };
+        platform?: { contains: string; mode: 'insensitive' };
+      }>;
+      tags?: { hasSome: string[] };
+      platform?: { contains: string; mode: 'insensitive' };
+    } = {};
 
     if (filters?.status) {
       where.status = filters.status;

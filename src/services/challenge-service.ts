@@ -1,4 +1,4 @@
-import { Quest, Book, Course } from '../lib/types';
+import { Quest, Book, Course, FocusState } from '../lib/types';
 
 export interface ChallengeItem {
   id: string;
@@ -30,21 +30,21 @@ export class ChallengeService {
   /**
    * Checks if a quest can be added to focus (only 1 quest allowed)
    */
-  static canAddQuestToFocus(currentFocusState: any): boolean {
+  static canAddQuestToFocus(currentFocusState: FocusState): boolean {
     return !currentFocusState?.quest;
   }
 
   /**
    * Checks if a book can be added to focus (only 1 book allowed)
    */
-  static canAddBookToFocus(currentFocusState: any): boolean {
+  static canAddBookToFocus(currentFocusState: FocusState): boolean {
     return !currentFocusState?.book;
   }
 
   /**
    * Checks if a course can be added to focus (only 1 course allowed)
    */
-  static canAddCourseToFocus(currentFocusState: any): boolean {
+  static canAddCourseToFocus(currentFocusState: FocusState): boolean {
     return !currentFocusState?.course;
   }
 

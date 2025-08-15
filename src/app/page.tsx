@@ -1,7 +1,16 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { Quest, Book, Course, FocusState } from '../lib/types';
+import {
+  Quest,
+  Book,
+  Course,
+  FocusState,
+  CreateBookData,
+  UpdateBookData,
+  CreateCourseData,
+  UpdateCourseData,
+} from '../lib/types';
 import {
   useQuests,
   useAppState,
@@ -42,6 +51,7 @@ import { Flame, Sparkles, ChevronDown, Dices } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AddQuestDialog,
+  AddOrEditBookDialog,
   QuestRow,
   SearchAndFilters,
   ChallengeModal,
@@ -81,6 +91,12 @@ export default function HomePage() {
   );
   const [isChallengeModalOpen, setIsChallengeModalOpen] = useState(false);
 
+  // Dialog state for books and courses
+  const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
+  const [isAddCourseDialogOpen, setIsAddCourseDialogOpen] = useState(false);
+  const [editingBook, setEditingBook] = useState<Book | null>(null);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+
   // Tab navigation state
   const [activeTab, setActiveTab] = useState<'quests' | 'books' | 'courses'>(
     'quests'
@@ -88,21 +104,17 @@ export default function HomePage() {
 
   // Calculated values using services
   const totalXp = useMemo(
-    () => QuestService.calculateTotalXp(quests || []),
+    () => QuestService.calculateTotalXp(quests),
     [quests]
   );
 
   // Get unique categories from all learning items
   const categories = useMemo(() => {
-    return CategoryBadgeService.getUniqueCategories(
-      quests || [],
-      books || [],
-      courses || []
-    );
+    return CategoryBadgeService.getUniqueCategories(quests, books, courses);
   }, [quests, books, courses]);
 
   const filtered = useMemo(() => {
-    const filteredQuests = SearchService.searchQuests(quests || [], search, {
+    const filteredQuests = SearchService.searchQuests(quests, search, {
       type: filterType,
       category: filterCategory,
     });
@@ -157,11 +169,7 @@ export default function HomePage() {
 
   // Calculate category progress and badges using service
   const categoryProgress = useMemo(() => {
-    return CategoryBadgeService.getCategoryProgress(
-      quests || [],
-      books || [],
-      courses || []
-    );
+    return CategoryBadgeService.getCategoryProgress(quests, books, courses);
   }, [quests, books, courses]);
 
   // Event handlers using services
@@ -210,15 +218,62 @@ export default function HomePage() {
   );
 
   // New handlers for Books and Courses
-  const handleAddBook = useCallback(async () => {
-    // TODO: Implement book creation dialog
-    toast.info('Book creation coming soon!');
+  const handleAddBook = useCallback(() => {
+    setEditingBook(null);
+    setIsAddBookDialogOpen(true);
   }, []);
 
-  const handleEditBook = useCallback(async (book: Book) => {
-    // TODO: Implement book editing dialog
-    toast.info('Book editing coming soon!');
+  const handleEditBook = useCallback((book: Book) => {
+    setEditingBook(book);
+    setIsAddBookDialogOpen(true);
   }, []);
+
+  const handleBookSubmit = useCallback(
+    async (data: CreateBookData | UpdateBookData) => {
+      try {
+        if (editingBook) {
+          // Update existing book
+          const response = await fetch(`/api/books/${editingBook.id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+
+          if (response.ok) {
+            await mutateBooks();
+            toast.success('Book updated successfully!');
+            setIsAddBookDialogOpen(false);
+            setEditingBook(null);
+          } else {
+            throw new Error('Failed to update book');
+          }
+        } else {
+          // Create new book
+          const response = await fetch('/api/books', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+
+          if (response.ok) {
+            await mutateBooks();
+            toast.success('Book added successfully!');
+            setIsAddBookDialogOpen(false);
+          } else {
+            throw new Error('Failed to add book');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to save book:', error);
+        toast.error('Failed to save book. Please try again.');
+      }
+    },
+    [editingBook, mutateBooks]
+  );
 
   const handleDeleteBook = useCallback(
     async (bookId: string) => {
@@ -246,15 +301,62 @@ export default function HomePage() {
     toast.info('Book progress logging coming soon!');
   }, []);
 
-  const handleAddCourse = useCallback(async () => {
-    // TODO: Implement course creation dialog
-    toast.info('Course creation coming soon!');
+  const handleAddCourse = useCallback(() => {
+    setEditingCourse(null);
+    setIsAddCourseDialogOpen(true);
   }, []);
 
-  const handleEditCourse = useCallback(async (course: Course) => {
-    // TODO: Implement course editing dialog
-    toast.info('Course editing coming soon!');
+  const handleEditCourse = useCallback((course: Course) => {
+    setEditingCourse(course);
+    setIsAddCourseDialogOpen(true);
   }, []);
+
+  const handleCourseSubmit = useCallback(
+    async (data: CreateCourseData | UpdateCourseData) => {
+      try {
+        if (editingCourse) {
+          // Update existing course
+          const response = await fetch(`/api/courses/${editingCourse.id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+
+          if (response.ok) {
+            await mutateCourses();
+            toast.success('Course updated successfully!');
+            setIsAddCourseDialogOpen(false);
+            setEditingCourse(null);
+          } else {
+            throw new Error('Failed to update course');
+          }
+        } else {
+          // Create new course
+          const response = await fetch('/api/courses', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+
+          if (response.ok) {
+            await mutateCourses();
+            toast.success('Course added successfully!');
+            setIsAddCourseDialogOpen(false);
+          } else {
+            throw new Error('Failed to add course');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to save course:', error);
+        toast.error('Failed to save course. Please try again.');
+      }
+    },
+    [editingCourse, mutateCourses]
+  );
 
   const handleDeleteCourse = useCallback(
     async (courseId: string) => {
@@ -609,9 +711,9 @@ export default function HomePage() {
         {/* New Focus Row for 1+1+1 System */}
         <FocusRow
           focusState={focusState || {}}
-          quests={quests || []}
-          books={books || []}
-          courses={courses || []}
+          quests={quests}
+          books={books}
+          courses={courses}
           onUpdateFocus={handleUpdateFocus}
           onNavigateToTab={setActiveTab}
           onToggleQuestDone={handleToggleDone}
@@ -627,9 +729,9 @@ export default function HomePage() {
           </CardHeader>
           <CardContent>
             <TabbedContent
-              quests={quests || []}
-              books={books || []}
-              courses={courses || []}
+              quests={quests}
+              books={books}
+              courses={courses}
               activeTab={activeTab}
               onTabChange={setActiveTab}
               questsContent={
@@ -761,7 +863,7 @@ export default function HomePage() {
                     </Button>
                   </div>
                   <BooksList
-                    books={books || []}
+                    books={books}
                     search={bookSearch}
                     statusFilter={bookStatusFilter}
                     onAddBook={handleAddBook}
@@ -788,7 +890,7 @@ export default function HomePage() {
                     </Button>
                   </div>
                   <CoursesList
-                    courses={courses || []}
+                    courses={courses}
                     search={courseSearch}
                     statusFilter={courseStatusFilter}
                     platformFilter={coursePlatformFilter}
@@ -821,6 +923,16 @@ export default function HomePage() {
         }}
         onAccept={handleChallengeAccept}
       />
+
+      {/* Book Dialog */}
+      <AddOrEditBookDialog
+        book={editingBook}
+        onSubmit={handleBookSubmit}
+        open={isAddBookDialogOpen}
+        onOpenChange={setIsAddBookDialogOpen}
+      />
+
+      {/* Course Dialog - TODO: Implement AddOrEditCourseDialog component */}
     </>
   );
 }
