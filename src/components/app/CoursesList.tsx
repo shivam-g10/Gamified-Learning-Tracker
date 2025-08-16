@@ -15,15 +15,18 @@ interface CoursesListProps {
   search: string;
   statusFilter: string;
   platformFilter: string;
+  categoryFilter: string;
   onAddCourse: () => void;
   onEditCourse: (course: Course) => void;
   onDeleteCourse: (courseId: string) => void;
   onLogProgress: (course: Course) => void;
   onToggleFocus: (course: Course) => void;
+  onViewHistory: (course: Course) => void;
   getIsInFocus: (courseId: string) => boolean;
   onSearchChange: (value: string) => void;
   onStatusFilterChange: (value: string) => void;
   onPlatformFilterChange: (value: string) => void;
+  onCategoryFilterChange: (value: string) => void;
 }
 
 export function CoursesList({
@@ -31,21 +34,30 @@ export function CoursesList({
   search,
   statusFilter,
   platformFilter,
+  categoryFilter,
   onAddCourse,
   onEditCourse,
   onDeleteCourse,
   onLogProgress,
   onToggleFocus,
+  onViewHistory,
   getIsInFocus,
   onSearchChange,
   onStatusFilterChange,
   onPlatformFilterChange,
+  onCategoryFilterChange,
 }: CoursesListProps) {
   // Apply search and filters using SearchService
   const filteredCourses = SearchService.searchCourses(courses, search, {
     status: statusFilter === 'all' ? undefined : statusFilter,
     platform: platformFilter === 'all' ? undefined : platformFilter,
+    category: categoryFilter === 'all' ? undefined : categoryFilter,
   });
+
+  // Get unique categories for filtering
+  const uniqueCategories = Array.from(
+    new Set(courses.map(course => course.category))
+  ).sort();
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -127,6 +139,18 @@ export function CoursesList({
             ],
             onChange: onPlatformFilterChange,
           },
+          {
+            label: 'Category',
+            value: categoryFilter,
+            options: [
+              { value: 'all', label: 'All Categories' },
+              ...uniqueCategories.map(category => ({
+                value: category,
+                label: category,
+              })),
+            ],
+            onChange: onCategoryFilterChange,
+          },
         ]}
       />
 
@@ -143,28 +167,18 @@ export function CoursesList({
                 {course.title}
               </h3>
               {course.platform && (
-                <div className='flex items-center gap-2 mb-2'>
-                  <Badge
-                    variant='outline'
-                    className='text-xs border-purple-300 text-purple-600 dark:border-purple-700 dark:text-purple-400'
-                  >
-                    {course.platform}
-                  </Badge>
-                  {course.url && (
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() =>
-                        course.url && window.open(course.url, '_blank')
-                      }
-                      className='h-5 w-5 p-0 text-purple-600 hover:text-purple-700'
-                    >
-                      <ExternalLink className='h-3 w-3' />
-                    </Button>
-                  )}
-                </div>
+                <p className='text-xs text-muted-foreground mb-2'>
+                  on {course.platform}
+                </p>
               )}
-              <div className='flex items-center gap-2 mb-2'>
+              <div className='flex items-center gap-2 mb-2 flex-wrap'>
+                {/* Category Badge */}
+                <Badge
+                  variant='outline'
+                  className='text-xs border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/20'
+                >
+                  {course.category}
+                </Badge>
                 {getStatusBadge(course.status)}
                 {course.tags.length > 0 && (
                   <Badge variant='outline' className='text-xs'>
@@ -227,6 +241,15 @@ export function CoursesList({
 
             {/* Edit/Delete */}
             <div className='flex gap-1 mt-2'>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => onViewHistory(course)}
+                className='h-7 px-2 text-muted-foreground hover:text-foreground'
+                title='View Progress History'
+              >
+                📊
+              </Button>
               <Button
                 variant='ghost'
                 size='sm'

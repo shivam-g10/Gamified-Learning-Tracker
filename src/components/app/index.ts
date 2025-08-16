@@ -16,3 +16,7 @@ export { FocusRow } from './FocusRow';
 export { BooksList } from './BooksList';
 export { CoursesList } from './CoursesList';
 export { TabbedContent } from './TabbedContent';
+export { LogBookProgressDialog } from './LogBookProgressDialog';
+export { LogCourseProgressDialog } from './LogCourseProgressDialog';
+export { BookProgressHistory } from './BookProgressHistory';
+export { CourseProgressHistory } from './CourseProgressHistory';

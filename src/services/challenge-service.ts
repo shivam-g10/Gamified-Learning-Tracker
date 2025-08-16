@@ -6,11 +6,12 @@ export interface ChallengeItem {
   type: 'quest' | 'book' | 'course';
   category: string;
   xp: number;
+  status?: string;
 }
 
 export class ChallengeService {
   /**
-   * Gets a random unfinished quest for challenges
+   * Gets a random unfinished learning item for challenges
    */
   static async getRandomChallenge(): Promise<ChallengeItem | null> {
     try {
@@ -75,5 +76,39 @@ export class ChallengeService {
   static getChallengeSuccessMessage(item: ChallengeItem): string {
     const typeText = item.type === 'quest' ? 'quest' : item.type;
     return `Challenge accepted! "${item.title}" added to focus.`;
+  }
+
+  /**
+   * Gets challenge type display name
+   */
+  static getChallengeTypeDisplayName(
+    type: 'quest' | 'book' | 'course'
+  ): string {
+    switch (type) {
+      case 'quest':
+        return 'Quest';
+      case 'book':
+        return 'Book';
+      case 'course':
+        return 'Course';
+      default:
+        return type;
+    }
+  }
+
+  /**
+   * Gets challenge type icon
+   */
+  static getChallengeTypeIcon(type: 'quest' | 'book' | 'course'): string {
+    switch (type) {
+      case 'quest':
+        return '🎯';
+      case 'book':
+        return '📚';
+      case 'course':
+        return '🎓';
+      default:
+        return '📝';
+    }
   }
 }

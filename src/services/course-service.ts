@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { XPService } from './xp-service';
 import type {
   Course,
   CourseProgressEntry,
@@ -107,8 +108,14 @@ export class CourseService {
    */
   static async logProgress(
     courseId: string,
-    data: LogCourseProgressData
-  ): Promise<{ course: Course; xpEarned: number; isFinished: boolean }> {
+    data: LogCourseProgressData,
+    isInFocus: boolean = false
+  ): Promise<{
+    course: Course;
+    xpEarned: number;
+    isFinished: boolean;
+    finishBonus: number;
+  }> {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
     });
@@ -149,25 +156,38 @@ export class CourseService {
       },
     });
 
-    // Calculate XP
-    const xpEarned = this.calculateSessionXP(data.units_delta);
+    // Calculate XP with focus boost
+    const sessionXP = XPService.calculateCourseSessionXP(
+      data.units_delta,
+      isInFocus
+    );
+    const finishBonus =
+      newCompletedUnits >= course.total_units
+        ? XPService.calculateCourseFinishBonus(course.total_units)
+        : 0;
+    const totalXP = sessionXP + finishBonus;
     const isFinished = newCompletedUnits >= course.total_units;
 
-    return { course: updatedCourse, xpEarned, isFinished };
+    return {
+      course: updatedCourse,
+      xpEarned: totalXP,
+      isFinished,
+      finishBonus,
+    };
   }
 
   /**
-   * Calculates XP for a course session
+   * Calculates XP for a course session (deprecated - use XPService)
    */
   static calculateSessionXP(unitsDelta: number): number {
-    return 5 * unitsDelta;
+    return XPService.calculateCourseSessionXP(unitsDelta, false);
   }
 
   /**
-   * Calculates finish bonus XP
+   * Calculates finish bonus XP (deprecated - use XPService)
    */
   static calculateFinishBonus(totalUnits: number): number {
-    return 10 + Math.ceil(totalUnits / 2);
+    return XPService.calculateCourseFinishBonus(totalUnits);
   }
 
   /**

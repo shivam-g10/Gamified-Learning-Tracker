@@ -14,33 +14,45 @@ interface BooksListProps {
   books: Book[];
   search: string;
   statusFilter: string;
+  categoryFilter: string;
   onAddBook: () => void;
   onEditBook: (book: Book) => void;
   onDeleteBook: (bookId: string) => void;
   onLogProgress: (book: Book) => void;
   onToggleFocus: (book: Book) => void;
+  onViewHistory: (book: Book) => void;
   getIsInFocus: (bookId: string) => boolean;
   onSearchChange: (value: string) => void;
   onStatusFilterChange: (value: string) => void;
+  onCategoryFilterChange: (value: string) => void;
 }
 
 export function BooksList({
   books,
   search,
   statusFilter,
+  categoryFilter,
   onAddBook,
   onEditBook,
   onDeleteBook,
   onLogProgress,
   onToggleFocus,
+  onViewHistory,
   getIsInFocus,
   onSearchChange,
   onStatusFilterChange,
+  onCategoryFilterChange,
 }: BooksListProps) {
   // Apply search and filters using SearchService
   const filteredBooks = SearchService.searchBooks(books, search, {
     status: statusFilter === 'all' ? undefined : statusFilter,
+    category: categoryFilter === 'all' ? undefined : categoryFilter,
   });
+
+  // Get unique categories for filtering
+  const uniqueCategories = Array.from(
+    new Set(books.map(book => book.category))
+  ).sort();
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -100,6 +112,18 @@ export function BooksList({
             ],
             onChange: onStatusFilterChange,
           },
+          {
+            label: 'Category',
+            value: categoryFilter,
+            options: [
+              { value: 'all', label: 'All Categories' },
+              ...uniqueCategories.map(category => ({
+                value: category,
+                label: category,
+              })),
+            ],
+            onChange: onCategoryFilterChange,
+          },
         ]}
       />
 
@@ -117,7 +141,14 @@ export function BooksList({
                   by {book.author}
                 </p>
               )}
-              <div className='flex items-center gap-2 mb-2'>
+              <div className='flex items-center gap-2 mb-2 flex-wrap'>
+                {/* Category Badge */}
+                <Badge
+                  variant='outline'
+                  className='text-xs border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20'
+                >
+                  {book.category}
+                </Badge>
                 {getStatusBadge(book.status)}
                 {book.tags.length > 0 && (
                   <Badge variant='outline' className='text-xs'>
@@ -178,8 +209,17 @@ export function BooksList({
               </Button>
             </div>
 
-            {/* Edit/Delete */}
+            {/* Additional Actions */}
             <div className='flex gap-1 mt-2'>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => onViewHistory(book)}
+                className='h-7 px-2 text-muted-foreground hover:text-foreground'
+                title='View Progress History'
+              >
+                📊
+              </Button>
               <Button
                 variant='ghost'
                 size='sm'

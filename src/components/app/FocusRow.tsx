@@ -19,6 +19,8 @@ interface FocusRowProps {
   ) => Promise<void>;
   onNavigateToTab: (tab: 'quests' | 'books' | 'courses') => void;
   onToggleQuestDone?: (quest: Quest) => Promise<void>;
+  onUpdateBookProgress?: (book: Book) => void;
+  onUpdateCourseProgress?: (course: Course) => void;
 }
 
 export function FocusRow({
@@ -29,6 +31,8 @@ export function FocusRow({
   onUpdateFocus,
   onNavigateToTab,
   onToggleQuestDone,
+  onUpdateBookProgress,
+  onUpdateCourseProgress,
 }: FocusRowProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
@@ -166,8 +170,7 @@ export function FocusRow({
           </div>
 
           <div className='mb-3'>
-            {'done' in item ? // Quest - no status display needed
-            null : (
+            {'done' in item ? null : ( // Quest - no status display needed
               // Book/Course progress - show percentage
               <>
                 <div className='flex justify-between text-xs text-muted-foreground mb-1'>
@@ -177,6 +180,19 @@ export function FocusRow({
                 <Progress value={progress} className='h-2' />
                 <div className='text-xs text-muted-foreground mt-1'>
                   {progressLabel}
+                </div>
+                {/* Category display for books and courses */}
+                <div className='mt-2'>
+                  <Badge
+                    variant='outline'
+                    className={`text-xs ${
+                      'current_page' in item
+                        ? 'border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20'
+                        : 'border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/20'
+                    }`}
+                  >
+                    {item.category}
+                  </Badge>
                 </div>
               </>
             )}
@@ -188,8 +204,13 @@ export function FocusRow({
             onClick={() => {
               if ('done' in item && onToggleQuestDone) {
                 onToggleQuestDone(item);
+              } else if ('current_page' in item && onUpdateBookProgress) {
+                // Book progress update
+                onUpdateBookProgress(item);
+              } else if ('completed_units' in item && onUpdateCourseProgress) {
+                // Course progress update
+                onUpdateCourseProgress(item);
               }
-              // TODO: Handle book/course progress updates
             }}
           >
             {'done' in item

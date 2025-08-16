@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { XPService } from './xp-service';
 import type {
   Book,
   BookProgressEntry,
@@ -113,8 +114,14 @@ export class BookService {
    */
   static async logProgress(
     bookId: string,
-    data: LogBookProgressData
-  ): Promise<{ book: Book; xpEarned: number; isFinished: boolean }> {
+    data: LogBookProgressData,
+    isInFocus: boolean = false
+  ): Promise<{
+    book: Book;
+    xpEarned: number;
+    isFinished: boolean;
+    finishBonus: number;
+  }> {
     const book = await prisma.book.findUnique({
       where: { id: bookId },
     });
@@ -157,25 +164,35 @@ export class BookService {
       },
     });
 
-    // Calculate XP
-    const xpEarned = this.calculateSessionXP(pagesRead);
+    // Calculate XP with focus boost
+    const sessionXP = XPService.calculateBookSessionXP(pagesRead, isInFocus);
+    const finishBonus =
+      data.to_page >= book.total_pages
+        ? XPService.calculateBookFinishBonus(book.total_pages)
+        : 0;
+    const totalXP = sessionXP + finishBonus;
     const isFinished = data.to_page >= book.total_pages;
 
-    return { book: updatedBook, xpEarned, isFinished };
+    return {
+      book: updatedBook,
+      xpEarned: totalXP,
+      isFinished,
+      finishBonus,
+    };
   }
 
   /**
-   * Calculates XP for a reading session
+   * Calculates XP for a reading session (deprecated - use XPService)
    */
   static calculateSessionXP(pagesRead: number): number {
-    return Math.ceil(pagesRead / 5);
+    return XPService.calculateBookSessionXP(pagesRead, false);
   }
 
   /**
-   * Calculates finish bonus XP
+   * Calculates finish bonus XP (deprecated - use XPService)
    */
   static calculateFinishBonus(totalPages: number): number {
-    return Math.min(50, Math.ceil(totalPages / 10));
+    return XPService.calculateBookFinishBonus(totalPages);
   }
 
   /**

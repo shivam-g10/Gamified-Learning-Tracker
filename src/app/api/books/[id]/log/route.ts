@@ -46,19 +46,36 @@ export async function POST(
     const focusState = await FocusService.getFocusState();
     const isInFocus = focusState.book?.id === id;
 
-    // Log progress and calculate XP
-    const result = await BookService.logProgress(id, {
-      from_page,
-      to_page,
-      notes: notes || null,
-    });
+    // Log progress and calculate XP with focus boost
+    const result = await BookService.logProgress(
+      id,
+      {
+        from_page,
+        to_page,
+        notes: notes || null,
+      },
+      isInFocus
+    );
+
+    // Calculate focus boost details for response
+    const baseSessionXP = XPService.calculateBookSessionXP(
+      to_page - from_page,
+      false
+    );
+    const focusBoostXP = isInFocus
+      ? result.xpEarned - baseSessionXP - result.finishBonus
+      : 0;
 
     return NextResponse.json({
       success: true,
       book: result.book,
       xpEarned: result.xpEarned,
+      sessionXP: baseSessionXP,
+      focusBoostXP,
+      finishBonus: result.finishBonus,
       isFinished: result.isFinished,
       isInFocus,
+      pagesRead: to_page - from_page,
     });
   } catch (error) {
     console.error('Error logging book progress:', error);

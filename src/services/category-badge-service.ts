@@ -5,6 +5,9 @@ export interface CategoryProgress {
   totalItems: number;
   completedItems: number;
   percentage: number;
+  quests: { total: number; completed: number };
+  books: { total: number; completed: number };
+  courses: { total: number; completed: number };
 }
 
 export interface CategoryBadge {
@@ -28,7 +31,7 @@ export class CategoryBadgeService {
   } as const;
 
   /**
-   * Calculates category progress statistics
+   * Calculates category progress statistics with separate tracking for each type
    */
   static getCategoryProgress(
     quests: Quest[],
@@ -36,16 +39,32 @@ export class CategoryBadgeService {
     courses: Course[] = []
   ): CategoryProgress[] {
     // Combine all items by category
-    const categoryMap = new Map<string, { total: number; completed: number }>();
+    const categoryMap = new Map<
+      string,
+      {
+        total: number;
+        completed: number;
+        quests: { total: number; completed: number };
+        books: { total: number; completed: number };
+        courses: { total: number; completed: number };
+      }
+    >();
 
     // Process quests
     quests.forEach(quest => {
       const current = categoryMap.get(quest.category) || {
         total: 0,
         completed: 0,
+        quests: { total: 0, completed: 0 },
+        books: { total: 0, completed: 0 },
+        courses: { total: 0, completed: 0 },
       };
       current.total += 1;
-      if (quest.done) current.completed += 1;
+      current.quests.total += 1;
+      if (quest.done) {
+        current.completed += 1;
+        current.quests.completed += 1;
+      }
       categoryMap.set(quest.category, current);
     });
 
@@ -54,9 +73,16 @@ export class CategoryBadgeService {
       const current = categoryMap.get(book.category) || {
         total: 0,
         completed: 0,
+        quests: { total: 0, completed: 0 },
+        books: { total: 0, completed: 0 },
+        courses: { total: 0, completed: 0 },
       };
       current.total += 1;
-      if (book.status === 'finished') current.completed += 1;
+      current.books.total += 1;
+      if (book.status === 'finished') {
+        current.completed += 1;
+        current.books.completed += 1;
+      }
       categoryMap.set(book.category, current);
     });
 
@@ -65,19 +91,94 @@ export class CategoryBadgeService {
       const current = categoryMap.get(course.category) || {
         total: 0,
         completed: 0,
+        quests: { total: 0, completed: 0 },
+        books: { total: 0, completed: 0 },
+        courses: { total: 0, completed: 0 },
       };
       current.total += 1;
-      if (course.status === 'finished') current.completed += 1;
+      current.courses.total += 1;
+      if (course.status === 'finished') {
+        current.completed += 1;
+        current.courses.completed += 1;
+      }
       categoryMap.set(course.category, current);
     });
 
     // Convert to array and calculate percentages
     return Array.from(categoryMap.entries()).map(
-      ([category, { total, completed }]) => ({
+      ([category, { total, completed, quests, books, courses }]) => ({
         category,
         totalItems: total,
         completedItems: completed,
         percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+        quests,
+        books,
+        courses,
+      })
+    );
+  }
+
+  /**
+   * Gets category progress for a specific type only
+   */
+  static getCategoryProgressByType(
+    items: (Quest | Book | Course)[],
+    type: 'quests' | 'books' | 'courses'
+  ): CategoryProgress[] {
+    const categoryMap = new Map<
+      string,
+      {
+        total: number;
+        completed: number;
+        quests: { total: number; completed: number };
+        books: { total: number; completed: number };
+        courses: { total: number; completed: number };
+      }
+    >();
+
+    items.forEach(item => {
+      const category = item.category;
+      const current = categoryMap.get(category) || {
+        total: 0,
+        completed: 0,
+        quests: { total: 0, completed: 0 },
+        books: { total: 0, completed: 0 },
+        courses: { total: 0, completed: 0 },
+      };
+
+      // Determine if item is completed based on type
+      let isCompleted = false;
+      if ('done' in item) {
+        // Quest
+        isCompleted = item.done;
+        current.quests.total += 1;
+        if (isCompleted) current.quests.completed += 1;
+      } else if ('current_page' in item) {
+        // Book
+        isCompleted = item.status === 'finished';
+        current.books.total += 1;
+        if (isCompleted) current.books.completed += 1;
+      } else {
+        // Course
+        isCompleted = item.status === 'finished';
+        current.courses.total += 1;
+        if (isCompleted) current.courses.completed += 1;
+      }
+
+      current.total += 1;
+      if (isCompleted) current.completed += 1;
+      categoryMap.set(category, current);
+    });
+
+    return Array.from(categoryMap.entries()).map(
+      ([category, { total, completed, quests, books, courses }]) => ({
+        category,
+        totalItems: total,
+        completedItems: completed,
+        percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+        quests,
+        books,
+        courses,
       })
     );
   }
@@ -93,6 +194,18 @@ export class CategoryBadgeService {
     books.forEach(book => categories.add(book.category));
     courses.forEach(course => categories.add(course.category));
 
+    return Array.from(categories).sort();
+  }
+
+  /**
+   * Gets categories for a specific type only
+   */
+  static getCategoriesByType(
+    items: (Quest | Book | Course)[],
+    type: 'quests' | 'books' | 'courses'
+  ): string[] {
+    const categories = new Set<string>();
+    items.forEach(item => categories.add(item.category));
     return Array.from(categories).sort();
   }
 

@@ -37,18 +37,35 @@ export async function POST(
     const focusState = await FocusService.getFocusState();
     const isInFocus = focusState.course?.id === id;
 
-    // Log progress and calculate XP
-    const result = await CourseService.logProgress(id, {
+    // Log progress and calculate XP with focus boost
+    const result = await CourseService.logProgress(
+      id,
+      {
+        units_delta,
+        notes: notes || null,
+      },
+      isInFocus
+    );
+
+    // Calculate focus boost details for response
+    const baseSessionXP = XPService.calculateCourseSessionXP(
       units_delta,
-      notes: notes || null,
-    });
+      false
+    );
+    const focusBoostXP = isInFocus
+      ? result.xpEarned - baseSessionXP - result.finishBonus
+      : 0;
 
     return NextResponse.json({
       success: true,
       course: result.course,
       xpEarned: result.xpEarned,
+      sessionXP: baseSessionXP,
+      focusBoostXP,
+      finishBonus: result.finishBonus,
       isFinished: result.isFinished,
       isInFocus,
+      unitsCompleted: units_delta,
     });
   } catch (error) {
     console.error('Error logging course progress:', error);

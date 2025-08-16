@@ -237,4 +237,110 @@ export class XPService {
   static getFocusBoostPercentage(): number {
     return Math.round((this.FOCUS_BOOST_MULTIPLIER - 1) * 100);
   }
+
+  /**
+   * Calculates total XP from all learning sources
+   */
+  static calculateTotalXP(
+    quests: Array<{ xp: number; done: boolean }>,
+    books: Array<{ total_pages: number; status: string }> = [],
+    courses: Array<{ total_units: number; status: string }> = []
+  ): number {
+    let totalXP = 0;
+
+    // Add XP from completed quests
+    quests.forEach(quest => {
+      if (quest.done) {
+        totalXP += quest.xp;
+      }
+    });
+
+    // Add XP from finished books (estimated based on total pages)
+    books.forEach(book => {
+      if (book.status === 'finished') {
+        // Estimate XP based on total pages read
+        const estimatedPagesRead = book.total_pages;
+        const sessionXP = this.calculateBookSessionXP(
+          estimatedPagesRead,
+          false
+        );
+        const finishBonus = this.calculateBookFinishBonus(book.total_pages);
+        totalXP += sessionXP + finishBonus;
+      }
+    });
+
+    // Add XP from finished courses (estimated based on total units)
+    courses.forEach(course => {
+      if (course.status === 'finished') {
+        // Estimate XP based on total units completed
+        const estimatedUnitsCompleted = course.total_units;
+        const sessionXP = this.calculateCourseSessionXP(
+          estimatedUnitsCompleted,
+          false
+        );
+        const finishBonus = this.calculateCourseFinishBonus(course.total_units);
+        totalXP += sessionXP + finishBonus;
+      }
+    });
+
+    return totalXP;
+  }
+
+  /**
+   * Gets XP breakdown by source
+   */
+  static getXPBreakdown(
+    quests: Array<{ xp: number; done: boolean }>,
+    books: Array<{ total_pages: number; status: string }> = [],
+    courses: Array<{ total_units: number; status: string }> = []
+  ): {
+    quests: number;
+    books: number;
+    courses: number;
+    total: number;
+  } {
+    let questXP = 0;
+    let bookXP = 0;
+    let courseXP = 0;
+
+    // Calculate quest XP
+    quests.forEach(quest => {
+      if (quest.done) {
+        questXP += quest.xp;
+      }
+    });
+
+    // Calculate book XP
+    books.forEach(book => {
+      if (book.status === 'finished') {
+        const estimatedPagesRead = book.total_pages;
+        const sessionXP = this.calculateBookSessionXP(
+          estimatedPagesRead,
+          false
+        );
+        const finishBonus = this.calculateBookFinishBonus(book.total_pages);
+        bookXP += sessionXP + finishBonus;
+      }
+    });
+
+    // Calculate course XP
+    courses.forEach(course => {
+      if (course.status === 'finished') {
+        const estimatedUnitsCompleted = course.total_units;
+        const sessionXP = this.calculateCourseSessionXP(
+          estimatedUnitsCompleted,
+          false
+        );
+        const finishBonus = this.calculateCourseFinishBonus(course.total_units);
+        courseXP += sessionXP + finishBonus;
+      }
+    });
+
+    return {
+      quests: questXP,
+      books: bookXP,
+      courses: courseXP,
+      total: questXP + bookXP + courseXP,
+    };
+  }
 }
