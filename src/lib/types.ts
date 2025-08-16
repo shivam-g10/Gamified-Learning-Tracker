@@ -110,6 +110,7 @@ export type CreateCourseData = {
   platform?: string;
   url?: string;
   total_units: number;
+  category: string;
   description?: string;
   tags?: string[];
 };
@@ -121,6 +122,7 @@ export type UpdateCourseData = {
   total_units?: number;
   completed_units?: number;
   status?: 'backlog' | 'learning' | 'finished';
+  category?: string;
   description?: string;
   tags?: string[];
   started_at?: Date;

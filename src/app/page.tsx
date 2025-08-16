@@ -52,6 +52,7 @@ import { toast } from 'sonner';
 import {
   AddQuestDialog,
   AddOrEditBookDialog,
+  AddOrEditCourseDialog,
   QuestRow,
   SearchAndFilters,
   ChallengeModal,
@@ -932,7 +933,13 @@ export default function HomePage() {
         onOpenChange={setIsAddBookDialogOpen}
       />
 
-      {/* Course Dialog - TODO: Implement AddOrEditCourseDialog component */}
+      {/* Course Dialog */}
+      <AddOrEditCourseDialog
+        course={editingCourse}
+        onSubmit={handleCourseSubmit}
+        open={isAddCourseDialogOpen}
+        onOpenChange={setIsAddCourseDialogOpen}
+      />
     </>
   );
 }

@@ -20,68 +20,69 @@ import {
   DialogTrigger,
 } from '../ui/dialog';
 import { Plus, Edit } from 'lucide-react';
-import { CreateBookData, UpdateBookData } from '../../services';
-import type { Book } from '../../lib/types';
+import { CreateCourseData, UpdateCourseData } from '../../services';
+import type { Course } from '../../lib/types';
 
-interface AddOrEditBookDialogProps {
-  book?: Book | null;
-  onSubmit: (data: CreateBookData | UpdateBookData) => Promise<void>;
+interface AddOrEditCourseDialogProps {
+  course?: Course | null;
+  onSubmit: (data: CreateCourseData | UpdateCourseData) => Promise<void>;
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-export function AddOrEditBookDialog({
-  book,
+export function AddOrEditCourseDialog({
+  course,
   onSubmit,
   trigger,
   open: externalOpen,
   onOpenChange: externalOnOpenChange,
-}: AddOrEditBookDialogProps) {
+}: AddOrEditCourseDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
 
   // Use external state if provided, otherwise use internal state
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const setOpen = externalOnOpenChange || setInternalOpen;
 
-  const [formData, setFormData] = useState<CreateBookData | UpdateBookData>({
-    title: '',
-    author: '',
-    total_pages: 0,
-    category: '',
-    description: '',
-    tags: [],
-    cover_url: '',
-  });
+  const [formData, setFormData] = useState<CreateCourseData | UpdateCourseData>(
+    {
+      title: '',
+      platform: '',
+      url: '',
+      total_units: 0,
+      description: '',
+      category: '',
+      tags: [],
+    }
+  );
 
-  const isEditing = !!book;
+  const isEditing = !!course;
 
   // Update form data when editing
   useEffect(() => {
-    if (book) {
+    if (course) {
       setFormData({
-        title: book.title,
-        author: book.author || '',
-        total_pages: book.total_pages,
-        current_page: book.current_page,
-        status: book.status,
-        description: book.description || '',
-        tags: book.tags || [],
-        cover_url: book.cover_url || '',
-        category: book.category,
+        title: course.title,
+        platform: course.platform || '',
+        url: course.url || '',
+        total_units: course.total_units,
+        completed_units: course.completed_units,
+        status: course.status,
+        description: course.description || '',
+        category: course.category,
+        tags: course.tags || [],
       });
     } else {
       setFormData({
         title: '',
-        author: '',
-        total_pages: 0,
+        platform: '',
+        url: '',
+        total_units: 0,
         description: '',
         tags: [],
-        cover_url: '',
-        category: '',
       });
     }
-  }, [book]);
+  }, [course]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,17 +91,17 @@ export function AddOrEditBookDialog({
       if (!isEditing) {
         setFormData({
           title: '',
-          author: '',
-          total_pages: 0,
+          platform: '',
+          url: '',
+          total_units: 0,
           description: '',
-          tags: [],
-          cover_url: '',
           category: '',
+          tags: [],
         });
       }
       setOpen(false);
     } catch (error) {
-      console.error(`Failed to ${isEditing ? 'update' : 'add'} book:`, error);
+      console.error(`Failed to ${isEditing ? 'update' : 'add'} course:`, error);
     }
   };
 
@@ -122,12 +123,12 @@ export function AddOrEditBookDialog({
   const defaultTrigger = isEditing ? (
     <Button size='sm' variant='outline' className='hidden'>
       <Edit className='w-4 h-4 mr-2' />
-      Edit Book
+      Edit Course
     </Button>
   ) : (
     <Button size='sm' className='hidden'>
       <Plus className='w-4 h-4 mr-2' />
-      Add Book
+      Add Course
     </Button>
   );
 
@@ -136,11 +137,13 @@ export function AddOrEditBookDialog({
       <DialogTrigger asChild>{trigger || defaultTrigger}</DialogTrigger>
       <DialogContent className='sm:max-w-[500px] max-h-[85vh] flex flex-col'>
         <DialogHeader className='flex-shrink-0'>
-          <DialogTitle>{isEditing ? 'Edit Book' : 'Add New Book'}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? 'Edit Course' : 'Add New Course'}
+          </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? 'Update your book information.'
-              : 'Add a new book to your learning library.'}
+              ? 'Update your course information.'
+              : 'Add a new course to your learning library.'}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -159,7 +162,7 @@ export function AddOrEditBookDialog({
               </Label>
               <Input
                 id='title'
-                placeholder='Book title'
+                placeholder='Course title'
                 value={formData.title || ''}
                 onChange={e => handleInputChange('title', e.target.value)}
                 required
@@ -169,84 +172,117 @@ export function AddOrEditBookDialog({
 
             <div className='grid grid-cols-2 gap-3'>
               <div className='space-y-1.5'>
-                <Label htmlFor='author' className='text-sm'>
-                  Author
+                <Label htmlFor='platform' className='text-sm'>
+                  Platform
                 </Label>
                 <Input
-                  id='author'
-                  placeholder='Author name'
-                  value={formData.author || ''}
-                  onChange={e => handleInputChange('author', e.target.value)}
+                  id='platform'
+                  placeholder='e.g., Udemy, Coursera'
+                  value={formData.platform || ''}
+                  onChange={e => handleInputChange('platform', e.target.value)}
                   className='h-9'
                 />
               </div>
 
               <div className='space-y-1.5'>
-                <Label htmlFor='total_pages' className='text-sm'>
-                  Total Pages *
+                <Label htmlFor='category' className='text-sm'>
+                  Category *
                 </Label>
                 <Input
-                  id='total_pages'
-                  type='number'
-                  min='1'
-                  placeholder='0'
-                  value={formData.total_pages || ''}
-                  onChange={e =>
-                    handleInputChange(
-                      'total_pages',
-                      parseInt(e.target.value) || 0
-                    )
-                  }
+                  id='category'
+                  placeholder='e.g., Programming'
+                  value={formData.category || ''}
+                  onChange={e => handleInputChange('category', e.target.value)}
                   required
                   className='h-9'
                 />
               </div>
             </div>
+
+            <div className='space-y-1.5'>
+              <Label htmlFor='url' className='text-sm'>
+                Course URL
+              </Label>
+              <Input
+                id='url'
+                type='url'
+                placeholder='https://example.com/course'
+                value={formData.url || ''}
+                onChange={e => handleInputChange('url', e.target.value)}
+                className='h-9'
+              />
+            </div>
+
+            <div className='space-y-1.5'>
+              <Label htmlFor='total_units' className='text-sm'>
+                Total Units *
+              </Label>
+              <Input
+                id='total_units'
+                type='number'
+                min='1'
+                placeholder='0'
+                value={formData.total_units || ''}
+                onChange={e =>
+                  handleInputChange(
+                    'total_units',
+                    parseInt(e.target.value) || 0
+                  )
+                }
+                required
+                className='h-9'
+              />
+            </div>
           </div>
 
           {/* Progress & Status (Editing Only) */}
           {isEditing && (
-            <div className='space-y-4'>
-              <h4 className='text-sm font-medium text-muted-foreground border-b pb-2'>
+            <div className='space-y-3'>
+              <h4 className='text-sm font-medium text-muted-foreground border-b pb-1'>
                 Progress & Status
               </h4>
 
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='current_page'>Current Page</Label>
+              <div className='grid grid-cols-2 gap-3'>
+                <div className='space-y-1.5'>
+                  <Label htmlFor='completed_units' className='text-sm'>
+                    Completed Units
+                  </Label>
                   <Input
-                    id='current_page'
+                    id='completed_units'
                     type='number'
                     min='0'
-                    max={formData.total_pages || 0}
+                    max={formData.total_units || 0}
                     placeholder='0'
-                    value={(formData as UpdateBookData).current_page || ''}
+                    value={(formData as UpdateCourseData).completed_units || ''}
                     onChange={e =>
                       handleInputChange(
-                        'current_page',
+                        'completed_units',
                         parseInt(e.target.value) || 0
                       )
                     }
+                    className='h-9'
                   />
                 </div>
 
-                <div className='space-y-2'>
-                  <Label htmlFor='status'>Status</Label>
+                <div className='space-y-1.5'>
+                  <Label htmlFor='status' className='text-sm'>
+                    Status
+                  </Label>
                   <Select
-                    value={(formData as UpdateBookData).status || 'backlog'}
+                    value={(formData as UpdateCourseData).status || 'backlog'}
                     onValueChange={value =>
                       handleInputChange(
                         'status',
-                        value as 'backlog' | 'reading' | 'finished'
+                        value as 'backlog' | 'learning' | 'finished'
                       )
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className='h-9'>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value='backlog'>Backlog</SelectItem>
-                      <SelectItem value='reading'>Reading</SelectItem>
+                      <SelectItem value='learning'>Learning</SelectItem>
                       <SelectItem value='finished'>Finished</SelectItem>
                     </SelectContent>
                   </Select>
@@ -256,51 +292,35 @@ export function AddOrEditBookDialog({
           )}
 
           {/* Additional Information */}
-          <div className='space-y-4'>
-            <h4 className='text-sm font-medium text-muted-foreground border-b pb-2'>
+          <div className='space-y-3'>
+            <h4 className='text-sm font-medium text-muted-foreground border-b pb-1'>
               Additional Information
             </h4>
 
-            <div className='space-y-2'>
-              <Label htmlFor='category'>Category *</Label>
-              <Input
-                id='category'
-                placeholder='e.g., Programming, Fiction, Science, etc.'
-                value={formData.category || ''}
-                onChange={e => handleInputChange('category', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='description'>Description</Label>
+            <div className='space-y-1.5'>
+              <Label htmlFor='description' className='text-sm'>
+                Description
+              </Label>
               <Textarea
                 id='description'
-                placeholder='Brief description of the book'
+                placeholder='Brief description of the course'
                 value={formData.description || ''}
                 onChange={e => handleInputChange('description', e.target.value)}
-                rows={3}
+                rows={2}
+                className='min-h-[60px]'
               />
             </div>
 
-            <div className='space-y-2'>
-              <Label htmlFor='tags'>Tags</Label>
+            <div className='space-y-1.5'>
+              <Label htmlFor='tags' className='text-sm'>
+                Tags
+              </Label>
               <Input
                 id='tags'
                 placeholder='tag1, tag2, tag3 (comma-separated)'
                 value={formData.tags?.join(', ') || ''}
                 onChange={e => handleTagsChange(e.target.value)}
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='cover_url'>Cover URL</Label>
-              <Input
-                id='cover_url'
-                type='url'
-                placeholder='https://example.com/cover.jpg'
-                value={formData.cover_url || ''}
-                onChange={e => handleInputChange('cover_url', e.target.value)}
+                className='h-9'
               />
             </div>
           </div>
@@ -317,7 +337,7 @@ export function AddOrEditBookDialog({
               type='submit'
               className='bg-primary hover:bg-primary/90 text-primary-foreground'
             >
-              {isEditing ? 'Update Book' : 'Add Book'}
+              {isEditing ? 'Update Course' : 'Add Course'}
             </Button>
           </DialogFooter>
         </form>

@@ -34,12 +34,21 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { title, platform, url, total_units, description, tags } = body;
+    const { title, platform, url, total_units, description, category, tags } =
+      body;
 
     // Validation
-    if (!title || typeof total_units !== 'number' || total_units < 0) {
+    if (
+      !title ||
+      typeof total_units !== 'number' ||
+      total_units < 0 ||
+      !category
+    ) {
       return NextResponse.json(
-        { error: 'Invalid payload. Title and total_units are required.' },
+        {
+          error:
+            'Invalid payload. Title, total_units, and category are required.',
+        },
         { status: 400 }
       );
     }
@@ -49,6 +58,7 @@ export async function POST(req: NextRequest) {
       platform,
       url,
       total_units,
+      category,
       description,
       tags,
     });

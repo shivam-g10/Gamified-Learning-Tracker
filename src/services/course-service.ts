@@ -18,6 +18,7 @@ export class CourseService {
         platform: data.platform,
         url: data.url,
         total_units: data.total_units,
+        category: data.category,
         description: data.description,
         tags: data.tags || [],
       },
