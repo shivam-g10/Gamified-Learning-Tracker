@@ -69,7 +69,7 @@ export function FocusChips({
                 onClick={() => onToggleFocus(q)}
                 variant='ghost'
                 size='sm'
-                className='absolute top-2 right-2 opacity-0 group-hover:opacity-100 hover:bg-primary/30 hover:text-primary active:bg-primary/40 focus:bg-primary/30 focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full p-1 h-6 w-6 transition-all duration-200'
+                className='absolute top-2 right-2 opacity-0 group-hover:opacity-100 hover:bg-primary/30 hover:text-primary active:bg-primary/40 focus:bg-primary/30 focus:ring-1 focus:ring-ring focus:ring-offset-2 rounded-full p-1 h-6 w-6 transition-all duration-200'
               >
                 <X className='w-3 h-3' />
               </Button>

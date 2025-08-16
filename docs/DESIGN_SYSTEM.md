@@ -1,4 +1,4 @@
-# 🎨 Design System — CS → Gamified Learning Tracker
+# 🎨 Design System — GyaanQuest
 
 **Modes:** Light & Dark • **System:** shadcn/ui-compatible (semantic tokens)
 

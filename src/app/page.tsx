@@ -34,7 +34,6 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card';
-import { Progress } from '../components/ui/progress';
 import { Button } from '../components/ui/button';
 import {
   Tooltip,
@@ -757,7 +756,7 @@ export default function HomePage() {
                         onClick={handleDailyCheckIn}
                         variant='outline'
                         size='sm'
-                        className={`transition-all duration-200 focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
+                        className={`transition-all duration-200 focus:ring-1 focus:ring-ring focus:ring-offset-2 ${
                           appState?.last_check_in &&
                           new Date(appState.last_check_in).toDateString() ===
                             new Date().toDateString()
@@ -786,7 +785,7 @@ export default function HomePage() {
                         onClick={handleRandomChallenge}
                         variant='outline'
                         size='sm'
-                        className='transition-all duration-200 focus:ring-2 focus:ring-ring focus:ring-offset-2 hover:bg-muted/50 hover:border-muted-foreground/50'
+                        className='transition-all duration-200 focus:ring-1 focus:ring-ring focus:ring-offset-2 hover:bg-muted/50 hover:border-muted-foreground/50'
                       >
                         <Dices className='w-4 h-4 mr-1' />
                       </Button>
@@ -827,10 +826,42 @@ export default function HomePage() {
 
             {/* Progress Bar */}
             <div className='mb-4'>
-              <Progress
-                value={levelInfo.pct}
-                className='h-3 progress-shimmer'
-              />
+              <div className='relative progress-shimmer'>
+                {/* Background Track */}
+                <div className='w-full h-3 bg-muted/50 rounded-full overflow-hidden'>
+                  {/* Progress Fill */}
+                  <div
+                    className={`h-full transition-all duration-300 ease-out rounded-full ${
+                      levelInfo.pct >= 100
+                        ? 'bg-success'
+                        : levelInfo.pct >= 75
+                          ? 'bg-accent'
+                          : levelInfo.pct >= 50
+                            ? 'bg-secondary'
+                            : levelInfo.pct >= 25
+                              ? 'bg-primary'
+                              : 'bg-muted-foreground/50'
+                    }`}
+                    style={{ width: `${levelInfo.pct}%` }}
+                  />
+                </div>
+
+                {/* Progress Ticks - Only show if there's progress */}
+                {levelInfo.pct > 0 && (
+                  <div className='absolute inset-0 flex justify-between items-center pointer-events-none'>
+                    {[25, 50, 75, 100].map(tick => (
+                      <div
+                        key={tick}
+                        className={`w-0.5 h-3 rounded-full ${
+                          levelInfo.pct >= tick
+                            ? 'bg-foreground/20'
+                            : 'bg-transparent'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Badges Section - Small and Thin */}

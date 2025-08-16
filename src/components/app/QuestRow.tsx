@@ -44,7 +44,7 @@ export function QuestRow({
           type='checkbox'
           checked={quest.done}
           onChange={() => onToggleDone(quest)}
-          className='w-5 h-5 rounded border-input bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-0 transition-all duration-200 hover:scale-110'
+          className='w-5 h-5 rounded border-input bg-background text-primary focus:ring-1 focus:ring-ring focus:ring-offset-0 transition-all duration-200 hover:scale-110'
         />
       </div>
 
@@ -99,13 +99,11 @@ export function QuestRow({
           onClick={() => onToggleFocus(quest)}
           variant={isInFocus ? 'default' : 'outline'}
           size='sm'
-          className={`
-            transition-all duration-200 focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-              isInFocus
-                ? 'bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 shadow-sm'
-                : 'border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40 active:bg-primary/30 focus:bg-primary/20 hover:shadow-sm'
-            }
-          `}
+          className={`transition-all duration-200 focus:ring-1 focus:ring-ring focus:ring-offset-2 ${
+            isInFocus
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 shadow-sm'
+              : 'border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40 active:bg-primary/30 focus:bg-primary/20 hover:shadow-sm'
+          }`}
         >
           <Target className='h-4 w-4 mr-1' />
           {isInFocus ? 'Unfocus' : 'Focus'}
@@ -115,7 +113,7 @@ export function QuestRow({
           onClick={() => onDelete(quest)}
           variant='ghost'
           size='sm'
-          className='opacity-0 group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive hover:border-destructive/30 active:bg-destructive/30 focus:bg-destructive/20 focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all duration-200'
+          className='opacity-0 group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive hover:border-destructive/30 active:bg-destructive/30 focus:bg-destructive/20 focus:text-destructive focus:ring-1 focus:ring-ring focus:ring-offset-2 transition-all duration-200'
         >
           <Trash2 className='w-4 h-4' />
         </Button>

@@ -227,13 +227,11 @@ export function CoursesList({
                 variant='outline'
                 size='sm'
                 onClick={() => onToggleFocus(course)}
-                className={`
-                  transition-all duration-200 focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-                    getIsInFocus(course.id)
-                      ? 'bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 shadow-sm'
-                      : 'border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40 active:bg-primary/30 focus:bg-primary/20 hover:shadow-sm'
-                  }
-                `}
+                className={`transition-all duration-200 focus:ring-1 focus:ring-ring focus:ring-offset-2 ${
+                  getIsInFocus(course.id)
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 shadow-sm'
+                    : 'border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40 active:bg-primary/30 focus:bg-primary/20 hover:shadow-sm'
+                }`}
               >
                 {getIsInFocus(course.id) ? 'Unfocus' : 'Focus'}
               </Button>

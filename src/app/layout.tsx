@@ -110,7 +110,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <header className='border-b border-border bg-background'>
             <div className='container-narrow py-4 flex items-center justify-between'>
               <h1 className='text-lg font-semibold text-foreground'>
-                CS → Gamified Learning Tracker
+                GyaanQuest
               </h1>
               <div className='flex items-center gap-2'>
                 <ThemeToggle />
