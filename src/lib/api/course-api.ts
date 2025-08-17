@@ -17,7 +17,7 @@ export class CourseAPI {
       }
       const data = await response.json();
       return succeed(data);
-    } catch (error) {
+    } catch {
       return fail('Failed to fetch courses');
     }
   }
@@ -30,7 +30,7 @@ export class CourseAPI {
       }
       const course = await response.json();
       return succeed(course);
-    } catch (error) {
+    } catch {
       return fail('Failed to fetch course');
     }
   }
@@ -49,7 +49,7 @@ export class CourseAPI {
       }
       const course = await response.json();
       return succeed(course);
-    } catch (error) {
+    } catch {
       return fail('Failed to create course');
     }
   }
@@ -71,7 +71,7 @@ export class CourseAPI {
       }
       const course = await response.json();
       return succeed(course);
-    } catch (error) {
+    } catch {
       return fail('Failed to update course');
     }
   }
@@ -85,7 +85,7 @@ export class CourseAPI {
         return fail('Failed to delete course');
       }
       return succeed(undefined);
-    } catch (error) {
+    } catch {
       return fail('Failed to delete course');
     }
   }
@@ -95,7 +95,7 @@ export class CourseAPI {
     data: LogCourseProgressData
   ): Promise<Result<Course>> {
     try {
-      const response = await fetch(`/api/courses/${id}/progress`, {
+      const response = await fetch(`/api/courses/${id}/log`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ export class CourseAPI {
       }
       const course = await response.json();
       return succeed(course);
-    } catch (error) {
+    } catch {
       return fail('Failed to log progress');
     }
   }
@@ -124,7 +124,7 @@ export class CourseAPI {
       }
       const data = await response.json();
       return succeed(data);
-    } catch (error) {
+    } catch {
       return fail('Failed to fetch courses by category');
     }
   }
@@ -139,7 +139,7 @@ export class CourseAPI {
       }
       const data = await response.json();
       return succeed(data);
-    } catch (error) {
+    } catch {
       return fail('Failed to fetch courses by status');
     }
   }
@@ -156,7 +156,7 @@ export class CourseAPI {
       }
       const data = await response.json();
       return succeed(data);
-    } catch (error) {
+    } catch {
       return fail('Failed to fetch courses by platform');
     }
   }
@@ -170,8 +170,8 @@ export class CourseAPI {
         return fail('Failed to fetch course progress history');
       }
       const data = await response.json();
-      return succeed(data);
-    } catch (error) {
+      return succeed(data.progressEntries);
+    } catch {
       return fail('Failed to fetch course progress history');
     }
   }

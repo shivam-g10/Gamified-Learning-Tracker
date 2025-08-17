@@ -2,7 +2,7 @@
 
 import { FocusState } from '../lib/types';
 import type { ChallengeItem } from '../lib/api-types';
-import { Result, succeed, fail } from '../lib/result';
+import { Result } from '../lib/result';
 import { ChallengeAPI } from '../lib/api';
 
 export type { ChallengeItem } from '../lib/api-types';

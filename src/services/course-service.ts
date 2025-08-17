@@ -8,7 +8,7 @@ import type {
   UpdateCourseData,
   LogCourseProgressData,
 } from '../lib/types';
-import { Result, succeed, fail } from '../lib/result';
+
 import { CourseAPI } from '../lib/api';
 
 export class CourseService {

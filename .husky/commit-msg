@@ -1,1 +1,50 @@
-npx --yes @commitlint/cli@latest --edit $1
+echo "📝 Validating commit message format..."
+echo ""
+
+# Get the commit message
+commit_msg=$(cat "$1")
+
+# Check if commit message follows conventional format
+if ! echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .+"; then
+  echo "❌ Invalid commit message format!"
+  echo ""
+  echo "📋 Commit message must follow conventional format:"
+  echo "   <type>(<scope>): <description>"
+  echo ""
+  echo "🔍 Valid types:"
+  echo "   feat     - New feature"
+  echo "   fix      - Bug fix"
+  echo "   docs     - Documentation changes"
+  echo "   style    - Code style changes (formatting, etc.)"
+  echo "   refactor - Code refactoring"
+  echo "   test     - Adding or updating tests"
+  echo "   chore    - Maintenance tasks"
+  echo "   perf     - Performance improvements"
+  echo "   ci       - CI/CD changes"
+  echo "   build    - Build system changes"
+  echo "   revert   - Reverting previous commits"
+  echo ""
+  echo "💡 Examples:"
+  echo "   feat: add new quest management system"
+  echo "   fix(auth): resolve login validation issue"
+  echo "   docs: update API documentation"
+  echo "   style: format code with prettier"
+  echo ""
+  echo "🚫 Commit blocked. Please fix the message format."
+  exit 1
+fi
+
+# Check commit message length
+if [ ${#commit_msg} -gt 72 ]; then
+  echo "❌ Commit message too long!"
+  echo "📏 Maximum length: 72 characters"
+  echo "📝 Current length: ${#commit_msg} characters"
+  echo ""
+  echo "💡 Keep the first line under 72 characters"
+  echo "   Use the body for additional details"
+  exit 1
+fi
+
+echo "✅ Commit message format is valid!"
+echo "💡 Remember: AI agents MUST ask for explicit consent before committing"
+echo "💡 Run 'pnpm ci:check' for full validation before pushing"

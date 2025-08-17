@@ -1,0 +1,27 @@
+echo "🚀 Running pre-push CI validation..."
+echo "⚠️  This hook will BLOCK pushes if any CI checks fail"
+echo ""
+
+# Run full CI validation
+echo "🔍 Running comprehensive CI checks..."
+pnpm ci:check
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ CI validation failed! Push blocked."
+  echo ""
+  echo "💡 To fix issues:"
+  echo "   1. Run 'pnpm ci:check' to see all failures"
+  echo "   2. Fix formatting: 'pnpm format'"
+  echo "   3. Fix linting: 'pnpm lint:fix'"
+  echo "   4. Fix types: Check TypeScript errors"
+  echo "   5. Fix build: Resolve build issues"
+  echo "   6. Run 'pnpm ci:check' again"
+  echo ""
+  echo "🚫 Push blocked until all CI checks pass"
+  exit 1
+fi
+
+echo ""
+echo "🎉 All CI checks passed! Push allowed."
+echo "💡 Remember: AI agents MUST ask for explicit consent before committing"

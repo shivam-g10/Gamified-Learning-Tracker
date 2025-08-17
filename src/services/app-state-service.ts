@@ -1,7 +1,7 @@
 'use client';
 
 import { AppState } from '../lib/api-types';
-import { Result, succeed, fail } from '../lib/result';
+import { Result, fail } from '../lib/result';
 import { AppStateAPI } from '../lib/api';
 
 export interface UpdateAppStateData {

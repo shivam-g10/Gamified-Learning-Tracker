@@ -1,7 +1,7 @@
 'use client';
 
 import type { FocusState } from '../lib/types';
-import { Result, succeed, fail } from '../lib/result';
+
 import { FocusAPI } from '../lib/api';
 
 export class FocusService {
@@ -65,7 +65,7 @@ export class FocusService {
       }
 
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -105,7 +105,7 @@ export class FocusService {
       }
 
       return false;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -130,7 +130,7 @@ export class FocusService {
       }
 
       return null;
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -169,7 +169,7 @@ export class FocusService {
         courseCount,
         totalCount: questCount + bookCount + courseCount,
       };
-    } catch (error) {
+    } catch {
       return {
         questCount: 0,
         bookCount: 0,

@@ -12,7 +12,7 @@ export class FocusAPI {
       }
       const data = await response.json();
       return succeed(data);
-    } catch (error) {
+    } catch {
       return fail('Failed to fetch focus state');
     }
   }
@@ -34,7 +34,7 @@ export class FocusAPI {
       }
       const data = await response.json();
       return succeed(data);
-    } catch (error) {
+    } catch {
       return fail('Failed to set focus');
     }
   }
@@ -55,7 +55,7 @@ export class FocusAPI {
       }
       const data = await response.json();
       return succeed(data);
-    } catch (error) {
+    } catch {
       return fail('Failed to remove focus');
     }
   }
@@ -70,7 +70,7 @@ export class FocusAPI {
       }
       const data = await response.json();
       return succeed(data);
-    } catch (error) {
+    } catch {
       return fail('Failed to clear focus');
     }
   }

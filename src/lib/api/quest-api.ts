@@ -12,7 +12,7 @@ export class QuestAPI {
       }
       const data = await response.json();
       return succeed(data);
-    } catch (error) {
+    } catch {
       return fail('Failed to fetch quests');
     }
   }
@@ -31,7 +31,7 @@ export class QuestAPI {
       }
       const quest = await response.json();
       return succeed(quest);
-    } catch (error) {
+    } catch {
       return fail('Failed to create quest');
     }
   }
@@ -53,7 +53,7 @@ export class QuestAPI {
       }
       const quest = await response.json();
       return succeed(quest);
-    } catch (error) {
+    } catch {
       return fail('Failed to update quest');
     }
   }
@@ -67,7 +67,7 @@ export class QuestAPI {
         return fail('Failed to delete quest');
       }
       return succeed(undefined);
-    } catch (error) {
+    } catch {
       return fail('Failed to delete quest');
     }
   }
@@ -86,7 +86,7 @@ export class QuestAPI {
       }
       const quest = await response.json();
       return succeed(quest);
-    } catch (error) {
+    } catch {
       return fail('Failed to toggle quest completion');
     }
   }
@@ -99,7 +99,7 @@ export class QuestAPI {
       }
       const quest = await response.json();
       return succeed(quest);
-    } catch (error) {
+    } catch {
       return fail('Failed to get random challenge');
     }
   }

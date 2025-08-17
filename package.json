@@ -24,7 +24,13 @@
     "docker:prod": "docker compose up --build",
     "docker:down": "docker compose down",
     "docker:clean": "docker compose down -v --remove-orphans",
-    "prepare": "husky"
+    "prepare": "husky",
+    "ci:check": "pnpm format:check && pnpm lint && pnpm type-check && pnpm build",
+    "ci:check:format": "pnpm format:check",
+    "ci:check:lint": "pnpm lint",
+    "ci:check:types": "pnpm type-check",
+    "ci:check:build": "pnpm build",
+    "pre-commit:check": "pnpm format:check && pnpm lint && pnpm type-check"
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",
@@ -40,7 +46,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.539.0",
-    "next": "^15.4.6",
+    "next": "15.1.0",
     "next-themes": "^0.4.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

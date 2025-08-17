@@ -54,7 +54,7 @@ export class BookManagementService {
         message: 'Book added successfully!',
         book,
       });
-    } catch (error) {
+    } catch {
       return fail('Failed to create book. Please try again.');
     }
   }
@@ -95,7 +95,7 @@ export class BookManagementService {
         message: 'Book updated successfully!',
         book,
       });
-    } catch (error) {
+    } catch {
       return fail('Failed to update book. Please try again.');
     }
   }
@@ -112,7 +112,7 @@ export class BookManagementService {
       return succeed({
         message: 'Book deleted successfully!',
       });
-    } catch (error) {
+    } catch {
       return fail('Failed to delete book. Please try again.');
     }
   }
@@ -144,7 +144,7 @@ export class BookManagementService {
         finishBonus: result.finishBonus,
         isFinished: result.isFinished,
       });
-    } catch (error) {
+    } catch {
       return fail('Failed to log progress. Please try again.');
     }
   }

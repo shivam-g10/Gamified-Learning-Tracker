@@ -8,7 +8,7 @@ import type {
   UpdateBookData,
   LogBookProgressData,
 } from '../lib/types';
-import { Result, succeed, fail } from '../lib/result';
+
 import { BookAPI } from '../lib/api';
 
 export class BookService {

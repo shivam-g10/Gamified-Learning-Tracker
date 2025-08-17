@@ -12,7 +12,7 @@ export class AppStateAPI {
       }
       const data = await response.json();
       return succeed(data);
-    } catch (error) {
+    } catch {
       return fail('Failed to fetch app state');
     }
   }
@@ -26,7 +26,7 @@ export class AppStateAPI {
         return fail('Failed to record check-in');
       }
       return succeed(undefined);
-    } catch (error) {
+    } catch {
       return fail('Failed to record check-in');
     }
   }
@@ -47,7 +47,7 @@ export class AppStateAPI {
       }
       const appState = await response.json();
       return succeed(appState);
-    } catch (error) {
+    } catch {
       return fail('Failed to update app state');
     }
   }

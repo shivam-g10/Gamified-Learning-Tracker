@@ -54,7 +54,7 @@ export class CourseManagementService {
         message: 'Course added successfully!',
         course,
       });
-    } catch (error) {
+    } catch {
       return fail('Failed to add course. Please try again.');
     }
   }
@@ -95,7 +95,7 @@ export class CourseManagementService {
         message: 'Course updated successfully!',
         course,
       });
-    } catch (error) {
+    } catch {
       return fail('Failed to update course. Please try again.');
     }
   }
@@ -112,7 +112,7 @@ export class CourseManagementService {
       return succeed({
         message: 'Course deleted successfully!',
       });
-    } catch (error) {
+    } catch {
       return fail('Failed to delete course. Please try again.');
     }
   }
@@ -140,7 +140,7 @@ export class CourseManagementService {
         finishBonus: result.finishBonus,
         isFinished: result.isFinished,
       });
-    } catch (error) {
+    } catch {
       return fail('Failed to log progress. Please try again.');
     }
   }

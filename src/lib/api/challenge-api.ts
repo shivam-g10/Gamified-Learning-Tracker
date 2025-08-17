@@ -12,7 +12,7 @@ export class ChallengeAPI {
       }
       const data = await response.json();
       return succeed(data);
-    } catch (error) {
+    } catch {
       return fail('Failed to get random challenge');
     }
   }
@@ -30,7 +30,7 @@ export class ChallengeAPI {
         return fail('Failed to accept challenge');
       }
       return succeed(undefined);
-    } catch (error) {
+    } catch {
       return fail('Failed to accept challenge');
     }
   }

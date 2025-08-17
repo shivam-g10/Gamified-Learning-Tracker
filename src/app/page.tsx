@@ -452,7 +452,6 @@ export default function HomePage() {
     async (quest: Quest) => {
       try {
         const isCurrentlyFocused = focusState?.quest?.id === quest.id;
-        const action = isCurrentlyFocused ? 'remove' : 'switch';
 
         if (isCurrentlyFocused) {
           await FocusService.removeFocus('quest');
@@ -475,7 +474,6 @@ export default function HomePage() {
     async (book: Book) => {
       try {
         const isCurrentlyFocused = focusState?.book?.id === book.id;
-        const action = isCurrentlyFocused ? 'remove' : 'switch';
 
         if (isCurrentlyFocused) {
           await FocusService.removeFocus('book');
@@ -498,7 +496,6 @@ export default function HomePage() {
     async (course: Course) => {
       try {
         const isCurrentlyFocused = focusState?.course?.id === course.id;
-        const action = isCurrentlyFocused ? 'remove' : 'switch';
 
         if (isCurrentlyFocused) {
           await FocusService.removeFocus('course');

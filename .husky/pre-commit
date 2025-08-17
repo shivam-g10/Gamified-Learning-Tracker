@@ -1,1 +1,1 @@
-pnpm lint
+pnpm pre-commit:check

@@ -1,7 +1,7 @@
 'use client';
 
 import { Quest } from '../lib/types';
-import { Result, succeed, fail } from '../lib/result';
+import { Result } from '../lib/result';
 import { QuestAPI } from '../lib/api';
 
 export interface CreateQuestData {

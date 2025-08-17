@@ -17,7 +17,7 @@ export class BookAPI {
       }
       const data = await response.json();
       return succeed(data);
-    } catch (error) {
+    } catch {
       return fail('Failed to fetch books');
     }
   }
@@ -30,7 +30,7 @@ export class BookAPI {
       }
       const book = await response.json();
       return succeed(book);
-    } catch (error) {
+    } catch {
       return fail('Failed to fetch book');
     }
   }
@@ -49,7 +49,7 @@ export class BookAPI {
       }
       const book = await response.json();
       return succeed(book);
-    } catch (error) {
+    } catch {
       return fail('Failed to create book');
     }
   }
@@ -71,7 +71,7 @@ export class BookAPI {
       }
       const book = await response.json();
       return succeed(book);
-    } catch (error) {
+    } catch {
       return fail('Failed to update book');
     }
   }
@@ -85,7 +85,7 @@ export class BookAPI {
         return fail('Failed to delete book');
       }
       return succeed(undefined);
-    } catch (error) {
+    } catch {
       return fail('Failed to delete book');
     }
   }
@@ -95,7 +95,7 @@ export class BookAPI {
     data: LogBookProgressData
   ): Promise<Result<Book>> {
     try {
-      const response = await fetch(`/api/books/${id}/progress`, {
+      const response = await fetch(`/api/books/${id}/log`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ export class BookAPI {
       }
       const book = await response.json();
       return succeed(book);
-    } catch (error) {
+    } catch {
       return fail('Failed to log progress');
     }
   }
@@ -122,7 +122,7 @@ export class BookAPI {
       }
       const data = await response.json();
       return succeed(data);
-    } catch (error) {
+    } catch {
       return fail('Failed to fetch books by category');
     }
   }
@@ -137,7 +137,7 @@ export class BookAPI {
       }
       const data = await response.json();
       return succeed(data);
-    } catch (error) {
+    } catch {
       return fail('Failed to fetch books by status');
     }
   }
@@ -151,8 +151,8 @@ export class BookAPI {
         return fail('Failed to fetch book progress history');
       }
       const data = await response.json();
-      return succeed(data);
-    } catch (error) {
+      return succeed(data.progressEntries);
+    } catch {
       return fail('Failed to fetch book progress history');
     }
   }
