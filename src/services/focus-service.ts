@@ -52,7 +52,7 @@ export class FocusService {
   ): Promise<boolean> {
     try {
       const focusState = await this.getFocusState();
-      
+
       // Check if the type is already in focus
       if (type === 'quest' && focusState.quest) {
         return false;
@@ -63,7 +63,7 @@ export class FocusService {
       if (type === 'course' && focusState.course) {
         return false;
       }
-      
+
       return true;
     } catch (error) {
       return false;
@@ -93,7 +93,7 @@ export class FocusService {
   ): Promise<boolean> {
     try {
       const focusState = await this.getFocusState();
-      
+
       if (type === 'quest' && focusState.quest?.id === id) {
         return true;
       }
@@ -103,7 +103,7 @@ export class FocusService {
       if (type === 'course' && focusState.course?.id === id) {
         return true;
       }
-      
+
       return false;
     } catch (error) {
       return false;
@@ -118,7 +118,7 @@ export class FocusService {
   ): Promise<string | null> {
     try {
       const focusState = await this.getFocusState();
-      
+
       if (type === 'quest' && focusState.quest) {
         return focusState.quest.id;
       }
@@ -128,7 +128,7 @@ export class FocusService {
       if (type === 'course' && focusState.course) {
         return focusState.course.id;
       }
-      
+
       return null;
     } catch (error) {
       return null;
@@ -158,7 +158,7 @@ export class FocusService {
   }> {
     try {
       const focusState = await this.getFocusState();
-      
+
       const questCount = focusState.quest ? 1 : 0;
       const bookCount = focusState.book ? 1 : 0;
       const courseCount = focusState.course ? 1 : 0;

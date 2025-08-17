@@ -30,7 +30,9 @@ export class BookManagementService {
   /**
    * Creates a new book with proper validation and error handling
    */
-  static async createBook(data: CreateBookData): Promise<Result<BookManagementResult>> {
+  static async createBook(
+    data: CreateBookData
+  ): Promise<Result<BookManagementResult>> {
     // Validate book data
     if (!data.title?.trim()) {
       return fail('Book title is required');
@@ -101,7 +103,9 @@ export class BookManagementService {
   /**
    * Deletes a book with confirmation
    */
-  static async deleteBook(bookId: string): Promise<Result<{ message: string }>> {
+  static async deleteBook(
+    bookId: string
+  ): Promise<Result<{ message: string }>> {
     try {
       await BookService.deleteBook(bookId);
 

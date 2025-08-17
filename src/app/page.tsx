@@ -143,7 +143,7 @@ export default function HomePage() {
       type: filterType,
       category: filterCategory,
     });
-            return QuestService.sortQuests(filteredQuests, sortBy, sortOrder);
+    return QuestService.sortQuests(filteredQuests, sortBy, sortOrder);
   }, [quests, search, filterType, filterCategory, sortBy, sortOrder]);
 
   // Calculate level info using service
@@ -172,7 +172,7 @@ export default function HomePage() {
   // Event handlers using services
   const handleAddQuest = useCallback(
     async (data: CreateQuestData) => {
-              const result = await QuestService.createQuest(data);
+      const result = await QuestService.createQuest(data);
       if (result._tag === 'Success') {
         await mutateQuests();
         toast.success('Quest created successfully!');
@@ -185,7 +185,10 @@ export default function HomePage() {
 
   const handleToggleDone = useCallback(
     async (quest: Quest) => {
-              const result = await QuestService.toggleQuestCompletion(quest.id, quest.done);
+      const result = await QuestService.toggleQuestCompletion(
+        quest.id,
+        quest.done
+      );
       if (result._tag === 'Success') {
         await mutateQuests();
         toast.success(`Quest ${quest.done ? 'uncompleted' : 'completed'}!`);
@@ -198,7 +201,7 @@ export default function HomePage() {
 
   const handleDeleteQuest = useCallback(
     async (quest: Quest) => {
-              const result = await QuestService.deleteQuest(quest.id);
+      const result = await QuestService.deleteQuest(quest.id);
       if (result._tag === 'Success') {
         await mutateQuests();
         toast.success('Quest deleted successfully!');
@@ -434,7 +437,7 @@ export default function HomePage() {
         } else {
           await FocusService.setFocus(type, id);
         }
-        
+
         await mutateFocusState();
         toast.success(`${type} focus updated successfully!`);
       } catch (error) {
@@ -458,7 +461,7 @@ export default function HomePage() {
           await FocusService.setFocus('quest', quest.id);
           toast.success('Quest added to focus!');
         }
-        
+
         await mutateFocusState();
       } catch (error) {
         console.error('Failed to toggle quest focus:', error);
@@ -481,7 +484,7 @@ export default function HomePage() {
           await FocusService.setFocus('book', book.id);
           toast.success('Book added to focus!');
         }
-        
+
         await mutateFocusState();
       } catch (error) {
         console.error('Failed to toggle book focus:', error);
@@ -504,7 +507,7 @@ export default function HomePage() {
           await FocusService.setFocus('course', course.id);
           toast.success('Course added to focus!');
         }
-        
+
         await mutateFocusState();
       } catch (error) {
         console.error('Failed to toggle course focus:', error);
@@ -516,7 +519,7 @@ export default function HomePage() {
 
   // Daily check-in and challenge handlers
   const handleDailyCheckIn = useCallback(async () => {
-            const result = await AppStateService.recordDailyCheckIn();
+    const result = await AppStateService.recordDailyCheckIn();
 
     if (result._tag === 'Failure') {
       toast.error(result.error);

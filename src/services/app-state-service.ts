@@ -19,7 +19,7 @@ export class AppStateService {
     if (checkInResult._tag === 'Failure') {
       return checkInResult;
     }
-    
+
     // After successful check-in, fetch the updated app state
     return AppStateAPI.getAppState();
   }

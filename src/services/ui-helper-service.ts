@@ -12,13 +12,19 @@ export class UIHelperService {
   } {
     switch (status) {
       case 'backlog':
-        return { variant: 'outline', className: 'border-gray-500 text-gray-600' };
+        return {
+          variant: 'outline',
+          className: 'border-gray-500 text-gray-600',
+        };
       case 'reading':
         return { variant: 'default', className: 'bg-blue-500 text-white' };
       case 'finished':
         return { variant: 'secondary', className: 'bg-green-500 text-white' };
       default:
-        return { variant: 'outline', className: 'border-gray-500 text-gray-600' };
+        return {
+          variant: 'outline',
+          className: 'border-gray-500 text-gray-600',
+        };
     }
   }
 
@@ -31,13 +37,19 @@ export class UIHelperService {
   } {
     switch (status) {
       case 'backlog':
-        return { variant: 'outline', className: 'border-gray-500 text-gray-600' };
+        return {
+          variant: 'outline',
+          className: 'border-gray-500 text-gray-600',
+        };
       case 'learning':
         return { variant: 'default', className: 'bg-purple-500 text-white' };
       case 'finished':
         return { variant: 'secondary', className: 'bg-green-500 text-white' };
       default:
-        return { variant: 'outline', className: 'border-gray-500 text-gray-600' };
+        return {
+          variant: 'outline',
+          className: 'border-gray-500 text-gray-600',
+        };
     }
   }
 
@@ -113,7 +125,9 @@ export class UIHelperService {
   /**
    * Gets challenge type display name
    */
-  static getChallengeTypeDisplayName(type: 'quest' | 'book' | 'course'): string {
+  static getChallengeTypeDisplayName(
+    type: 'quest' | 'book' | 'course'
+  ): string {
     switch (type) {
       case 'quest':
         return 'Quest';
@@ -142,7 +156,9 @@ export class UIHelperService {
   /**
    * Gets unique categories from items
    */
-  static getUniqueCategories<T extends { category: string }>(items: T[]): string[] {
+  static getUniqueCategories<T extends { category: string }>(
+    items: T[]
+  ): string[] {
     const categories = new Set<string>();
     items.forEach(item => categories.add(item.category));
     return Array.from(categories).sort();

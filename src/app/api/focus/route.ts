@@ -8,7 +8,7 @@ export async function GET() {
   try {
     // Get the current focus state from the database
     const focusSlot = await prisma.focusSlot.findFirst();
-    
+
     if (!focusSlot) {
       // Create a default focus slot if none exists
       await prisma.focusSlot.create({
@@ -32,21 +32,38 @@ export async function GET() {
       const quest = await prisma.quest.findUnique({
         where: { id: focusSlot.quest_id },
       });
-      if (quest) focusState.quest = quest;
+      if (quest) {
+        focusState.quest = {
+          ...quest,
+          created_at: quest.created_at.toISOString(),
+        };
+      }
     }
 
     if (focusSlot.book_id) {
       const book = await prisma.book.findUnique({
         where: { id: focusSlot.book_id },
       });
-      if (book) focusState.book = book;
+      if (book) {
+        focusState.book = {
+          ...book,
+          created_at: book.created_at,
+          updated_at: book.updated_at,
+        };
+      }
     }
 
     if (focusSlot.course_id) {
       const course = await prisma.course.findUnique({
         where: { id: focusSlot.course_id },
       });
-      if (course) focusState.course = course;
+      if (course) {
+        focusState.course = {
+          ...course,
+          created_at: course.created_at,
+          updated_at: course.updated_at,
+        };
+      }
     }
 
     return NextResponse.json(focusState);
@@ -77,7 +94,7 @@ export async function PUT(request: NextRequest) {
       await prisma.focusSlot.updateMany({
         data: { [`${type}_id`]: null },
       });
-      
+
       // Return empty focus state for this type
       focusState = { [type]: null };
     } else {

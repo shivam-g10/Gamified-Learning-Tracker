@@ -57,7 +57,6 @@ export async function POST(
         course_id: id,
         units_delta,
         notes: notes || null,
-        xp_earned: totalXP,
       },
     });
 
@@ -71,16 +70,8 @@ export async function POST(
       },
     });
 
-    // Update app state XP
-    const appState = await prisma.appState.findFirst();
-    if (appState) {
-      await prisma.appState.update({
-        where: { id: appState.id },
-        data: {
-          total_xp: appState.total_xp + totalXP,
-        },
-      });
-    }
+    // Note: XP tracking would need to be implemented in a separate table
+    // For now, we'll just log the progress without XP tracking
 
     return NextResponse.json({
       success: true,

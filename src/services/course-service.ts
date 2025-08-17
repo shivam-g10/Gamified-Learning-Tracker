@@ -36,9 +36,9 @@ export class CourseService {
     if (result._tag === 'Failure') {
       throw new Error(result.error);
     }
-    
+
     let courses = result.data;
-    
+
     // Apply filters client-side since the API doesn't support complex filtering yet
     if (filters?.status) {
       courses = courses.filter(course => course.status === filters.status);
@@ -46,26 +46,36 @@ export class CourseService {
 
     if (filters?.search) {
       const searchLower = filters.search.toLowerCase();
-      courses = courses.filter(course => 
-        course.title.toLowerCase().includes(searchLower) ||
-        (course.description && course.description.toLowerCase().includes(searchLower)) ||
-        (course.platform && course.platform.toLowerCase().includes(searchLower))
+      courses = courses.filter(
+        course =>
+          course.title.toLowerCase().includes(searchLower) ||
+          (course.description &&
+            course.description.toLowerCase().includes(searchLower)) ||
+          (course.platform &&
+            course.platform.toLowerCase().includes(searchLower))
       );
     }
 
     if (filters?.tags && filters.tags.length > 0) {
-      courses = courses.filter(course => 
+      courses = courses.filter(course =>
         filters.tags!.some(tag => course.tags.includes(tag))
       );
     }
 
     if (filters?.platform) {
-      courses = courses.filter(course => 
-        course.platform && course.platform.toLowerCase().includes(filters.platform!.toLowerCase())
+      courses = courses.filter(
+        course =>
+          course.platform &&
+          course.platform
+            .toLowerCase()
+            .includes(filters.platform!.toLowerCase())
       );
     }
 
-    return courses.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    return courses.sort(
+      (a, b) =>
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    );
   }
 
   /**
@@ -136,7 +146,7 @@ export class CourseService {
     if (result._tag === 'Failure') {
       throw new Error(result.error);
     }
-    
+
     const updatedCourse = result.data;
 
     // Calculate XP with focus boost
@@ -193,7 +203,10 @@ export class CourseService {
     if (result._tag === 'Failure') {
       throw new Error(result.error);
     }
-    return result.data.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    return result.data.sort(
+      (a, b) =>
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    );
   }
 
   /**
@@ -225,9 +238,14 @@ export class CourseService {
    */
   static async getActiveCourses(): Promise<Course[]> {
     const courses = await this.getCourses();
-    return courses.filter(course => 
-      course.status === 'learning' && course.completed_units > 0
-    ).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    return courses
+      .filter(
+        course => course.status === 'learning' && course.completed_units > 0
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
   }
 
   /**
@@ -238,7 +256,10 @@ export class CourseService {
     if (result._tag === 'Failure') {
       throw new Error(result.error);
     }
-    return result.data.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    return result.data.sort(
+      (a, b) =>
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    );
   }
 
   /**
@@ -249,7 +270,7 @@ export class CourseService {
     const platforms = courses
       .map(course => course.platform)
       .filter((platform): platform is string => platform !== null);
-    
+
     return [...new Set(platforms)];
   }
 }

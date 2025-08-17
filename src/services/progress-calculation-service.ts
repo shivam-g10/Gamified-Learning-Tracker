@@ -8,7 +8,10 @@ export class ProgressCalculationService {
    */
   static getBookProgressPercentage(book: Book): number {
     if (book.total_pages <= 0) return 0;
-    return Math.min(100, Math.round((book.current_page / book.total_pages) * 100));
+    return Math.min(
+      100,
+      Math.round((book.current_page / book.total_pages) * 100)
+    );
   }
 
   /**
@@ -16,7 +19,10 @@ export class ProgressCalculationService {
    */
   static getCourseProgressPercentage(course: Course): number {
     if (course.total_units <= 0) return 0;
-    return Math.min(100, Math.round((course.completed_units / course.total_units) * 100));
+    return Math.min(
+      100,
+      Math.round((course.completed_units / course.total_units) * 100)
+    );
   }
 
   /**
@@ -70,15 +76,25 @@ export class ProgressCalculationService {
   /**
    * Calculates total pages read from book progress entries
    */
-  static calculateTotalPagesRead(progressEntries: Array<{ pages_read: number }>): number {
-    return progressEntries.reduce((total, entry) => total + entry.pages_read, 0);
+  static calculateTotalPagesRead(
+    progressEntries: Array<{ pages_read: number }>
+  ): number {
+    return progressEntries.reduce(
+      (total, entry) => total + entry.pages_read,
+      0
+    );
   }
 
   /**
    * Calculates total units completed from course progress entries
    */
-  static calculateTotalUnitsCompleted(progressEntries: Array<{ units_delta: number }>): number {
-    return progressEntries.reduce((total, entry) => total + entry.units_delta, 0);
+  static calculateTotalUnitsCompleted(
+    progressEntries: Array<{ units_delta: number }>
+  ): number {
+    return progressEntries.reduce(
+      (total, entry) => total + entry.units_delta,
+      0
+    );
   }
 
   /**

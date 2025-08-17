@@ -16,11 +16,11 @@ export async function GET(req: NextRequest) {
     const platform = searchParams.get('platform') || undefined;
 
     const where: Record<string, unknown> = {};
-    
+
     if (status) {
       where.status = status;
     }
-    
+
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
@@ -28,11 +28,11 @@ export async function GET(req: NextRequest) {
         { platform: { contains: search, mode: 'insensitive' } },
       ];
     }
-    
+
     if (tags && tags.length > 0) {
       where.tags = { hasSome: tags };
     }
-    
+
     if (platform) {
       where.platform = { contains: platform, mode: 'insensitive' };
     }

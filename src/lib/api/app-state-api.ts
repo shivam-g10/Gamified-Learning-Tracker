@@ -31,7 +31,9 @@ export class AppStateAPI {
     }
   }
 
-  static async updateAppState(data: Partial<AppState>): Promise<Result<AppState>> {
+  static async updateAppState(
+    data: Partial<AppState>
+  ): Promise<Result<AppState>> {
     try {
       const response = await fetch('/api/app-state', {
         method: 'PUT',

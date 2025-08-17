@@ -103,7 +103,9 @@ export class CourseManagementService {
   /**
    * Deletes a course with confirmation
    */
-  static async deleteCourse(courseId: string): Promise<Result<{ message: string }>> {
+  static async deleteCourse(
+    courseId: string
+  ): Promise<Result<{ message: string }>> {
     try {
       await CourseService.deleteCourse(courseId);
 

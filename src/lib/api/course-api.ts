@@ -1,7 +1,11 @@
 'use client';
 
 import type { Course, CourseProgressEntry } from '../types';
-import type { CreateCourseData, UpdateCourseData, LogCourseProgressData } from '../api-types';
+import type {
+  CreateCourseData,
+  UpdateCourseData,
+  LogCourseProgressData,
+} from '../api-types';
 import { Result, succeed, fail } from '../result';
 
 export class CourseAPI {
@@ -50,7 +54,10 @@ export class CourseAPI {
     }
   }
 
-  static async updateCourse(id: string, data: UpdateCourseData): Promise<Result<Course>> {
+  static async updateCourse(
+    id: string,
+    data: UpdateCourseData
+  ): Promise<Result<Course>> {
     try {
       const response = await fetch(`/api/courses/${id}`, {
         method: 'PUT',
@@ -83,7 +90,10 @@ export class CourseAPI {
     }
   }
 
-  static async logProgress(id: string, data: LogCourseProgressData): Promise<Result<Course>> {
+  static async logProgress(
+    id: string,
+    data: LogCourseProgressData
+  ): Promise<Result<Course>> {
     try {
       const response = await fetch(`/api/courses/${id}/progress`, {
         method: 'POST',
@@ -102,9 +112,13 @@ export class CourseAPI {
     }
   }
 
-  static async getCoursesByCategory(category: string): Promise<Result<Course[]>> {
+  static async getCoursesByCategory(
+    category: string
+  ): Promise<Result<Course[]>> {
     try {
-      const response = await fetch(`/api/courses?category=${encodeURIComponent(category)}`);
+      const response = await fetch(
+        `/api/courses?category=${encodeURIComponent(category)}`
+      );
       if (!response.ok) {
         return fail('Failed to fetch courses by category');
       }
@@ -117,7 +131,9 @@ export class CourseAPI {
 
   static async getCoursesByStatus(status: string): Promise<Result<Course[]>> {
     try {
-      const response = await fetch(`/api/courses?status=${encodeURIComponent(status)}`);
+      const response = await fetch(
+        `/api/courses?status=${encodeURIComponent(status)}`
+      );
       if (!response.ok) {
         return fail('Failed to fetch courses by status');
       }
@@ -128,9 +144,13 @@ export class CourseAPI {
     }
   }
 
-  static async getCoursesByPlatform(platform: string): Promise<Result<Course[]>> {
+  static async getCoursesByPlatform(
+    platform: string
+  ): Promise<Result<Course[]>> {
     try {
-      const response = await fetch(`/api/courses?platform=${encodeURIComponent(platform)}`);
+      const response = await fetch(
+        `/api/courses?platform=${encodeURIComponent(platform)}`
+      );
       if (!response.ok) {
         return fail('Failed to fetch courses by platform');
       }
@@ -141,7 +161,9 @@ export class CourseAPI {
     }
   }
 
-  static async getCourseProgressHistory(id: string): Promise<Result<CourseProgressEntry[]>> {
+  static async getCourseProgressHistory(
+    id: string
+  ): Promise<Result<CourseProgressEntry[]>> {
     try {
       const response = await fetch(`/api/courses/${id}/progress`);
       if (!response.ok) {

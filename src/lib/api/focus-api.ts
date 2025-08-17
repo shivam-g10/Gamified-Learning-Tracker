@@ -14,10 +14,13 @@ export class FocusAPI {
       return succeed(data);
     } catch (error) {
       return fail('Failed to fetch focus state');
-      }
+    }
   }
 
-  static async setFocus(type: 'quest' | 'book' | 'course', id: string): Promise<Result<FocusState>> {
+  static async setFocus(
+    type: 'quest' | 'book' | 'course',
+    id: string
+  ): Promise<Result<FocusState>> {
     try {
       const response = await fetch('/api/focus', {
         method: 'PUT',
@@ -36,7 +39,9 @@ export class FocusAPI {
     }
   }
 
-  static async removeFocus(type: 'quest' | 'book' | 'course'): Promise<Result<FocusState>> {
+  static async removeFocus(
+    type: 'quest' | 'book' | 'course'
+  ): Promise<Result<FocusState>> {
     try {
       const response = await fetch('/api/focus', {
         method: 'DELETE',

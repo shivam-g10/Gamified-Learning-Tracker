@@ -36,7 +36,10 @@ export class QuestAPI {
     }
   }
 
-  static async updateQuest(id: string, data: UpdateQuestData): Promise<Result<Quest>> {
+  static async updateQuest(
+    id: string,
+    data: UpdateQuestData
+  ): Promise<Result<Quest>> {
     try {
       const response = await fetch(`/api/quests/${id}`, {
         method: 'PUT',

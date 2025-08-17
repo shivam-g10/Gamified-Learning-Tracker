@@ -15,11 +15,11 @@ export async function GET(req: NextRequest) {
     const tags = searchParams.get('tags')?.split(',') || undefined;
 
     const where: Record<string, unknown> = {};
-    
+
     if (status) {
       where.status = status;
     }
-    
+
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
         { description: { contains: search, mode: 'insensitive' } },
       ];
     }
-    
+
     if (tags && tags.length > 0) {
       where.tags = { hasSome: tags };
     }

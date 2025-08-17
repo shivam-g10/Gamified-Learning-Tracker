@@ -37,35 +37,40 @@ export class BookService {
       if (result._tag === 'Failure') {
         throw new Error(result.error);
       }
-      
+
       let books = result.data;
-      
+
       // Apply filters client-side since the API doesn't support complex filtering yet
       if (filters?.status) {
         books = books.filter(book => book.status === filters.status);
       }
-      
+
       if (filters?.search) {
         const searchLower = filters.search.toLowerCase();
-        books = books.filter(book => 
-          book.title.toLowerCase().includes(searchLower) ||
-          (book.author && book.author.toLowerCase().includes(searchLower)) ||
-          book.category.toLowerCase().includes(searchLower) ||
-          (book.description && book.description.toLowerCase().includes(searchLower))
+        books = books.filter(
+          book =>
+            book.title.toLowerCase().includes(searchLower) ||
+            (book.author && book.author.toLowerCase().includes(searchLower)) ||
+            book.category.toLowerCase().includes(searchLower) ||
+            (book.description &&
+              book.description.toLowerCase().includes(searchLower))
         );
       }
-      
+
       if (filters?.tags && filters.tags.length > 0) {
-        books = books.filter(book => 
+        books = books.filter(book =>
           filters.tags!.some(tag => book.tags.includes(tag))
         );
       }
-      
+
       if (filters?.category) {
         books = books.filter(book => book.category === filters.category);
       }
-      
-      return books.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+
+      return books.sort(
+        (a, b) =>
+          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
     } catch (error) {
       console.error('Failed to fetch books:', error);
       throw new Error('Failed to fetch books');
@@ -140,7 +145,7 @@ export class BookService {
     if (result._tag === 'Failure') {
       throw new Error(result.error);
     }
-    
+
     const updatedBook = result.data;
 
     // Calculate XP with focus boost
@@ -194,7 +199,10 @@ export class BookService {
     if (result._tag === 'Failure') {
       throw new Error(result.error);
     }
-    return result.data.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    return result.data.sort(
+      (a, b) =>
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    );
   }
 
   /**
@@ -224,8 +232,11 @@ export class BookService {
    */
   static async getActiveBooks(): Promise<Book[]> {
     const books = await this.getBooks();
-    return books.filter(book => 
-      book.status === 'reading' && book.current_page > 0
-    ).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    return books
+      .filter(book => book.status === 'reading' && book.current_page > 0)
+      .sort(
+        (a, b) =>
+          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
   }
 }

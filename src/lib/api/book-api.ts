@@ -1,7 +1,11 @@
 'use client';
 
 import type { Book, BookProgressEntry } from '../types';
-import type { CreateBookData, UpdateBookData, LogBookProgressData } from '../api-types';
+import type {
+  CreateBookData,
+  UpdateBookData,
+  LogBookProgressData,
+} from '../api-types';
 import { Result, succeed, fail } from '../result';
 
 export class BookAPI {
@@ -50,7 +54,10 @@ export class BookAPI {
     }
   }
 
-  static async updateBook(id: string, data: UpdateBookData): Promise<Result<Book>> {
+  static async updateBook(
+    id: string,
+    data: UpdateBookData
+  ): Promise<Result<Book>> {
     try {
       const response = await fetch(`/api/books/${id}`, {
         method: 'PUT',
@@ -83,7 +90,10 @@ export class BookAPI {
     }
   }
 
-  static async logProgress(id: string, data: LogBookProgressData): Promise<Result<Book>> {
+  static async logProgress(
+    id: string,
+    data: LogBookProgressData
+  ): Promise<Result<Book>> {
     try {
       const response = await fetch(`/api/books/${id}/progress`, {
         method: 'POST',
@@ -104,7 +114,9 @@ export class BookAPI {
 
   static async getBooksByCategory(category: string): Promise<Result<Book[]>> {
     try {
-      const response = await fetch(`/api/books?category=${encodeURIComponent(category)}`);
+      const response = await fetch(
+        `/api/books?category=${encodeURIComponent(category)}`
+      );
       if (!response.ok) {
         return fail('Failed to fetch books by category');
       }
@@ -117,7 +129,9 @@ export class BookAPI {
 
   static async getBooksByStatus(status: string): Promise<Result<Book[]>> {
     try {
-      const response = await fetch(`/api/books?status=${encodeURIComponent(status)}`);
+      const response = await fetch(
+        `/api/books?status=${encodeURIComponent(status)}`
+      );
       if (!response.ok) {
         return fail('Failed to fetch books by status');
       }
@@ -128,7 +142,9 @@ export class BookAPI {
     }
   }
 
-  static async getBookProgressHistory(id: string): Promise<Result<BookProgressEntry[]>> {
+  static async getBookProgressHistory(
+    id: string
+  ): Promise<Result<BookProgressEntry[]>> {
     try {
       const response = await fetch(`/api/books/${id}/progress`);
       if (!response.ok) {
