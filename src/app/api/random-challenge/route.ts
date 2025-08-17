@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import type { Quest, Book, Course } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,21 +16,21 @@ export async function GET() {
 
     // Combine all items into a single array
     const allItems = [
-      ...unfinishedQuests.map((quest: any) => ({
+      ...unfinishedQuests.map((quest: Quest) => ({
         id: quest.id,
         title: quest.title,
         type: 'quest' as const,
         category: quest.category,
         xp: quest.xp,
       })),
-      ...unfinishedBooks.map((book: any) => ({
+      ...unfinishedBooks.map((book: Book) => ({
         id: book.id,
         title: book.title,
         type: 'book' as const,
         category: book.category,
         xp: 50, // Default XP for books
       })),
-      ...unfinishedCourses.map((course: any) => ({
+      ...unfinishedCourses.map((course: Course) => ({
         id: course.id,
         title: course.title,
         type: 'course' as const,
