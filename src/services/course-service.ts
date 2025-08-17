@@ -270,6 +270,8 @@ export class CourseService {
       select: { platform: true },
     });
 
-    return [...new Set(courses.map(c => c.platform!))];
+    return courses
+      .map(c => c.platform)
+      .filter((platform): platform is string => platform !== null);
   }
 }
