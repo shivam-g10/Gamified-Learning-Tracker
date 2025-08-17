@@ -42,8 +42,6 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
     # No external port mapping needed - Coolify handles proxying
-    ports:
-      - '${HOST_PORT:-3000}:${PORT:-3000}'
     # Restart policy for production
     restart: unless-stopped
     # Network isolation
@@ -51,7 +49,7 @@ services:
     #   - app-network
     # Health check for web service
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:${HOST_PORT:-3000}/health']
+      test: ['CMD', 'curl', '-f', 'http://localhost:${PORT:-3000}/health']
       interval: 30s
       timeout: 10s
       retries: 3
