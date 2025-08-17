@@ -1,4 +1,4 @@
-# AI Guidelines for Gamified Learning Tracker
+# AI Guidelines for GyaanQuest
 
 > **📚 Documentation Structure**: This file is part of the comprehensive documentation system. AI agents should start with `../AI_AGENT_ENTRY.md` in the root directory, then read this file along with other documentation in the `docs/` folder.
 
@@ -14,7 +14,7 @@
 
 ## 🎯 Purpose and Scope
 
-This document establishes mandatory guidelines for all AI agents, developers, and contributors working on the Gamified Learning Tracker. These guidelines ensure:
+This document establishes mandatory guidelines for all AI agents, developers, and contributors working on GyaanQuest. These guidelines ensure:
 
 - **Consistency** in code quality, architecture, and development practices
 - **Alignment** with project requirements and business objectives
@@ -40,7 +40,7 @@ This document establishes mandatory guidelines for all AI agents, developers, an
 
 ### Core Project Definition
 
-- **Product**: Gamified Learning Tracker
+- **Product**: GyaanQuest
 - **Purpose**: Track and gamify learning progress for self learners
 - **Target Users**: Self learners
 - **Business Model**: Free and open sourced

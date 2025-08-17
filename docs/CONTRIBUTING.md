@@ -1,6 +1,6 @@
-# Contributing to Gamified Learning Tracker
+# Contributing to GyaanQuest
 
-Thank you for your interest in contributing to Gamified Learning Tracker! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to GyaanQuest! This document provides guidelines and information for contributors.
 
 ## 🚀 Getting Started
 
@@ -19,10 +19,13 @@ Thank you for your interest in contributing to Gamified Learning Tracker! This d
    git clone https://github.com/yourusername/Gamified-Learning-Tracker.git
    cd Gamified-Learning-Tracker
    ```
+
+````
 3. Install dependencies:
    ```bash
    pnpm install
-   ```
+````
+
 4. Set up environment:
    ```bash
    cp .env.example .env

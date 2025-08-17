@@ -6,7 +6,7 @@ import { ThemeToggle } from '../components/theme-toggle';
 import { Toaster } from '../components/ui/sonner';
 
 export const metadata: Metadata = {
-  title: 'Gamified Learning Tracker',
+  title: 'GyaanQuest',
   description:
     'A full-stack gamified learning tracker built with Next.js and PostgreSQL. Track your learning progress with XP, levels, streaks, badges, and interactive quests.',
   keywords: [
@@ -18,9 +18,9 @@ export const metadata: Metadata = {
     'XP',
     'quests',
   ],
-  authors: [{ name: 'Gamified Learning Tracker Team' }],
-  creator: 'Gamified Learning Tracker Team',
-  publisher: 'Gamified Learning Tracker',
+  authors: [{ name: 'GyaanQuest Team' }],
+  creator: 'GyaanQuest Team',
+  publisher: 'GyaanQuest',
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
     apple: '/favicon.svg',
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     google: 'no-verification-needed',
   },
   openGraph: {
-    title: 'Gamified Learning Tracker',
+    title: 'GyaanQuest',
     description:
       'A full-stack gamified learning tracker built with Next.js and PostgreSQL',
     type: 'website',
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary',
-    title: 'Gamified Learning Tracker',
+    title: 'GyaanQuest',
     description:
       'A full-stack gamified learning tracker built with Next.js and PostgreSQL',
   },

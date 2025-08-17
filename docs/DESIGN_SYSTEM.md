@@ -4,7 +4,7 @@
 
 ## Overview
 
-This design system provides a fun, motivating look for a gamified learning tracker app that works seamlessly in both light and dark modes while maintaining excellent contrast and accessibility. The app now features a "Mint Arcade" brand skin with playful gamification elements.
+This design system provides a fun, motivating look for GyaanQuest that works seamlessly in both light and dark modes while maintaining excellent contrast and accessibility. The app now features a "Mint Arcade" brand skin with playful gamification elements.
 
 ## Goals
 

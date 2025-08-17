@@ -62,7 +62,7 @@ import {
 } from '../components/app';
 
 /**
- * HomePage component serves as the main application interface for the Gamified Learning Tracker.
+ * HomePage component serves as the main application interface for GyaanQuest.
  * It manages the overall state and coordinates between different learning item types.
  */
 export default function HomePage() {

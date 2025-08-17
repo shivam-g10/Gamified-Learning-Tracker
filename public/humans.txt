@@ -1,5 +1,5 @@
 /* TEAM */
-    Developer: Gamified Learning Tracker Team
+    Developer: GyaanQuest Team
     Contact: shivam@kodingkorp.com
     From: Internet
 
