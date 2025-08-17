@@ -1,5 +1,6 @@
 import { FocusState } from '../lib/types';
 import type { ChallengeItem } from '../lib/client-types';
+import { Result, succeed, fail } from '../lib/result';
 
 export type { ChallengeItem } from '../lib/client-types';
 
@@ -7,19 +8,15 @@ export class ChallengeService {
   /**
    * Gets a random unfinished learning item for challenges
    */
-  static async getRandomChallenge(): Promise<ChallengeItem | null> {
-    try {
-      const response = await fetch('/api/random-challenge');
+  static async getRandomChallenge(): Promise<Result<ChallengeItem | null>> {
+    const response = await fetch('/api/random-challenge');
 
-      if (!response.ok) {
-        throw new Error('Failed to get random challenge');
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error('Error getting random challenge:', error);
-      return null;
+    if (!response.ok) {
+      return fail('Failed to get random challenge');
     }
+
+    const item = await response.json();
+    return succeed(item);
   }
 
   /**

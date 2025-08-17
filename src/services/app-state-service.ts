@@ -1,4 +1,5 @@
 import { AppState } from '../lib/types';
+import { Result, succeed, fail } from '../lib/result';
 
 export interface UpdateAppStateData {
   streak?: number;
@@ -10,22 +11,25 @@ export class AppStateService {
   /**
    * Records a daily check-in and updates streak
    */
-  static async recordDailyCheckIn(): Promise<AppState> {
+  static async recordDailyCheckIn(): Promise<Result<AppState>> {
     const response = await fetch('/api/checkin', {
       method: 'POST',
     });
 
     if (!response.ok) {
-      throw new Error('Failed to record daily check-in');
+      return fail('Failed to record daily check-in');
     }
 
-    return response.json();
+    const appState = await response.json();
+    return succeed(appState);
   }
 
   /**
    * Updates application state
    */
-  static async updateAppState(data: UpdateAppStateData): Promise<AppState> {
+  static async updateAppState(
+    data: UpdateAppStateData
+  ): Promise<Result<AppState>> {
     const response = await fetch('/api/app-state', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -33,10 +37,11 @@ export class AppStateService {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to update app state');
+      return fail('Failed to update app state');
     }
 
-    return response.json();
+    const appState = await response.json();
+    return succeed(appState);
   }
 
   /**
@@ -46,14 +51,14 @@ export class AppStateService {
     questId: string,
     currentFocus: string[],
     maxFocus: number = 3
-  ): Promise<AppState> {
+  ): Promise<Result<AppState>> {
     const focus = new Set(currentFocus);
 
     if (focus.has(questId)) {
       focus.delete(questId);
     } else {
       if (focus.size >= maxFocus) {
-        throw new Error(`Maximum focus limit of ${maxFocus} reached`);
+        return fail(`Maximum focus limit of ${maxFocus} reached`);
       }
       focus.add(questId);
     }
@@ -68,13 +73,13 @@ export class AppStateService {
     questId: string,
     currentFocus: string[],
     maxFocus: number = 3
-  ): Promise<AppState> {
+  ): Promise<Result<AppState>> {
     if (currentFocus.length >= maxFocus) {
-      throw new Error(`Maximum focus limit of ${maxFocus} reached`);
+      return fail(`Maximum focus limit of ${maxFocus} reached`);
     }
 
     if (currentFocus.includes(questId)) {
-      throw new Error('Quest is already in focus');
+      return fail('Quest is already in focus');
     }
 
     const newFocus = [...currentFocus, questId];
@@ -87,9 +92,9 @@ export class AppStateService {
   static async removeQuestFromFocus(
     questId: string,
     currentFocus: string[]
-  ): Promise<AppState> {
+  ): Promise<Result<AppState>> {
     if (!currentFocus.includes(questId)) {
-      throw new Error('Quest is not in focus');
+      return fail('Quest is not in focus');
     }
 
     const newFocus = currentFocus.filter(id => id !== questId);

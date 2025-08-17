@@ -64,7 +64,7 @@ export function TabbedContent({
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-200 relative ${
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-200 relative cursor-pointer ${
               activeTab === tab.id
                 ? 'text-primary border-b-2 border-primary bg-primary/5'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'

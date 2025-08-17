@@ -1,4 +1,5 @@
 import { Quest } from '../lib/types';
+import { Result, succeed, fail } from '../lib/result';
 
 export interface CreateQuestData {
   title: string;
@@ -19,7 +20,7 @@ export class QuestService {
   /**
    * Creates a new quest
    */
-  static async createQuest(data: CreateQuestData): Promise<Quest> {
+  static async createQuest(data: CreateQuestData): Promise<Result<Quest>> {
     const response = await fetch('/api/quests', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -27,16 +28,20 @@ export class QuestService {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to create quest');
+      return fail('Failed to create quest');
     }
 
-    return response.json();
+    const quest = await response.json();
+    return succeed(quest);
   }
 
   /**
    * Updates an existing quest
    */
-  static async updateQuest(id: string, data: UpdateQuestData): Promise<Quest> {
+  static async updateQuest(
+    id: string,
+    data: UpdateQuestData
+  ): Promise<Result<Quest>> {
     const response = await fetch(`/api/quests/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -44,23 +49,26 @@ export class QuestService {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to update quest');
+      return fail('Failed to update quest');
     }
 
-    return response.json();
+    const quest = await response.json();
+    return succeed(quest);
   }
 
   /**
    * Deletes a quest
    */
-  static async deleteQuest(id: string): Promise<void> {
+  static async deleteQuest(id: string): Promise<Result<void>> {
     const response = await fetch(`/api/quests/${id}`, {
       method: 'DELETE',
     });
 
     if (!response.ok) {
-      throw new Error('Failed to delete quest');
+      return fail('Failed to delete quest');
     }
+
+    return succeed(undefined);
   }
 
   /**
@@ -69,21 +77,22 @@ export class QuestService {
   static async toggleQuestCompletion(
     id: string,
     currentDone: boolean
-  ): Promise<Quest> {
+  ): Promise<Result<Quest>> {
     return this.updateQuest(id, { done: !currentDone });
   }
 
   /**
    * Gets a random unfinished quest for challenges
    */
-  static async getRandomChallenge(): Promise<Quest | null> {
+  static async getRandomChallenge(): Promise<Result<Quest | null>> {
     const response = await fetch('/api/random-challenge');
 
     if (!response.ok) {
-      throw new Error('Failed to get random challenge');
+      return fail('Failed to get random challenge');
     }
 
-    return response.json();
+    const quest = await response.json();
+    return succeed(quest);
   }
 
   /**

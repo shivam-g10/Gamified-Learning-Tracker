@@ -1,98 +1,75 @@
 import useSWR from 'swr';
-import type { Quest, AppState, Book, Course, FocusState } from './types';
+import { Quest, AppState, Book, Course, FocusState } from './types';
+import { Result, succeed, fail } from './result';
 
-const fetcher = async (url: string) => {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      // If the response is not ok, return empty array for array endpoints
-      if (
-        url.includes('/quests') ||
-        url.includes('/books') ||
-        url.includes('/courses')
-      ) {
-        return [];
-      }
-      // For other endpoints, throw an error
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Fetcher error:', error);
-    // Return empty array for array endpoints on error
-    if (
-      url.includes('/quests') ||
-      url.includes('/books') ||
-      url.includes('/courses')
-    ) {
-      return [];
-    }
-    // For other endpoints, re-throw the error
-    throw error;
+const fetcher = async <T>(url: string): Promise<Result<T>> => {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    return fail(`HTTP error! status: ${response.status}`);
   }
+
+  const data = await response.json();
+  return succeed(data);
 };
 
 export function useQuests() {
-  const {
-    data: quests,
-    mutate,
-    error,
-  } = useSWR<Quest[]>('/api/quests', fetcher);
+  const { data, mutate } = useSWR<Result<Quest[]>>(
+    '/api/quests',
+    fetcher<Quest[]>
+  );
   return {
-    quests: quests || [],
+    quests: data?._tag === 'Success' ? data.data : [],
     mutateQuests: mutate,
-    error,
   };
 }
 
 export function useAppState() {
-  const {
-    data: appState,
-    mutate,
-    error,
-  } = useSWR<AppState>('/api/app-state', fetcher);
+  const { data, mutate } = useSWR<Result<AppState>>(
+    '/api/app-state',
+    fetcher<AppState>
+  );
   return {
-    appState: appState || { id: 1, streak: 0, last_check_in: null, focus: [] },
+    appState:
+      data?._tag === 'Success'
+        ? data.data
+        : { id: 1, streak: 0, last_check_in: null, focus: [] },
     mutateState: mutate,
-    error,
   };
 }
 
 export function useBooks() {
-  const { data: books, mutate, error } = useSWR<Book[]>('/api/books', fetcher);
+  const { data, mutate } = useSWR<Result<Book[]>>(
+    '/api/books',
+    fetcher<Book[]>
+  );
   return {
-    books: books || [],
+    books: data?._tag === 'Success' ? data.data : [],
     mutateBooks: mutate,
-    error,
   };
 }
 
 export function useCourses() {
-  const {
-    data: courses,
-    mutate,
-    error,
-  } = useSWR<Course[]>('/api/courses', fetcher);
+  const { data, mutate } = useSWR<Result<Course[]>>(
+    '/api/courses',
+    fetcher<Course[]>
+  );
   return {
-    courses: courses || [],
+    courses: data?._tag === 'Success' ? data.data : [],
     mutateCourses: mutate,
-    error,
   };
 }
 
 export function useFocusState() {
-  const {
-    data: focusState,
-    mutate,
-    error,
-  } = useSWR<FocusState>('/api/focus', fetcher);
+  const { data, mutate } = useSWR<Result<FocusState>>(
+    '/api/focus',
+    fetcher<FocusState>
+  );
   return {
-    focusState: focusState || {
-      quest: undefined,
-      book: undefined,
-      course: undefined,
-    },
+    focusState:
+      data?._tag === 'Success'
+        ? data.data
+        : { quest: undefined, book: undefined, course: undefined },
     mutateFocusState: mutate,
-    error,
   };
 }

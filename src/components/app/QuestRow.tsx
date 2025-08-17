@@ -44,7 +44,7 @@ export function QuestRow({
           type='checkbox'
           checked={quest.done}
           onChange={() => onToggleDone(quest)}
-          className='w-5 h-5 rounded border-input bg-background text-primary focus:ring-1 focus:ring-ring focus:ring-offset-0 transition-all duration-200 hover:scale-110'
+          className='w-5 h-5 rounded border-input bg-background text-primary focus:ring-1 focus:ring-ring focus:ring-offset-0 transition-all duration-200 hover:scale-110 cursor-pointer'
         />
       </div>
 

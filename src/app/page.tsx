@@ -18,9 +18,6 @@ import {
   useFocusState,
 } from '../lib/hooks';
 import {
-  QuestService,
-  QuestManagementService,
-  AppStateService,
   CategoryBadgeService,
   ChallengeService,
   SearchService,
@@ -28,6 +25,10 @@ import {
   BookManagementService,
   CourseManagementService,
 } from '../services';
+import {
+  ClientQuestService,
+  ClientAppStateService,
+} from '../lib/client-services';
 import type { ChallengeItem, CreateQuestData } from '../lib/client-types';
 import {
   Card,
@@ -142,7 +143,7 @@ export default function HomePage() {
       type: filterType,
       category: filterCategory,
     });
-    return QuestService.sortQuests(filteredQuests, sortBy, sortOrder);
+    return ClientQuestService.sortQuests(filteredQuests, sortBy, sortOrder);
   }, [quests, search, filterType, filterCategory, sortBy, sortOrder]);
 
   // Calculate level info using service
@@ -199,17 +200,12 @@ export default function HomePage() {
   // Event handlers using services
   const handleAddQuest = useCallback(
     async (data: CreateQuestData) => {
-      try {
-        const result = await QuestManagementService.createQuest(data);
-        if (result.success) {
-          await mutateQuests();
-          toast.success(result.message);
-        } else {
-          toast.error(result.message);
-        }
-      } catch (error) {
-        console.error('Failed to add quest:', error);
-        toast.error('Failed to add quest. Please try again.');
+      const result = await ClientQuestService.createQuest(data);
+      if (result._tag === 'Success') {
+        await mutateQuests();
+        toast.success(result.data);
+      } else {
+        toast.error(result.error);
       }
     },
     [mutateQuests]
@@ -217,18 +213,12 @@ export default function HomePage() {
 
   const handleToggleDone = useCallback(
     async (quest: Quest) => {
-      try {
-        const result =
-          await QuestManagementService.toggleQuestCompletion(quest);
-        if (result.success) {
-          await mutateQuests();
-          toast.success(result.message);
-        } else {
-          toast.error(result.message);
-        }
-      } catch (error) {
-        console.error('Failed to toggle quest completion:', error);
-        toast.error('Failed to update quest. Please try again.');
+      const result = await ClientQuestService.toggleQuestCompletion(quest);
+      if (result._tag === 'Success') {
+        await mutateQuests();
+        toast.success(result.data);
+      } else {
+        toast.error(result.error);
       }
     },
     [mutateQuests]
@@ -236,17 +226,12 @@ export default function HomePage() {
 
   const handleDeleteQuest = useCallback(
     async (quest: Quest) => {
-      try {
-        const result = await QuestManagementService.deleteQuest(quest);
-        if (result.success) {
-          await mutateQuests();
-          toast.success(result.message);
-        } else {
-          toast.error(result.message);
-        }
-      } catch (error) {
-        console.error('Failed to delete quest:', error);
-        toast.error('Failed to delete quest. Please try again.');
+      const result = await ClientQuestService.deleteQuest(quest);
+      if (result._tag === 'Success') {
+        await mutateQuests();
+        toast.success(result.data.message);
+      } else {
+        toast.error(result.error);
       }
     },
     [mutateQuests]
@@ -602,56 +587,59 @@ export default function HomePage() {
 
   // Daily check-in and challenge handlers
   const handleDailyCheckIn = useCallback(async () => {
-    try {
-      await AppStateService.recordDailyCheckIn();
-      await mutateState();
-      toast.success('🔥 Streak +1 — see you tomorrow!');
-    } catch (error) {
-      console.error('Failed to record daily check-in:', error);
-      toast.error('Failed to record check-in. Please try again.');
+    const result = await ClientAppStateService.recordDailyCheckIn();
+
+    if (result._tag === 'Failure') {
+      toast.error(result.error);
+      return;
     }
+
+    await mutateState();
+    toast.success('🔥 Streak +1 — see you tomorrow!');
   }, [mutateState]);
 
   const handleRandomChallenge = useCallback(async () => {
-    try {
-      const challenge = await ChallengeService.getRandomChallenge();
-      if (!challenge) {
-        toast.info('All learning items are completed — nice!');
-        return;
-      }
+    const result = await ChallengeService.getRandomChallenge();
 
-      // Check focus limit based on challenge type
-      let canAdd = false;
-      let errorMessage = '';
-
-      switch (challenge.type) {
-        case 'quest':
-          canAdd = ChallengeService.canAddQuestToFocus(focusState);
-          errorMessage = ChallengeService.getQuestFocusLimitMessage();
-          break;
-        case 'book':
-          canAdd = ChallengeService.canAddBookToFocus(focusState);
-          errorMessage = ChallengeService.getBookFocusLimitMessage();
-          break;
-        case 'course':
-          canAdd = ChallengeService.canAddCourseToFocus(focusState);
-          errorMessage = ChallengeService.getCourseFocusLimitMessage();
-          break;
-        default:
-          canAdd = true; // Unknown type, allow it
-      }
-
-      if (!canAdd) {
-        toast.error(errorMessage);
-        return;
-      }
-
-      setChallengeItem(challenge);
-      setIsChallengeModalOpen(true);
-    } catch (error) {
-      console.error('Failed to get random challenge:', error);
-      toast.error('Failed to get random challenge. Please try again.');
+    if (result._tag === 'Failure') {
+      toast.error(result.error);
+      return;
     }
+
+    const challenge = result.data;
+    if (!challenge) {
+      toast.info('All learning items are completed — nice!');
+      return;
+    }
+
+    // Check focus limit based on challenge type
+    let canAdd = false;
+    let errorMessage = '';
+
+    switch (challenge.type) {
+      case 'quest':
+        canAdd = ChallengeService.canAddQuestToFocus(focusState);
+        errorMessage = ChallengeService.getQuestFocusLimitMessage();
+        break;
+      case 'book':
+        canAdd = ChallengeService.canAddBookToFocus(focusState);
+        errorMessage = ChallengeService.getBookFocusLimitMessage();
+        break;
+      case 'course':
+        canAdd = ChallengeService.canAddCourseToFocus(focusState);
+        errorMessage = ChallengeService.getCourseFocusLimitMessage();
+        break;
+      default:
+        canAdd = true; // Unknown type, allow it
+    }
+
+    if (!canAdd) {
+      toast.error(errorMessage);
+      return;
+    }
+
+    setChallengeItem(challenge);
+    setIsChallengeModalOpen(true);
   }, [focusState]);
 
   const handleChallengeAccept = useCallback(

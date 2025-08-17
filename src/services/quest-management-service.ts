@@ -1,12 +1,11 @@
 import { Quest } from '../lib/types';
 import { CreateQuestData } from './quest-service';
 import { QuestService } from './quest-service';
+import { Result, succeed, fail } from '../lib/result';
 
 export interface QuestManagementResult {
-  success: boolean;
   message: string;
   quest?: Quest;
-  error?: string;
 }
 
 /**
@@ -19,57 +18,35 @@ export class QuestManagementService {
    */
   static async createQuest(
     data: CreateQuestData
-  ): Promise<QuestManagementResult> {
-    try {
-      // Validate quest data
-      if (!data.title?.trim()) {
-        return {
-          success: false,
-          error: 'Quest title is required',
-          message: 'Please provide a quest title',
-        };
-      }
-
-      if (data.xp <= 0) {
-        return {
-          success: false,
-          error: 'XP must be greater than 0',
-          message: 'Please provide a valid XP value',
-        };
-      }
-
-      if (!data.type || !['topic', 'project', 'bonus'].includes(data.type)) {
-        return {
-          success: false,
-          error: 'Invalid quest type',
-          message: 'Please select a valid quest type',
-        };
-      }
-
-      if (!data.category?.trim()) {
-        return {
-          success: false,
-          error: 'Category is required',
-          message: 'Please provide a quest category',
-        };
-      }
-
-      // Create the quest
-      const quest = await QuestService.createQuest(data);
-
-      return {
-        success: true,
-        message: 'Quest added successfully!',
-        quest,
-      };
-    } catch (error) {
-      console.error('Failed to create quest:', error);
-      return {
-        success: false,
-        error: 'Failed to create quest',
-        message: 'Failed to add quest. Please try again.',
-      };
+  ): Promise<Result<QuestManagementResult>> {
+    // Validate quest data
+    if (!data.title?.trim()) {
+      return fail('Quest title is required');
     }
+
+    if (data.xp <= 0) {
+      return fail('XP must be greater than 0');
+    }
+
+    if (!data.type || !['topic', 'project', 'bonus'].includes(data.type)) {
+      return fail('Invalid quest type');
+    }
+
+    if (!data.category?.trim()) {
+      return fail('Category is required');
+    }
+
+    // Create the quest
+    const result = await QuestService.createQuest(data);
+
+    if (result._tag === 'Failure') {
+      return fail(result.error);
+    }
+
+    return succeed({
+      message: 'Quest added successfully!',
+      quest: result.data,
+    });
   }
 
   /**
@@ -77,51 +54,39 @@ export class QuestManagementService {
    */
   static async toggleQuestCompletion(
     quest: Quest
-  ): Promise<QuestManagementResult> {
-    try {
-      const updatedQuest = await QuestService.toggleQuestCompletion(
-        quest.id,
-        quest.done
-      );
+  ): Promise<Result<QuestManagementResult>> {
+    const result = await QuestService.toggleQuestCompletion(
+      quest.id,
+      quest.done
+    );
 
-      const message = updatedQuest.done
-        ? `Quest completed! +${quest.xp} XP earned.`
-        : 'Quest marked as incomplete';
-
-      return {
-        success: true,
-        message,
-        quest: updatedQuest,
-      };
-    } catch (error) {
-      console.error('Failed to toggle quest completion:', error);
-      return {
-        success: false,
-        error: 'Failed to update quest',
-        message: 'Failed to update quest. Please try again.',
-      };
+    if (result._tag === 'Failure') {
+      return fail(result.error);
     }
+
+    const message = result.data.done
+      ? `Quest completed! +${quest.xp} XP earned.`
+      : 'Quest marked as incomplete';
+
+    return succeed({
+      message,
+      quest: result.data,
+    });
   }
 
   /**
    * Deletes a quest with confirmation
    */
-  static async deleteQuest(quest: Quest): Promise<QuestManagementResult> {
-    try {
-      await QuestService.deleteQuest(quest.id);
+  static async deleteQuest(quest: Quest): Promise<Result<{ message: string }>> {
+    const result = await QuestService.deleteQuest(quest.id);
 
-      return {
-        success: true,
-        message: 'Quest deleted successfully!',
-      };
-    } catch (error) {
-      console.error('Failed to delete quest:', error);
-      return {
-        success: false,
-        error: 'Failed to delete quest',
-        message: 'Failed to delete quest. Please try again.',
-      };
+    if (result._tag === 'Failure') {
+      return fail(result.error);
     }
+
+    return succeed({
+      message: 'Quest deleted successfully!',
+    });
   }
 
   /**
