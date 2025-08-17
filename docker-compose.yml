@@ -43,7 +43,7 @@ services:
       PORT: ${PORT:-3000}
     # No external port mapping needed - Coolify handles proxying
     ports:
-      - '${HOST_PORT:-3000}:${PORT:-3000}'
+      - '3005:${PORT:-3000}'
     # Restart policy for production
     restart: unless-stopped
     # Network isolation
