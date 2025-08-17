@@ -4,11 +4,14 @@ export { AddOrEditCourseDialog } from './AddOrEditCourseDialog';
 export { AddQuestForm } from './AddQuestForm';
 export { Badges } from './Badges';
 export { CategoryProgress } from './CategoryProgress';
+
 export { ChallengeModal } from './ChallengeModal';
 export { FocusChips } from './FocusChips';
 export { LevelCard } from './LevelCard';
 export { Overview } from './Overview';
+export { ProgressOverview } from './ProgressOverview';
 export { QuestRow } from './QuestRow';
+export { QuestList } from './QuestList';
 export { SearchAndFilters } from './SearchAndFilters';
 export { StreakCard } from './StreakCard';
 export { TotalXPCard } from './TotalXPCard';

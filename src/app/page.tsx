@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   Quest,
   Book,
   Course,
-  FocusState,
   CreateBookData,
   UpdateBookData,
   CreateCourseData,
@@ -20,12 +19,15 @@ import {
 } from '../lib/hooks';
 import {
   QuestService,
+  QuestManagementService,
   AppStateService,
   CreateQuestData,
   CategoryBadgeService,
   ChallengeService,
   SearchService,
   XPService,
+  BookManagementService,
+  CourseManagementService,
 } from '../services';
 import { ChallengeItem } from '../services/challenge-service';
 import {
@@ -36,35 +38,20 @@ import {
 } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '../components/ui/tooltip';
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '../components/ui/accordion';
-import { Flame, Sparkles, ChevronDown, Dices, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AddQuestDialog,
   AddOrEditBookDialog,
   AddOrEditCourseDialog,
-  AddQuestForm,
-  Badges,
-  CategoryProgress,
+  ProgressOverview,
   ChallengeModal,
-  FocusChips,
-  LevelCard,
-  Overview,
-  QuestRow,
-  SearchAndFilters,
-  StreakCard,
-  TotalXPCard,
   FocusRow,
+  QuestList,
   BooksList,
   CoursesList,
   TabbedContent,
@@ -73,9 +60,13 @@ import {
   BookProgressHistory,
   CourseProgressHistory,
 } from '../components/app';
-import { Badge } from '@/components/ui/badge';
 
+/**
+ * HomePage component serves as the main application interface for the Gamified Learning Tracker.
+ * It manages the overall state and coordinates between different learning item types.
+ */
 export default function HomePage() {
+  // Data hooks
   const { quests, mutateQuests } = useQuests();
   const { appState, mutateState } = useAppState();
   const { books, mutateBooks } = useBooks();
@@ -86,11 +77,10 @@ export default function HomePage() {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
-  const [sortBy, setSortBy] = useState<
+  const [sortBy] = useState<
     'title' | 'xp' | 'category' | 'type' | 'created_at' | 'done'
   >('created_at');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [previousTotalXp, setPreviousTotalXp] = useState(0);
+  const [sortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Search and filter state for books and courses
   const [bookSearch, setBookSearch] = useState('');
@@ -147,21 +137,14 @@ export default function HomePage() {
     return CategoryBadgeService.getUniqueCategories(quests, books, courses);
   }, [quests, books, courses]);
 
-  const filtered = useMemo(() => {
+  // Filter and sort quests
+  const filteredQuests = useMemo(() => {
     const filteredQuests = SearchService.searchQuests(quests, search, {
       type: filterType,
       category: filterCategory,
     });
-
     return QuestService.sortQuests(filteredQuests, sortBy, sortOrder);
   }, [quests, search, filterType, filterCategory, sortBy, sortOrder]);
-
-  // Track XP changes for animations
-  useEffect(() => {
-    if (totalXp !== previousTotalXp) {
-      setPreviousTotalXp(totalXp);
-    }
-  }, [totalXp, previousTotalXp]);
 
   // Calculate level info using service
   const levelInfo = useMemo(() => {
@@ -218,9 +201,13 @@ export default function HomePage() {
   const handleAddQuest = useCallback(
     async (data: CreateQuestData) => {
       try {
-        await QuestService.createQuest(data);
-        await mutateQuests();
-        toast.success('Quest added successfully!');
+        const result = await QuestManagementService.createQuest(data);
+        if (result.success) {
+          await mutateQuests();
+          toast.success(result.message);
+        } else {
+          toast.error(result.message);
+        }
       } catch (error) {
         console.error('Failed to add quest:', error);
         toast.error('Failed to add quest. Please try again.');
@@ -232,10 +219,13 @@ export default function HomePage() {
   const handleToggleDone = useCallback(
     async (quest: Quest) => {
       try {
-        await QuestService.toggleQuestCompletion(quest.id, quest.done);
-        await mutateQuests();
-        if (!quest.done) {
-          toast.success(`Quest completed! +${quest.xp} XP earned.`);
+        const result =
+          await QuestManagementService.toggleQuestCompletion(quest);
+        if (result.success) {
+          await mutateQuests();
+          toast.success(result.message);
+        } else {
+          toast.error(result.message);
         }
       } catch (error) {
         console.error('Failed to toggle quest completion:', error);
@@ -248,9 +238,13 @@ export default function HomePage() {
   const handleDeleteQuest = useCallback(
     async (quest: Quest) => {
       try {
-        await QuestService.deleteQuest(quest.id);
-        await mutateQuests();
-        toast.success('Quest deleted successfully!');
+        const result = await QuestManagementService.deleteQuest(quest);
+        if (result.success) {
+          await mutateQuests();
+          toast.success(result.message);
+        } else {
+          toast.error(result.message);
+        }
       } catch (error) {
         console.error('Failed to delete quest:', error);
         toast.error('Failed to delete quest. Please try again.');
@@ -259,7 +253,7 @@ export default function HomePage() {
     [mutateQuests]
   );
 
-  // New handlers for Books and Courses
+  // Book management handlers using services
   const handleAddBook = useCallback(() => {
     setEditingBook(null);
     setIsAddBookDialogOpen(true);
@@ -273,41 +267,22 @@ export default function HomePage() {
   const handleBookSubmit = useCallback(
     async (data: CreateBookData | UpdateBookData) => {
       try {
+        let result;
         if (editingBook) {
-          // Update existing book
-          const response = await fetch(`/api/books/${editingBook.id}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-          });
-
-          if (response.ok) {
-            await mutateBooks();
-            toast.success('Book updated successfully!');
-            setIsAddBookDialogOpen(false);
-            setEditingBook(null);
-          } else {
-            throw new Error('Failed to update book');
-          }
+          result = await BookManagementService.updateBook(editingBook.id, data);
         } else {
-          // Create new book
-          const response = await fetch('/api/books', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-          });
+          result = await BookManagementService.createBook(
+            data as CreateBookData
+          );
+        }
 
-          if (response.ok) {
-            await mutateBooks();
-            toast.success('Book added successfully!');
-            setIsAddBookDialogOpen(false);
-          } else {
-            throw new Error('Failed to add book');
-          }
+        if (result.success) {
+          await mutateBooks();
+          toast.success(result.message);
+          setIsAddBookDialogOpen(false);
+          setEditingBook(null);
+        } else {
+          toast.error(result.message);
         }
       } catch (error) {
         console.error('Failed to save book:', error);
@@ -320,15 +295,12 @@ export default function HomePage() {
   const handleDeleteBook = useCallback(
     async (bookId: string) => {
       try {
-        const response = await fetch(`/api/books/${bookId}`, {
-          method: 'DELETE',
-        });
-
-        if (response.ok) {
+        const result = await BookManagementService.deleteBook(bookId);
+        if (result.success) {
           await mutateBooks();
-          toast.success('Book deleted successfully!');
+          toast.success(result.message);
         } else {
-          throw new Error('Failed to delete book');
+          toast.error(result.message);
         }
       } catch (error) {
         console.error('Failed to delete book:', error);
@@ -348,25 +320,20 @@ export default function HomePage() {
       if (!loggingBook) return;
 
       try {
-        const response = await fetch(`/api/books/${loggingBook.id}/log`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
+        const result = await BookManagementService.logProgress(
+          loggingBook.id,
+          data
+        );
+        if (result.success) {
           await mutateBooks();
           await mutateFocusState();
 
           // Show success message with XP details
-          let message = `Progress logged! +${result.xpEarned} XP earned`;
-          if (result.focusBoostXP > 0) {
+          let message = result.message;
+          if (result.focusBoostXP && result.focusBoostXP > 0) {
             message += ` (includes +${result.focusBoostXP} focus boost)`;
           }
-          if (result.finishBonus > 0) {
+          if (result.finishBonus && result.finishBonus > 0) {
             message += ` (includes +${result.finishBonus} finish bonus)`;
           }
           if (result.isFinished) {
@@ -377,7 +344,7 @@ export default function HomePage() {
           setIsLogBookProgressOpen(false);
           setLoggingBook(null);
         } else {
-          throw new Error('Failed to log progress');
+          toast.error(result.message);
         }
       } catch (error) {
         console.error('Failed to log book progress:', error);
@@ -387,6 +354,7 @@ export default function HomePage() {
     [loggingBook, mutateBooks, mutateFocusState]
   );
 
+  // Course management handlers using services
   const handleAddCourse = useCallback(() => {
     setEditingCourse(null);
     setIsAddCourseDialogOpen(true);
@@ -400,41 +368,25 @@ export default function HomePage() {
   const handleCourseSubmit = useCallback(
     async (data: CreateCourseData | UpdateCourseData) => {
       try {
+        let result;
         if (editingCourse) {
-          // Update existing course
-          const response = await fetch(`/api/courses/${editingCourse.id}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-          });
-
-          if (response.ok) {
-            await mutateCourses();
-            toast.success('Course updated successfully!');
-            setIsAddCourseDialogOpen(false);
-            setEditingCourse(null);
-          } else {
-            throw new Error('Failed to update course');
-          }
+          result = await CourseManagementService.updateCourse(
+            editingCourse.id,
+            data
+          );
         } else {
-          // Create new course
-          const response = await fetch('/api/courses', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-          });
+          result = await CourseManagementService.createCourse(
+            data as CreateCourseData
+          );
+        }
 
-          if (response.ok) {
-            await mutateCourses();
-            toast.success('Course added successfully!');
-            setIsAddCourseDialogOpen(false);
-          } else {
-            throw new Error('Failed to add course');
-          }
+        if (result.success) {
+          await mutateCourses();
+          toast.success(result.message);
+          setIsAddCourseDialogOpen(false);
+          setEditingCourse(null);
+        } else {
+          toast.error(result.message);
         }
       } catch (error) {
         console.error('Failed to save course:', error);
@@ -447,15 +399,12 @@ export default function HomePage() {
   const handleDeleteCourse = useCallback(
     async (courseId: string) => {
       try {
-        const response = await fetch(`/api/courses/${courseId}`, {
-          method: 'DELETE',
-        });
-
-        if (response.ok) {
+        const result = await CourseManagementService.deleteCourse(courseId);
+        if (result.success) {
           await mutateCourses();
-          toast.success('Course deleted successfully!');
+          toast.success(result.message);
         } else {
-          throw new Error('Failed to delete course');
+          toast.error(result.message);
         }
       } catch (error) {
         console.error('Failed to delete course:', error);
@@ -475,25 +424,20 @@ export default function HomePage() {
       if (!loggingCourse) return;
 
       try {
-        const response = await fetch(`/api/courses/${loggingCourse.id}/log`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
+        const result = await CourseManagementService.logProgress(
+          loggingCourse.id,
+          data
+        );
+        if (result.success) {
           await mutateCourses();
           await mutateFocusState();
 
           // Show success message with XP details
-          let message = `Progress logged! +${result.xpEarned} XP earned`;
-          if (result.focusBoostXP > 0) {
+          let message = result.message;
+          if (result.focusBoostXP && result.focusBoostXP > 0) {
             message += ` (includes +${result.focusBoostXP} focus boost)`;
           }
-          if (result.finishBonus > 0) {
+          if (result.finishBonus && result.finishBonus > 0) {
             message += ` (includes +${result.finishBonus} finish bonus)`;
           }
           if (result.isFinished) {
@@ -504,7 +448,7 @@ export default function HomePage() {
           setIsLogCourseProgressOpen(false);
           setLoggingCourse(null);
         } else {
-          throw new Error('Failed to log progress');
+          toast.error(result.message);
         }
       } catch (error) {
         console.error('Failed to log course progress:', error);
@@ -657,6 +601,7 @@ export default function HomePage() {
     [focusState, mutateFocusState]
   );
 
+  // Daily check-in and challenge handlers
   const handleDailyCheckIn = useCallback(async () => {
     try {
       await AppStateService.recordDailyCheckIn();
@@ -735,166 +680,18 @@ export default function HomePage() {
   return (
     <>
       <div className='space-y-6'>
-        {/* Original Overview Section - Restored */}
-        <Card>
-          <CardHeader className='pb-4'>
-            <div className='flex items-center justify-between'>
-              <CardTitle className='text-lg'>Learning Progress</CardTitle>
-              <div className='flex items-center gap-2'>
-                {/* Streak Display */}
-                <div className='flex items-center gap-2 px-3 py-1 bg-muted/30 rounded-lg'>
-                  <Flame className='w-4 h-4 text-secondary' />
-                  <span className='text-sm font-medium text-foreground'>
-                    {appState?.streak || 0}
-                  </span>
-                </div>
+        {/* Progress Overview */}
+        <ProgressOverview
+          levelInfo={levelInfo}
+          totalXp={totalXp}
+          xpBreakdown={xpBreakdown}
+          badgeThresholds={badgeThresholds}
+          appState={appState}
+          onCheckIn={handleDailyCheckIn}
+          onRandomChallenge={handleRandomChallenge}
+        />
 
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={handleDailyCheckIn}
-                        variant='outline'
-                        size='sm'
-                        className={`transition-all duration-200 focus:ring-1 focus:ring-ring focus:ring-offset-2 ${
-                          appState?.last_check_in &&
-                          new Date(appState.last_check_in).toDateString() ===
-                            new Date().toDateString()
-                            ? 'bg-green-600 text-white border-green-600 hover:bg-green-700'
-                            : 'hover:bg-muted/50 hover:border-muted-foreground/50'
-                        }`}
-                      >
-                        Check-in
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {appState?.last_check_in &&
-                      new Date(appState.last_check_in).toDateString() ===
-                        new Date().toDateString()
-                        ? 'Already checked in today!'
-                        : 'Record your daily progress'}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                {/* Random Challenge Button */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={handleRandomChallenge}
-                        variant='outline'
-                        size='sm'
-                        className='transition-all duration-200 focus:ring-1 focus:ring-ring focus:ring-offset-2 hover:bg-muted/50 hover:border-muted-foreground/50'
-                      >
-                        <Dices className='w-4 h-4 mr-1' />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      Get a random quest, book, or course challenge
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className='space-y-4'>
-            {/* Level and XP Display */}
-            <div className='flex items-center justify-between'>
-              <div>
-                <h2 className='text-2xl font-bold text-foreground'>
-                  Level {levelInfo.level}
-                </h2>
-                <p className='text-muted-foreground'>
-                  {levelInfo.progress}/{levelInfo.nextLevelXp} XP to next level
-                </p>
-              </div>
-              <div className='text-right'>
-                <div className='text-3xl font-bold text-foreground'>
-                  {totalXp}
-                </div>
-                <div className='text-sm text-muted-foreground'>Total XP</div>
-                {/* XP Breakdown */}
-                <div className='text-xs text-muted-foreground/70 mt-1 space-y-0.5'>
-                  <div>🎯 {xpBreakdown.quests} XP</div>
-                  <div>📚 {xpBreakdown.books} XP</div>
-                  <div>🎓 {xpBreakdown.courses} XP</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Progress Bar */}
-            <div className='mb-4'>
-              <div className='relative progress-shimmer'>
-                {/* Background Track */}
-                <div className='w-full h-3 bg-muted/50 rounded-full overflow-hidden'>
-                  {/* Progress Fill */}
-                  <div
-                    className={`h-full transition-all duration-300 ease-out rounded-full ${
-                      levelInfo.pct >= 100
-                        ? 'bg-success'
-                        : levelInfo.pct >= 75
-                          ? 'bg-accent'
-                          : levelInfo.pct >= 50
-                            ? 'bg-secondary'
-                            : levelInfo.pct >= 25
-                              ? 'bg-primary'
-                              : 'bg-muted-foreground/50'
-                    }`}
-                    style={{ width: `${levelInfo.pct}%` }}
-                  />
-                </div>
-
-                {/* Progress Ticks - Only show if there's progress */}
-                {levelInfo.pct > 0 && (
-                  <div className='absolute inset-0 flex justify-between items-center pointer-events-none'>
-                    {[25, 50, 75, 100].map(tick => (
-                      <div
-                        key={tick}
-                        className={`w-0.5 h-3 rounded-full ${
-                          levelInfo.pct >= tick
-                            ? 'bg-foreground/20'
-                            : 'bg-transparent'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Badges Section - Small and Thin */}
-            <div className='pt-2 border-t border-border'>
-              <div className='flex items-center justify-between mb-2'>
-                <span className='text-sm font-medium text-muted-foreground'>
-                  Badges
-                </span>
-                <span className='text-xs text-muted-foreground'>
-                  {badgeThresholds.filter(b => b.earned).length}/
-                  {badgeThresholds.length} earned
-                </span>
-              </div>
-              <div className='flex flex-wrap gap-2'>
-                {badgeThresholds.map(({ threshold, name, earned, color }) => (
-                  <div
-                    key={threshold}
-                    className={`flex items-center gap-1 px-2 py-1 rounded-md border text-xs ${
-                      earned
-                        ? `${color} text-white border-transparent`
-                        : 'bg-muted/30 border-muted text-muted-foreground'
-                    }`}
-                  >
-                    <span className='font-medium'>{name}</span>
-                    {earned && <Sparkles className='w-3 h-3 text-white' />}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* New Focus Row for 1+1+1 System */}
+        {/* Focus Row for 1+1+1 System */}
         <FocusRow
           focusState={focusState || {}}
           quests={quests}
@@ -912,7 +709,6 @@ export default function HomePage() {
           <CardHeader>
             <div className='flex items-center justify-between'>
               <CardTitle className='text-lg'>Learning Items</CardTitle>
-              {/* Add Quest button only shows in Quests tab - will be handled by TabbedContent */}
             </div>
           </CardHeader>
           <CardContent>
@@ -933,12 +729,12 @@ export default function HomePage() {
                   <Accordion type='single' collapsible className='w-full mb-6'>
                     <AccordionItem
                       value='quest-category-progress'
-                      className='border rounded-lg data-[state=open]:border-blue-400 data-[state=open]:shadow-[0_0_0_1px_rgba(59,130,246,0.4)] data-[state=open]:shadow-blue-500/20 transition-all duration-200'
+                      className='border rounded-lg data-[state=open]:border-blue-400 data-[state=open]:shadow-[0_0_0_1px_rgba(59,130,246,0.4)] data-[state=open]:shadow-blue-500/30 data-[state=open]:shadow-lg transition-all duration-300'
                     >
                       <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-blue-600'>
                         <div className='flex items-center gap-2'>
                           <span className='text-sm font-medium text-foreground'>
-                            🎯 Quest Progress by Category
+                            Progress by Category
                           </span>
                           <span className='text-xs text-muted-foreground'>
                             • Quest completion
@@ -994,72 +790,21 @@ export default function HomePage() {
                     </AccordionItem>
                   </Accordion>
 
-                  {/* Quest Count */}
-                  <div className='flex items-center gap-2 mb-4'>
-                    <Target className='w-5 h-5 text-blue-500' />
-                    <Badge variant='outline'>
-                      {typeof filtered !== 'undefined'
-                        ? filtered.length
-                        : quests.length}{' '}
-                      quests
-                    </Badge>
-                  </div>
-
-                  <SearchAndFilters
+                  <QuestList
+                    quests={quests}
+                    filteredQuests={filteredQuests}
                     search={search}
+                    filterType={filterType}
+                    filterCategory={filterCategory}
+                    categories={categories}
                     onSearchChange={setSearch}
-                    searchPlaceholder='Search quests by title or category...'
-                    filters={[
-                      {
-                        label: 'Type',
-                        value: filterType,
-                        options: [
-                          { value: 'all', label: 'All Types' },
-                          { value: 'topic', label: 'Topic' },
-                          { value: 'project', label: 'Project' },
-                          { value: 'bonus', label: 'Bonus' },
-                        ],
-                        onChange: setFilterType,
-                      },
-                      {
-                        label: 'Category',
-                        value: filterCategory,
-                        options: [
-                          { value: 'all', label: 'All Categories' },
-                          ...categories.map(category => ({
-                            value: category,
-                            label: category,
-                          })),
-                        ],
-                        onChange: setFilterCategory,
-                      },
-                    ]}
+                    onFilterTypeChange={setFilterType}
+                    onFilterCategoryChange={setFilterCategory}
+                    onToggleDone={handleToggleDone}
+                    onToggleFocus={handleToggleQuestFocus}
+                    onDelete={handleDeleteQuest}
+                    getIsInFocus={questId => focusState?.quest?.id === questId}
                   />
-
-                  {/* Quest List */}
-                  <div className='divide-y divide-border bg-muted/30 border border-border overflow-hidden rounded-lg'>
-                    {filtered?.map((q: Quest) => (
-                      <QuestRow
-                        key={q.id}
-                        quest={q}
-                        isInFocus={focusState?.quest?.id === q.id}
-                        onToggleDone={handleToggleDone}
-                        onToggleFocus={handleToggleQuestFocus}
-                        onDelete={handleDeleteQuest}
-                      />
-                    ))}
-                    {filtered && filtered.length === 0 && (
-                      <div className='text-center py-12 text-muted-foreground'>
-                        <div className='text-4xl mb-3'>🎯</div>
-                        <div className='text-lg font-medium mb-2'>
-                          No quests yet
-                        </div>
-                        <div className='text-sm'>
-                          Add your first quest to start earning XP
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 </>
               }
               booksContent={
@@ -1075,12 +820,12 @@ export default function HomePage() {
                   <Accordion type='single' collapsible className='w-full mb-6'>
                     <AccordionItem
                       value='book-category-progress'
-                      className='border rounded-lg data-[state=open]:border-green-400 data-[state=open]:shadow-[0_0_0_1px_rgba(34,197,94,0.4)] data-[state=open]:shadow-green-500/20 transition-all duration-200'
+                      className='border rounded-lg data-[state=open]:border-green-400 data-[state=open]:shadow-[0_0_0_1px_rgba(34,197,94,0.4)] data-[state=open]:shadow-green-500/30 data-[state=open]:shadow-lg transition-all duration-300'
                     >
                       <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-green-600'>
                         <div className='flex items-center gap-2'>
                           <span className='text-sm font-medium text-foreground'>
-                            📚 Book Progress by Category
+                            Progress by Category
                           </span>
                           <span className='text-xs text-muted-foreground'>
                             • Reading completion
@@ -1170,12 +915,12 @@ export default function HomePage() {
                   <Accordion type='single' collapsible className='w-full mb-6'>
                     <AccordionItem
                       value='course-category-progress'
-                      className='border rounded-lg data-[state=open]:border-purple-400 data-[state=open]:shadow-[0_0_0_1px_rgba(168,85,247,0.4)] data-[state=open]:shadow-purple-500/20 transition-all duration-200'
+                      className='border rounded-lg data-[state=open]:border-purple-400 data-[state=open]:shadow-[0_0_0_1px_rgba(168,85,247,0.4)] data-[state=open]:shadow-purple-500/30 data-[state=open]:shadow-lg transition-all duration-300'
                     >
                       <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-purple-600'>
                         <div className='flex items-center gap-2'>
                           <span className='text-sm font-medium text-foreground'>
-                            🎓 Course Progress by Category
+                            Progress by Category
                           </span>
                           <span className='text-xs text-muted-foreground'>
                             • Learning completion
