@@ -186,15 +186,15 @@ export default function HomePage() {
 
   // Calculate category progress and badges using service
   const questCategoryProgress = useMemo(() => {
-    return CategoryBadgeService.getCategoryProgressByType(quests, 'quests');
+    return CategoryBadgeService.getCategoryProgressByType(quests);
   }, [quests]);
 
   const bookCategoryProgress = useMemo(() => {
-    return CategoryBadgeService.getCategoryProgressByType(books, 'books');
+    return CategoryBadgeService.getCategoryProgressByType(books);
   }, [books]);
 
   const courseCategoryProgress = useMemo(() => {
-    return CategoryBadgeService.getCategoryProgressByType(courses, 'courses');
+    return CategoryBadgeService.getCategoryProgressByType(courses);
   }, [courses]);
 
   // Event handlers using services
@@ -694,9 +694,6 @@ export default function HomePage() {
         {/* Focus Row for 1+1+1 System */}
         <FocusRow
           focusState={focusState || {}}
-          quests={quests}
-          books={books}
-          courses={courses}
           onUpdateFocus={handleUpdateFocus}
           onNavigateToTab={setActiveTab}
           onToggleQuestDone={handleToggleDone}

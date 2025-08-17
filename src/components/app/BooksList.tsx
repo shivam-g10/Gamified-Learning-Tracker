@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { BookOpen, Plus, Edit, Trash2 } from 'lucide-react';
-import { SearchAndFilters, type FilterOption } from './SearchAndFilters';
+import { SearchAndFilters } from './SearchAndFilters';
 import { SearchService } from '@/services/search-service';
 import type { Book } from '@/lib/types';
 

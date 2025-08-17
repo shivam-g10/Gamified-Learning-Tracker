@@ -1,4 +1,4 @@
-import { Quest, Book, Course, FocusState } from '../lib/types';
+import { FocusState } from '../lib/types';
 
 export interface ChallengeItem {
   id: string;
@@ -74,7 +74,6 @@ export class ChallengeService {
    * Gets challenge success message
    */
   static getChallengeSuccessMessage(item: ChallengeItem): string {
-    const typeText = item.type === 'quest' ? 'quest' : item.type;
     return `Challenge accepted! "${item.title}" added to focus.`;
   }
 

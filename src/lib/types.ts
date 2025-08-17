@@ -15,7 +15,6 @@ export type Book = {
   total_pages: number;
   current_page: number;
   status: 'backlog' | 'reading' | 'finished';
-  cover_url: string | null;
   description: string | null;
   category: string;
   tags: string[];
@@ -88,7 +87,6 @@ export type CreateBookData = {
   category: string;
   description?: string;
   tags?: string[];
-  cover_url?: string;
 };
 
 export type UpdateBookData = {
@@ -100,7 +98,6 @@ export type UpdateBookData = {
   category?: string;
   description?: string;
   tags?: string[];
-  cover_url?: string;
   started_at?: Date;
   finished_at?: Date;
 };

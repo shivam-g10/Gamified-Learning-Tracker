@@ -68,9 +68,7 @@ Closes #(issue number)
 <!-- List the documentation files that were updated -->
 
 -
--
-
----
+- ***
 
 ## 🔍 Code Quality Checklist
 

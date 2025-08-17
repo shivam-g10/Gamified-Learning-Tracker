@@ -122,8 +122,7 @@ export class CategoryBadgeService {
    * Gets category progress for a specific type only
    */
   static getCategoryProgressByType(
-    items: (Quest | Book | Course)[],
-    type: 'quests' | 'books' | 'courses'
+    items: (Quest | Book | Course)[]
   ): CategoryProgress[] {
     const categoryMap = new Map<
       string,
@@ -200,10 +199,7 @@ export class CategoryBadgeService {
   /**
    * Gets categories for a specific type only
    */
-  static getCategoriesByType(
-    items: (Quest | Book | Course)[],
-    type: 'quests' | 'books' | 'courses'
-  ): string[] {
+  static getCategoriesByType(items: (Quest | Book | Course)[]): string[] {
     const categories = new Set<string>();
     items.forEach(item => categories.add(item.category));
     return Array.from(categories).sort();
@@ -257,7 +253,7 @@ export class CategoryBadgeService {
       const badges = Object.entries(this.CATEGORY_BADGE_THRESHOLDS);
       const earnedBadge = badges
         .reverse() // Start from highest threshold
-        .find(([_badgeName, threshold]) => percentage >= threshold); // eslint-disable-line @typescript-eslint/no-unused-vars
+        .find(([, threshold]) => percentage >= threshold);
 
       const badgeName =
         (earnedBadge?.[0] as CategoryBadge['badge']) || 'Bronze';
@@ -287,8 +283,8 @@ export class CategoryBadgeService {
 
     const { percentage } = categoryProgress;
     const nextBadge = Object.entries(this.CATEGORY_BADGE_THRESHOLDS).find(
-      ([_badgeName, threshold]) => percentage < threshold
-    ); // eslint-disable-line @typescript-eslint/no-unused-vars
+      ([, threshold]) => percentage < threshold
+    );
 
     if (!nextBadge) return null;
 

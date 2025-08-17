@@ -10,9 +10,6 @@ import type { Quest, Book, Course, FocusState } from '@/lib/types';
 
 interface FocusRowProps {
   focusState: FocusState;
-  quests: Quest[];
-  books: Book[];
-  courses: Course[];
   onUpdateFocus: (
     type: 'quest' | 'book' | 'course',
     id: string | null
@@ -25,9 +22,6 @@ interface FocusRowProps {
 
 export function FocusRow({
   focusState,
-  quests,
-  books,
-  courses,
   onUpdateFocus,
   onNavigateToTab,
   onToggleQuestDone,

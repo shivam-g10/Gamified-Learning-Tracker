@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -27,15 +27,7 @@ export function CourseProgressHistory({
   const [progressEntries, setProgressEntries] = useState<CourseProgressEntry[]>(
     []
   );
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (isOpen && course) {
-      loadProgressHistory();
-    }
-  }, [isOpen, course]);
-
-  const loadProgressHistory = async () => {
+  const loadProgressHistory = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/courses/${course.id}/progress`);
@@ -48,7 +40,15 @@ export function CourseProgressHistory({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [course.id]);
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && course) {
+      loadProgressHistory();
+    }
+  }, [isOpen, course, loadProgressHistory]);
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -133,7 +133,7 @@ export function CourseProgressHistory({
             ) : (
               <ScrollArea className='h-64'>
                 <div className='space-y-3 pr-4'>
-                  {progressEntries.map((entry, index) => (
+                  {progressEntries.map(entry => (
                     <div
                       key={entry.id}
                       className='p-3 border border-border rounded-lg bg-card'

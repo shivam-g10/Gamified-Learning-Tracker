@@ -51,7 +51,6 @@ export function AddOrEditBookDialog({
     category: '',
     description: '',
     tags: [],
-    cover_url: '',
   });
 
   const isEditing = !!book;
@@ -67,7 +66,7 @@ export function AddOrEditBookDialog({
         status: book.status,
         description: book.description || '',
         tags: book.tags || [],
-        cover_url: book.cover_url || '',
+
         category: book.category,
       });
     } else {
@@ -77,7 +76,6 @@ export function AddOrEditBookDialog({
         total_pages: 0,
         description: '',
         tags: [],
-        cover_url: '',
         category: '',
       });
     }
@@ -94,7 +92,6 @@ export function AddOrEditBookDialog({
           total_pages: 0,
           description: '',
           tags: [],
-          cover_url: '',
           category: '',
         });
       }
@@ -290,17 +287,6 @@ export function AddOrEditBookDialog({
                 placeholder='tag1, tag2, tag3 (comma-separated)'
                 value={formData.tags?.join(', ') || ''}
                 onChange={e => handleTagsChange(e.target.value)}
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='cover_url'>Cover URL</Label>
-              <Input
-                id='cover_url'
-                type='url'
-                placeholder='https://example.com/cover.jpg'
-                value={formData.cover_url || ''}
-                onChange={e => handleInputChange('cover_url', e.target.value)}
               />
             </div>
           </div>

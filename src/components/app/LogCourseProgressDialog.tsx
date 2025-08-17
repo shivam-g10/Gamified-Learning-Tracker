@@ -77,7 +77,7 @@ export function LogCourseProgressDialog({
         notes: notes.trim() || undefined,
       });
       onClose();
-    } catch (error) {
+    } catch {
       setError('Failed to log progress. Please try again.');
     } finally {
       setIsSubmitting(false);

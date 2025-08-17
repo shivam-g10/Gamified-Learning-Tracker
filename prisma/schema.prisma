@@ -30,7 +30,6 @@ model Book {
   total_pages           Int                   @default(0)
   current_page          Int                   @default(0)
   status                BookStatus            @default(backlog)
-  cover_url             String?
   description           String?
   category              String                @default("Uncategorized")
   tags                  String[]

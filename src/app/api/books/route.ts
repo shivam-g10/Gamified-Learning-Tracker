@@ -32,15 +32,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const {
-      title,
-      author,
-      total_pages,
-      category,
-      description,
-      tags,
-      cover_url,
-    } = body;
+    const { title, author, total_pages, category, description, tags } = body;
 
     // Validation
     if (
@@ -65,7 +57,6 @@ export async function POST(req: NextRequest) {
       category,
       description,
       tags,
-      cover_url,
     });
 
     return NextResponse.json(book, { status: 201 });

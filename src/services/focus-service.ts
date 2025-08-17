@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db';
-import type { FocusSlot, FocusState, Quest, Book, Course } from '@/lib/types';
+import type { FocusState } from '@/lib/types';
 
 export class FocusService {
   /**

@@ -21,7 +21,6 @@ export class BookService {
         category: data.category,
         description: data.description,
         tags: data.tags || [],
-        cover_url: data.cover_url,
       },
     });
   }

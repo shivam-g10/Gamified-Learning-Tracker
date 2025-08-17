@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { GraduationCap, Plus, Edit, Trash2, ExternalLink } from 'lucide-react';
-import { SearchAndFilters, type FilterOption } from './SearchAndFilters';
+import { GraduationCap, Plus, Edit, Trash2 } from 'lucide-react';
+import { SearchAndFilters } from './SearchAndFilters';
 import { SearchService } from '@/services/search-service';
 import type { Course } from '@/lib/types';
 

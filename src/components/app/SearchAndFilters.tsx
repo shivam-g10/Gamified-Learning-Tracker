@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -9,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 export interface FilterOption {
   value: string;

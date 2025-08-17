@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -29,13 +29,7 @@ export function BookProgressHistory({
   );
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && book) {
-      loadProgressHistory();
-    }
-  }, [isOpen, book]);
-
-  const loadProgressHistory = async () => {
+  const loadProgressHistory = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/books/${book.id}/progress`);
@@ -48,7 +42,13 @@ export function BookProgressHistory({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [book.id]);
+
+  useEffect(() => {
+    if (isOpen && book) {
+      loadProgressHistory();
+    }
+  }, [isOpen, book, loadProgressHistory]);
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -133,7 +133,7 @@ export function BookProgressHistory({
             ) : (
               <ScrollArea className='h-64'>
                 <div className='space-y-3 pr-4'>
-                  {progressEntries.map((entry, index) => (
+                  {progressEntries.map(entry => (
                     <div
                       key={entry.id}
                       className='p-3 border border-border rounded-lg bg-card'
