@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BookService } from '@/services/book-service';
+import { prisma } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
@@ -7,7 +9,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const book = await BookService.getBookById(id);
+    const book = await prisma.book.findUnique({
+      where: { id },
+    });
 
     if (!book) {
       return NextResponse.json({ error: 'Book not found' }, { status: 404 });
@@ -31,7 +35,10 @@ export async function PATCH(
     const { id } = await params;
     const body = await req.json();
 
-    const book = await BookService.updateBook(id, body);
+    const book = await prisma.book.update({
+      where: { id },
+      data: body,
+    });
     return NextResponse.json(book);
   } catch (error) {
     console.error('Error updating book:', error);
@@ -48,7 +55,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await BookService.deleteBook(id);
+    await prisma.book.delete({
+      where: { id },
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting book:', error);

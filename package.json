@@ -23,7 +23,8 @@
     "docker:dev:watch": "docker compose -f docker-compose.dev.yml up --build --watch",
     "docker:prod": "docker compose up --build",
     "docker:down": "docker compose down",
-    "docker:clean": "docker compose down -v --remove-orphans"
+    "docker:clean": "docker compose down -v --remove-orphans",
+    "prepare": "husky"
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",

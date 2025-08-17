@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CourseService } from '@/services/course-service';
+import { prisma } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
@@ -7,7 +9,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const course = await CourseService.getCourseById(id);
+    const course = await prisma.course.findUnique({
+      where: { id },
+    });
 
     if (!course) {
       return NextResponse.json({ error: 'Course not found' }, { status: 404 });
@@ -31,7 +35,10 @@ export async function PATCH(
     const { id } = await params;
     const body = await req.json();
 
-    const course = await CourseService.updateCourse(id, body);
+    const course = await prisma.course.update({
+      where: { id },
+      data: body,
+    });
     return NextResponse.json(course);
   } catch (error) {
     console.error('Error updating course:', error);
@@ -48,7 +55,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await CourseService.deleteCourse(id);
+    await prisma.course.delete({
+      where: { id },
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting course:', error);

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CourseService } from '@/services/course-service';
+import { prisma } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
@@ -16,13 +18,18 @@ export async function GET(
     }
 
     // Check if course exists
-    const course = await CourseService.getCourseById(id);
+    const course = await prisma.course.findUnique({
+      where: { id },
+    });
     if (!course) {
       return NextResponse.json({ error: 'Course not found' }, { status: 404 });
     }
 
-    // Get progress history using the service
-    const progressEntries = await CourseService.getCourseProgress(id);
+    // Get progress history using Prisma
+    const progressEntries = await prisma.courseProgressEntry.findMany({
+      where: { course_id: id },
+      orderBy: { created_at: 'desc' },
+    });
 
     return NextResponse.json({
       success: true,

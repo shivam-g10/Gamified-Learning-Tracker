@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BookService } from '@/services/book-service';
+import { prisma } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
@@ -16,13 +18,18 @@ export async function GET(
     }
 
     // Check if book exists
-    const book = await BookService.getBookById(id);
+    const book = await prisma.book.findUnique({
+      where: { id },
+    });
     if (!book) {
       return NextResponse.json({ error: 'Book not found' }, { status: 404 });
     }
 
-    // Get progress history using the service
-    const progressEntries = await BookService.getBookProgress(id);
+    // Get progress history using Prisma
+    const progressEntries = await prisma.bookProgressEntry.findMany({
+      where: { book_id: id },
+      orderBy: { created_at: 'desc' },
+    });
 
     return NextResponse.json({
       success: true,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CourseService } from '@/services/course-service';
-import { FocusService } from '@/services/focus-service';
-import { XPService } from '@/services/xp-service';
+import { prisma } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(
   req: NextRequest,
@@ -28,42 +28,68 @@ export async function POST(
     }
 
     // Check if course exists
-    const course = await CourseService.getCourseById(id);
+    const course = await prisma.course.findUnique({
+      where: { id },
+    });
     if (!course) {
       return NextResponse.json({ error: 'Course not found' }, { status: 404 });
     }
 
     // Check if course is in focus for XP boost
-    const focusState = await FocusService.getFocusState();
-    const isInFocus = focusState.course?.id === id;
+    const focusSlot = await prisma.focusSlot.findFirst();
+    const isInFocus = focusSlot?.course_id === id;
 
-    // Log progress and calculate XP with focus boost
-    const result = await CourseService.logProgress(
-      id,
-      {
+    // Calculate XP
+    const baseSessionXP = units_delta * 15; // 15 XP per unit
+    const focusBoostXP = isInFocus ? Math.floor(baseSessionXP * 0.5) : 0; // 50% boost if in focus
+    const sessionXP = baseSessionXP + focusBoostXP;
+
+    // Check if course is finished
+    const newCompletedUnits = course.completed_units + units_delta;
+    const isFinished = newCompletedUnits >= course.total_units;
+    const finishBonus = isFinished ? 150 : 0; // 150 XP bonus for finishing
+
+    const totalXP = sessionXP + finishBonus;
+
+    // Log progress entry
+    await prisma.courseProgressEntry.create({
+      data: {
+        course_id: id,
         units_delta,
         notes: notes || null,
+        xp_earned: totalXP,
       },
-      isInFocus
-    );
+    });
 
-    // Calculate focus boost details for response
-    const baseSessionXP = XPService.calculateCourseSessionXP(
-      units_delta,
-      false
-    );
-    const focusBoostXP = isInFocus
-      ? result.xpEarned - baseSessionXP - result.finishBonus
-      : 0;
+    // Update course completed units
+    const updatedCourse = await prisma.course.update({
+      where: { id },
+      data: {
+        completed_units: newCompletedUnits,
+        status: isFinished ? 'finished' : 'learning',
+        updated_at: new Date(),
+      },
+    });
+
+    // Update app state XP
+    const appState = await prisma.appState.findFirst();
+    if (appState) {
+      await prisma.appState.update({
+        where: { id: appState.id },
+        data: {
+          total_xp: appState.total_xp + totalXP,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      course: result.course,
-      xpEarned: result.xpEarned,
+      course: updatedCourse,
+      xpEarned: totalXP,
       sessionXP: baseSessionXP,
       focusBoostXP,
-      finishBonus: result.finishBonus,
-      isFinished: result.isFinished,
+      finishBonus,
+      isFinished,
       isInFocus,
       unitsCompleted: units_delta,
     });

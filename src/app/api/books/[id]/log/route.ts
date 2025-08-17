@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BookService } from '@/services/book-service';
-import { FocusService } from '@/services/focus-service';
-import { XPService } from '@/services/xp-service';
+import { prisma } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(
   req: NextRequest,
@@ -37,45 +37,71 @@ export async function POST(
     }
 
     // Check if book exists
-    const book = await BookService.getBookById(id);
+    const book = await prisma.book.findUnique({
+      where: { id },
+    });
     if (!book) {
       return NextResponse.json({ error: 'Book not found' }, { status: 404 });
     }
 
     // Check if book is in focus for XP boost
-    const focusState = await FocusService.getFocusState();
-    const isInFocus = focusState.book?.id === id;
+    const focusSlot = await prisma.focusSlot.findFirst();
+    const isInFocus = focusSlot?.book_id === id;
 
-    // Log progress and calculate XP with focus boost
-    const result = await BookService.logProgress(
-      id,
-      {
+    // Calculate XP
+    const pagesRead = to_page - from_page;
+    const baseSessionXP = pagesRead * 10; // 10 XP per page
+    const focusBoostXP = isInFocus ? Math.floor(baseSessionXP * 0.5) : 0; // 50% boost if in focus
+    const sessionXP = baseSessionXP + focusBoostXP;
+
+    // Check if book is finished
+    const isFinished = to_page >= book.total_pages;
+    const finishBonus = isFinished ? 100 : 0; // 100 XP bonus for finishing
+
+    const totalXP = sessionXP + finishBonus;
+
+    // Log progress entry
+    await prisma.bookProgressEntry.create({
+      data: {
+        book_id: id,
         from_page,
         to_page,
         notes: notes || null,
+        xp_earned: totalXP,
       },
-      isInFocus
-    );
+    });
 
-    // Calculate focus boost details for response
-    const baseSessionXP = XPService.calculateBookSessionXP(
-      to_page - from_page,
-      false
-    );
-    const focusBoostXP = isInFocus
-      ? result.xpEarned - baseSessionXP - result.finishBonus
-      : 0;
+    // Update book current page
+    const updatedBook = await prisma.book.update({
+      where: { id },
+      data: {
+        current_page: Math.max(book.current_page, to_page),
+        status: isFinished ? 'finished' : 'reading',
+        updated_at: new Date(),
+      },
+    });
+
+    // Update app state XP
+    const appState = await prisma.appState.findFirst();
+    if (appState) {
+      await prisma.appState.update({
+        where: { id: appState.id },
+        data: {
+          total_xp: appState.total_xp + totalXP,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      book: result.book,
-      xpEarned: result.xpEarned,
+      book: updatedBook,
+      xpEarned: totalXP,
       sessionXP: baseSessionXP,
       focusBoostXP,
-      finishBonus: result.finishBonus,
-      isFinished: result.isFinished,
+      finishBonus,
+      isFinished,
       isInFocus,
-      pagesRead: to_page - from_page,
+      pagesRead,
     });
   } catch (error) {
     console.error('Error logging book progress:', error);

@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GraduationCap, Calendar, FileText, TrendingUp } from 'lucide-react';
 import type { Course, CourseProgressEntry } from '@/lib/types';
+import { CourseService } from '@/services/index';
 
 interface CourseProgressHistoryProps {
   course: Course;
@@ -30,11 +31,8 @@ export function CourseProgressHistory({
   const loadProgressHistory = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/courses/${course.id}/progress`);
-      if (response.ok) {
-        const data = await response.json();
-        setProgressEntries(data.progressEntries || []);
-      }
+      const result = await CourseService.getCourseProgress(course.id);
+      setProgressEntries(result);
     } catch (error) {
       console.error('Failed to load progress history:', error);
     } finally {

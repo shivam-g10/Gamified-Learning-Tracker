@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Course,
   CreateCourseData,
@@ -5,22 +7,19 @@ import {
   LogCourseProgressData,
 } from '../lib/types';
 import { CourseService } from './course-service';
+import { Result, succeed, fail } from '../lib/result';
 
 export interface CourseManagementResult {
-  success: boolean;
   message: string;
   course?: Course;
-  error?: string;
 }
 
 export interface CourseProgressResult {
-  success: boolean;
   message: string;
   xpEarned?: number;
   focusBoostXP?: number;
   finishBonus?: number;
   isFinished?: boolean;
-  error?: string;
 }
 
 /**
@@ -33,48 +32,30 @@ export class CourseManagementService {
    */
   static async createCourse(
     data: CreateCourseData
-  ): Promise<CourseManagementResult> {
+  ): Promise<Result<CourseManagementResult>> {
+    // Validate course data
+    if (!data.title?.trim()) {
+      return fail('Course title is required');
+    }
+
+    if (data.total_units <= 0) {
+      return fail('Total units must be greater than 0');
+    }
+
+    if (!data.category?.trim()) {
+      return fail('Category is required');
+    }
+
     try {
-      // Validate course data
-      if (!data.title?.trim()) {
-        return {
-          success: false,
-          error: 'Course title is required',
-          message: 'Please provide a course title',
-        };
-      }
-
-      if (data.total_units <= 0) {
-        return {
-          success: false,
-          error: 'Total units must be greater than 0',
-          message: 'Please provide a valid unit count',
-        };
-      }
-
-      if (!data.category?.trim()) {
-        return {
-          success: false,
-          error: 'Category is required',
-          message: 'Please provide a course category',
-        };
-      }
-
       // Create the course
       const course = await CourseService.createCourse(data);
 
-      return {
-        success: true,
+      return succeed({
         message: 'Course added successfully!',
         course,
-      };
+      });
     } catch (error) {
-      console.error('Failed to create course:', error);
-      return {
-        success: false,
-        error: 'Failed to create course',
-        message: 'Failed to add course. Please try again.',
-      };
+      return fail('Failed to add course. Please try again.');
     }
   }
 
@@ -84,81 +65,53 @@ export class CourseManagementService {
   static async updateCourse(
     courseId: string,
     data: UpdateCourseData
-  ): Promise<CourseManagementResult> {
+  ): Promise<Result<CourseManagementResult>> {
+    // Validate update data
+    if (data.title !== undefined && !data.title?.trim()) {
+      return fail('Course title cannot be empty');
+    }
+
+    if (data.total_units !== undefined && data.total_units <= 0) {
+      return fail('Total units must be greater than 0');
+    }
+
+    if (data.completed_units !== undefined && data.completed_units < 0) {
+      return fail('Completed units cannot be negative');
+    }
+
+    if (
+      data.completed_units !== undefined &&
+      data.total_units !== undefined &&
+      data.completed_units > data.total_units
+    ) {
+      return fail('Completed units cannot exceed total units');
+    }
+
     try {
-      // Validate update data
-      if (data.title !== undefined && !data.title?.trim()) {
-        return {
-          success: false,
-          error: 'Course title cannot be empty',
-          message: 'Please provide a valid course title',
-        };
-      }
-
-      if (data.total_units !== undefined && data.total_units <= 0) {
-        return {
-          success: false,
-          error: 'Total units must be greater than 0',
-          message: 'Please provide a valid unit count',
-        };
-      }
-
-      if (data.completed_units !== undefined && data.completed_units < 0) {
-        return {
-          success: false,
-          error: 'Completed units cannot be negative',
-          message: 'Please provide a valid completed unit count',
-        };
-      }
-
-      if (
-        data.completed_units !== undefined &&
-        data.total_units !== undefined &&
-        data.completed_units > data.total_units
-      ) {
-        return {
-          success: false,
-          error: 'Completed units cannot exceed total units',
-          message: 'Completed units cannot be greater than total units',
-        };
-      }
-
       // Update the course
       const course = await CourseService.updateCourse(courseId, data);
 
-      return {
-        success: true,
+      return succeed({
         message: 'Course updated successfully!',
         course,
-      };
+      });
     } catch (error) {
-      console.error('Failed to update course:', error);
-      return {
-        success: false,
-        error: 'Failed to update course',
-        message: 'Failed to update course. Please try again.',
-      };
+      return fail('Failed to update course. Please try again.');
     }
   }
 
   /**
    * Deletes a course with confirmation
    */
-  static async deleteCourse(courseId: string): Promise<CourseManagementResult> {
+  static async deleteCourse(courseId: string): Promise<Result<{ message: string }>> {
     try {
       await CourseService.deleteCourse(courseId);
 
-      return {
-        success: true,
+      return succeed({
         message: 'Course deleted successfully!',
-      };
+      });
     } catch (error) {
-      console.error('Failed to delete course:', error);
-      return {
-        success: false,
-        error: 'Failed to delete course',
-        message: 'Failed to delete course. Please try again.',
-      };
+      return fail('Failed to delete course. Please try again.');
     }
   }
 
@@ -168,35 +121,25 @@ export class CourseManagementService {
   static async logProgress(
     courseId: string,
     data: LogCourseProgressData
-  ): Promise<CourseProgressResult> {
-    try {
-      // Validate progress data
-      if (data.units_delta <= 0) {
-        return {
-          success: false,
-          error: 'Units completed must be greater than 0',
-          message: 'Please provide a valid unit count',
-        };
-      }
+  ): Promise<Result<CourseProgressResult>> {
+    // Validate progress data
+    if (data.units_delta <= 0) {
+      return fail('Units completed must be greater than 0');
+    }
 
+    try {
       // Log the progress
       const result = await CourseService.logProgress(courseId, data);
 
-      return {
-        success: true,
+      return succeed({
         message: `Progress logged! +${result.xpEarned} XP earned`,
         xpEarned: result.xpEarned,
         focusBoostXP: 0, // Will be calculated by the calling component if needed
         finishBonus: result.finishBonus,
         isFinished: result.isFinished,
-      };
+      });
     } catch (error) {
-      console.error('Failed to log course progress:', error);
-      return {
-        success: false,
-        error: 'Failed to log progress',
-        message: 'Failed to log progress. Please try again.',
-      };
+      return fail('Failed to log progress. Please try again.');
     }
   }
 

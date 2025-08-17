@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Book,
   CreateBookData,
@@ -5,22 +7,19 @@ import {
   LogBookProgressData,
 } from '../lib/types';
 import { BookService } from './book-service';
+import { Result, succeed, fail } from '../lib/result';
 
 export interface BookManagementResult {
-  success: boolean;
   message: string;
   book?: Book;
-  error?: string;
 }
 
 export interface BookProgressResult {
-  success: boolean;
   message: string;
   xpEarned?: number;
   focusBoostXP?: number;
   finishBonus?: number;
   isFinished?: boolean;
-  error?: string;
 }
 
 /**
@@ -31,48 +30,30 @@ export class BookManagementService {
   /**
    * Creates a new book with proper validation and error handling
    */
-  static async createBook(data: CreateBookData): Promise<BookManagementResult> {
+  static async createBook(data: CreateBookData): Promise<Result<BookManagementResult>> {
+    // Validate book data
+    if (!data.title?.trim()) {
+      return fail('Book title is required');
+    }
+
+    if (data.total_pages <= 0) {
+      return fail('Total pages must be greater than 0');
+    }
+
+    if (!data.category?.trim()) {
+      return fail('Category is required');
+    }
+
     try {
-      // Validate book data
-      if (!data.title?.trim()) {
-        return {
-          success: false,
-          error: 'Book title is required',
-          message: 'Please provide a book title',
-        };
-      }
-
-      if (data.total_pages <= 0) {
-        return {
-          success: false,
-          error: 'Total pages must be greater than 0',
-          message: 'Please provide a valid page count',
-        };
-      }
-
-      if (!data.category?.trim()) {
-        return {
-          success: false,
-          error: 'Category is required',
-          message: 'Please provide a book category',
-        };
-      }
-
       // Create the book
       const book = await BookService.createBook(data);
 
-      return {
-        success: true,
+      return succeed({
         message: 'Book added successfully!',
         book,
-      };
+      });
     } catch (error) {
-      console.error('Failed to create book:', error);
-      return {
-        success: false,
-        error: 'Failed to create book',
-        message: 'Failed to add book. Please try again.',
-      };
+      return fail('Failed to create book. Please try again.');
     }
   }
 
@@ -82,81 +63,53 @@ export class BookManagementService {
   static async updateBook(
     bookId: string,
     data: UpdateBookData
-  ): Promise<BookManagementResult> {
+  ): Promise<Result<BookManagementResult>> {
+    // Validate update data
+    if (data.title !== undefined && !data.title?.trim()) {
+      return fail('Book title cannot be empty');
+    }
+
+    if (data.total_pages !== undefined && data.total_pages <= 0) {
+      return fail('Total pages must be greater than 0');
+    }
+
+    if (data.current_page !== undefined && data.current_page < 0) {
+      return fail('Current page cannot be negative');
+    }
+
+    if (
+      data.current_page !== undefined &&
+      data.total_pages !== undefined &&
+      data.current_page > data.total_pages
+    ) {
+      return fail('Current page cannot exceed total pages');
+    }
+
     try {
-      // Validate update data
-      if (data.title !== undefined && !data.title?.trim()) {
-        return {
-          success: false,
-          error: 'Book title cannot be empty',
-          message: 'Please provide a valid book title',
-        };
-      }
-
-      if (data.total_pages !== undefined && data.total_pages <= 0) {
-        return {
-          success: false,
-          error: 'Total pages must be greater than 0',
-          message: 'Please provide a valid page count',
-        };
-      }
-
-      if (data.current_page !== undefined && data.current_page < 0) {
-        return {
-          success: false,
-          error: 'Current page cannot be negative',
-          message: 'Please provide a valid current page',
-        };
-      }
-
-      if (
-        data.current_page !== undefined &&
-        data.total_pages !== undefined &&
-        data.current_page > data.total_pages
-      ) {
-        return {
-          success: false,
-          error: 'Current page cannot exceed total pages',
-          message: 'Current page cannot be greater than total pages',
-        };
-      }
-
       // Update the book
       const book = await BookService.updateBook(bookId, data);
 
-      return {
-        success: true,
+      return succeed({
         message: 'Book updated successfully!',
         book,
-      };
+      });
     } catch (error) {
-      console.error('Failed to update book:', error);
-      return {
-        success: false,
-        error: 'Failed to update book',
-        message: 'Failed to update book. Please try again.',
-      };
+      return fail('Failed to update book. Please try again.');
     }
   }
 
   /**
    * Deletes a book with confirmation
    */
-  static async deleteBook(bookId: string): Promise<BookManagementResult> {
+  static async deleteBook(bookId: string): Promise<Result<{ message: string }>> {
     try {
       await BookService.deleteBook(bookId);
 
-      return {
-        success: true,
+      return succeed({
         message: 'Book deleted successfully!',
-      };
+      });
     } catch (error) {
-      console.error('Failed to delete book:', error);
-      return {
-        success: false,
-        error: 'Failed to delete book',
-        message: 'Failed to delete book. Please try again.',
-      };
+      return fail('Failed to delete book. Please try again.');
     }
   }
 
@@ -166,43 +119,29 @@ export class BookManagementService {
   static async logProgress(
     bookId: string,
     data: LogBookProgressData
-  ): Promise<BookProgressResult> {
+  ): Promise<Result<BookProgressResult>> {
+    // Validate progress data
+    if (data.from_page < 0 || data.to_page < 0) {
+      return fail('Page numbers cannot be negative');
+    }
+
+    if (data.from_page > data.to_page) {
+      return fail('From page cannot be greater than to page');
+    }
+
     try {
-      // Validate progress data
-      if (data.from_page < 0 || data.to_page < 0) {
-        return {
-          success: false,
-          error: 'Page numbers cannot be negative',
-          message: 'Please provide valid page numbers',
-        };
-      }
-
-      if (data.from_page > data.to_page) {
-        return {
-          success: false,
-          error: 'From page cannot be greater than to page',
-          message: 'Please provide valid page range',
-        };
-      }
-
       // Log the progress
       const result = await BookService.logProgress(bookId, data);
 
-      return {
-        success: true,
+      return succeed({
         message: `Progress logged! +${result.xpEarned} XP earned`,
         xpEarned: result.xpEarned,
         focusBoostXP: 0, // Will be calculated by the calling component if needed
         finishBonus: result.finishBonus,
         isFinished: result.isFinished,
-      };
+      });
     } catch (error) {
-      console.error('Failed to log book progress:', error);
-      return {
-        success: false,
-        error: 'Failed to log progress',
-        message: 'Failed to log progress. Please try again.',
-      };
+      return fail('Failed to log progress. Please try again.');
     }
   }
 

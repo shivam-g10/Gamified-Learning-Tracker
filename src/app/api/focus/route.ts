@@ -1,10 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { FocusService } from '@/services/focus-service';
+import { prisma } from '@/lib/db';
 import type { FocusState } from '@/lib/types';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const focusState = await FocusService.getFocusState();
+    // Get the current focus state from the database
+    const focusSlot = await prisma.focusSlot.findFirst();
+    
+    if (!focusSlot) {
+      // Create a default focus slot if none exists
+      await prisma.focusSlot.create({
+        data: {
+          quest_id: null,
+          book_id: null,
+          course_id: null,
+        },
+      });
+      return NextResponse.json({
+        quest: null,
+        book: null,
+        course: null,
+      });
+    }
+
+    // Build the focus state by fetching the focused items
+    const focusState: FocusState = {};
+
+    if (focusSlot.quest_id) {
+      const quest = await prisma.quest.findUnique({
+        where: { id: focusSlot.quest_id },
+      });
+      if (quest) focusState.quest = quest;
+    }
+
+    if (focusSlot.book_id) {
+      const book = await prisma.book.findUnique({
+        where: { id: focusSlot.book_id },
+      });
+      if (book) focusState.book = book;
+    }
+
+    if (focusSlot.course_id) {
+      const course = await prisma.course.findUnique({
+        where: { id: focusSlot.course_id },
+      });
+      if (course) focusState.course = course;
+    }
+
     return NextResponse.json(focusState);
   } catch (error) {
     console.error('Failed to get focus state:', error);
@@ -29,7 +73,13 @@ export async function PUT(request: NextRequest) {
     let focusState: FocusState;
 
     if (action === 'remove') {
-      focusState = await FocusService.removeFocus(type);
+      // Remove focus from the specified type
+      await prisma.focusSlot.updateMany({
+        data: { [`${type}_id`]: null },
+      });
+      
+      // Return empty focus state for this type
+      focusState = { [type]: null };
     } else {
       if (!id) {
         return NextResponse.json(
@@ -37,7 +87,23 @@ export async function PUT(request: NextRequest) {
           { status: 400 }
         );
       }
-      focusState = await FocusService.setFocus(type, id);
+
+      // Set focus for the specified type
+      await prisma.focusSlot.updateMany({
+        data: { [`${type}_id`]: id },
+      });
+
+      // Fetch the focused item
+      let focusedItem;
+      if (type === 'quest') {
+        focusedItem = await prisma.quest.findUnique({ where: { id } });
+      } else if (type === 'book') {
+        focusedItem = await prisma.book.findUnique({ where: { id } });
+      } else if (type === 'course') {
+        focusedItem = await prisma.course.findUnique({ where: { id } });
+      }
+
+      focusState = { [type]: focusedItem };
     }
 
     return NextResponse.json(focusState);
@@ -52,8 +118,20 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE() {
   try {
-    const focusState = await FocusService.clearAllFocus();
-    return NextResponse.json(focusState);
+    // Clear all focus
+    await prisma.focusSlot.updateMany({
+      data: {
+        quest_id: null,
+        book_id: null,
+        course_id: null,
+      },
+    });
+
+    return NextResponse.json({
+      quest: null,
+      book: null,
+      course: null,
+    });
   } catch (error) {
     console.error('Failed to clear focus:', error);
     return NextResponse.json(

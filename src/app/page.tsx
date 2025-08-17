@@ -24,11 +24,11 @@ import {
   XPService,
   BookManagementService,
   CourseManagementService,
+  FocusService,
+  QuestService,
+  AppStateService,
 } from '../services';
-import {
-  ClientQuestService,
-  ClientAppStateService,
-} from '../lib/client-services';
+
 import type { ChallengeItem, CreateQuestData } from '../lib/client-types';
 import {
   Card,
@@ -143,45 +143,17 @@ export default function HomePage() {
       type: filterType,
       category: filterCategory,
     });
-    return ClientQuestService.sortQuests(filteredQuests, sortBy, sortOrder);
+            return QuestService.sortQuests(filteredQuests, sortBy, sortOrder);
   }, [quests, search, filterType, filterCategory, sortBy, sortOrder]);
 
   // Calculate level info using service
   const levelInfo = useMemo(() => {
-    const level = Math.floor(totalXp / 150) + 1;
-    const progress = totalXp % 150;
-    const nextLevelXp = 150;
-    const pct = Math.round((progress / nextLevelXp) * 100);
-    return { level, progress, nextLevelXp, pct };
+    return XPService.calculateLevelInfo(totalXp);
   }, [totalXp]);
 
   // Calculate badge thresholds using service
   const badgeThresholds = useMemo(() => {
-    const thresholds = [150, 400, 800, 1200, 2000];
-    return thresholds.map(threshold => ({
-      threshold,
-      name:
-        threshold === 150
-          ? 'Bronze'
-          : threshold === 400
-            ? 'Silver'
-            : threshold === 800
-              ? 'Gold'
-              : threshold === 1200
-                ? 'Epic'
-                : 'Legendary',
-      earned: totalXp >= threshold,
-      color:
-        threshold === 150
-          ? 'bg-amber-600'
-          : threshold === 400
-            ? 'bg-gray-500'
-            : threshold === 800
-              ? 'bg-yellow-500'
-              : threshold === 1200
-                ? 'bg-purple-600'
-                : 'bg-orange-600',
-    }));
+    return XPService.getBadgeThresholdsWithInfo(totalXp);
   }, [totalXp]);
 
   // Calculate category progress and badges using service
@@ -200,10 +172,10 @@ export default function HomePage() {
   // Event handlers using services
   const handleAddQuest = useCallback(
     async (data: CreateQuestData) => {
-      const result = await ClientQuestService.createQuest(data);
+              const result = await QuestService.createQuest(data);
       if (result._tag === 'Success') {
         await mutateQuests();
-        toast.success(result.data);
+        toast.success('Quest created successfully!');
       } else {
         toast.error(result.error);
       }
@@ -213,10 +185,10 @@ export default function HomePage() {
 
   const handleToggleDone = useCallback(
     async (quest: Quest) => {
-      const result = await ClientQuestService.toggleQuestCompletion(quest);
+              const result = await QuestService.toggleQuestCompletion(quest.id, quest.done);
       if (result._tag === 'Success') {
         await mutateQuests();
-        toast.success(result.data);
+        toast.success(`Quest ${quest.done ? 'uncompleted' : 'completed'}!`);
       } else {
         toast.error(result.error);
       }
@@ -226,10 +198,10 @@ export default function HomePage() {
 
   const handleDeleteQuest = useCallback(
     async (quest: Quest) => {
-      const result = await ClientQuestService.deleteQuest(quest);
+              const result = await QuestService.deleteQuest(quest.id);
       if (result._tag === 'Success') {
         await mutateQuests();
-        toast.success(result.data.message);
+        toast.success('Quest deleted successfully!');
       } else {
         toast.error(result.error);
       }
@@ -260,13 +232,13 @@ export default function HomePage() {
           );
         }
 
-        if (result.success) {
+        if (result._tag === 'Success') {
           await mutateBooks();
-          toast.success(result.message);
+          toast.success(result.data.message);
           setIsAddBookDialogOpen(false);
           setEditingBook(null);
         } else {
-          toast.error(result.message);
+          toast.error(result.error);
         }
       } catch (error) {
         console.error('Failed to save book:', error);
@@ -280,11 +252,11 @@ export default function HomePage() {
     async (bookId: string) => {
       try {
         const result = await BookManagementService.deleteBook(bookId);
-        if (result.success) {
+        if (result._tag === 'Success') {
           await mutateBooks();
-          toast.success(result.message);
+          toast.success(result.data.message);
         } else {
-          toast.error(result.message);
+          toast.error(result.error);
         }
       } catch (error) {
         console.error('Failed to delete book:', error);
@@ -308,19 +280,19 @@ export default function HomePage() {
           loggingBook.id,
           data
         );
-        if (result.success) {
+        if (result._tag === 'Success') {
           await mutateBooks();
           await mutateFocusState();
 
           // Show success message with XP details
-          let message = result.message;
-          if (result.focusBoostXP && result.focusBoostXP > 0) {
-            message += ` (includes +${result.focusBoostXP} focus boost)`;
+          let message = result.data.message;
+          if (result.data.focusBoostXP && result.data.focusBoostXP > 0) {
+            message += ` (includes +${result.data.focusBoostXP} focus boost)`;
           }
-          if (result.finishBonus && result.finishBonus > 0) {
-            message += ` (includes +${result.finishBonus} finish bonus)`;
+          if (result.data.finishBonus && result.data.finishBonus > 0) {
+            message += ` (includes +${result.data.finishBonus} finish bonus)`;
           }
-          if (result.isFinished) {
+          if (result.data.isFinished) {
             message += ' 🎉 Book completed!';
           }
 
@@ -328,7 +300,7 @@ export default function HomePage() {
           setIsLogBookProgressOpen(false);
           setLoggingBook(null);
         } else {
-          toast.error(result.message);
+          toast.error(result.error);
         }
       } catch (error) {
         console.error('Failed to log book progress:', error);
@@ -364,13 +336,13 @@ export default function HomePage() {
           );
         }
 
-        if (result.success) {
+        if (result._tag === 'Success') {
           await mutateCourses();
-          toast.success(result.message);
+          toast.success(result.data.message);
           setIsAddCourseDialogOpen(false);
           setEditingCourse(null);
         } else {
-          toast.error(result.message);
+          toast.error(result.error);
         }
       } catch (error) {
         console.error('Failed to save course:', error);
@@ -384,11 +356,11 @@ export default function HomePage() {
     async (courseId: string) => {
       try {
         const result = await CourseManagementService.deleteCourse(courseId);
-        if (result.success) {
+        if (result._tag === 'Success') {
           await mutateCourses();
-          toast.success(result.message);
+          toast.success(result.data.message);
         } else {
-          toast.error(result.message);
+          toast.error(result.error);
         }
       } catch (error) {
         console.error('Failed to delete course:', error);
@@ -412,19 +384,19 @@ export default function HomePage() {
           loggingCourse.id,
           data
         );
-        if (result.success) {
+        if (result._tag === 'Success') {
           await mutateCourses();
           await mutateFocusState();
 
           // Show success message with XP details
-          let message = result.message;
-          if (result.focusBoostXP && result.focusBoostXP > 0) {
-            message += ` (includes +${result.focusBoostXP} focus boost)`;
+          let message = result.data.message;
+          if (result.data.focusBoostXP && result.data.focusBoostXP > 0) {
+            message += ` (includes +${result.data.focusBoostXP} focus boost)`;
           }
-          if (result.finishBonus && result.finishBonus > 0) {
-            message += ` (includes +${result.finishBonus} finish bonus)`;
+          if (result.data.finishBonus && result.data.finishBonus > 0) {
+            message += ` (includes +${result.data.finishBonus} finish bonus)`;
           }
-          if (result.isFinished) {
+          if (result.data.isFinished) {
             message += ' 🎉 Course completed!';
           }
 
@@ -432,7 +404,7 @@ export default function HomePage() {
           setIsLogCourseProgressOpen(false);
           setLoggingCourse(null);
         } else {
-          toast.error(result.message);
+          toast.error(result.error);
         }
       } catch (error) {
         console.error('Failed to log course progress:', error);
@@ -457,24 +429,14 @@ export default function HomePage() {
   const handleUpdateFocus = useCallback(
     async (type: 'quest' | 'book' | 'course', id: string | null) => {
       try {
-        const response = await fetch('/api/focus', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            type,
-            id,
-            action: id === null ? 'remove' : 'switch',
-          }),
-        });
-
-        if (response.ok) {
-          await mutateFocusState();
-          toast.success(`${type} focus updated successfully!`);
+        if (id === null) {
+          await FocusService.removeFocus(type);
         } else {
-          throw new Error('Failed to update focus');
+          await FocusService.setFocus(type, id);
         }
+        
+        await mutateFocusState();
+        toast.success(`${type} focus updated successfully!`);
       } catch (error) {
         console.error('Failed to update focus:', error);
         toast.error('Failed to update focus. Please try again.');
@@ -489,26 +451,15 @@ export default function HomePage() {
         const isCurrentlyFocused = focusState?.quest?.id === quest.id;
         const action = isCurrentlyFocused ? 'remove' : 'switch';
 
-        const response = await fetch('/api/focus', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'quest',
-            id: isCurrentlyFocused ? null : quest.id,
-            action,
-          }),
-        });
-
-        if (response.ok) {
-          await mutateFocusState();
-          toast.success(
-            isCurrentlyFocused
-              ? 'Quest removed from focus'
-              : 'Quest added to focus!'
-          );
+        if (isCurrentlyFocused) {
+          await FocusService.removeFocus('quest');
+          toast.success('Quest removed from focus');
         } else {
-          throw new Error('Failed to update focus');
+          await FocusService.setFocus('quest', quest.id);
+          toast.success('Quest added to focus!');
         }
+        
+        await mutateFocusState();
       } catch (error) {
         console.error('Failed to toggle quest focus:', error);
         toast.error('Failed to update focus. Please try again.');
@@ -523,26 +474,15 @@ export default function HomePage() {
         const isCurrentlyFocused = focusState?.book?.id === book.id;
         const action = isCurrentlyFocused ? 'remove' : 'switch';
 
-        const response = await fetch('/api/focus', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'book',
-            id: isCurrentlyFocused ? null : book.id,
-            action,
-          }),
-        });
-
-        if (response.ok) {
-          await mutateFocusState();
-          toast.success(
-            isCurrentlyFocused
-              ? 'Book removed from focus'
-              : 'Book added to focus!'
-          );
+        if (isCurrentlyFocused) {
+          await FocusService.removeFocus('book');
+          toast.success('Book removed from focus');
         } else {
-          throw new Error('Failed to update focus');
+          await FocusService.setFocus('book', book.id);
+          toast.success('Book added to focus!');
         }
+        
+        await mutateFocusState();
       } catch (error) {
         console.error('Failed to toggle book focus:', error);
         toast.error('Failed to update focus. Please try again.');
@@ -557,26 +497,15 @@ export default function HomePage() {
         const isCurrentlyFocused = focusState?.course?.id === course.id;
         const action = isCurrentlyFocused ? 'remove' : 'switch';
 
-        const response = await fetch('/api/focus', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'course',
-            id: isCurrentlyFocused ? null : course.id,
-            action,
-          }),
-        });
-
-        if (response.ok) {
-          await mutateFocusState();
-          toast.success(
-            isCurrentlyFocused
-              ? 'Course removed from focus'
-              : 'Course added to focus!'
-          );
+        if (isCurrentlyFocused) {
+          await FocusService.removeFocus('course');
+          toast.success('Course removed from focus');
         } else {
-          throw new Error('Failed to update focus');
+          await FocusService.setFocus('course', course.id);
+          toast.success('Course added to focus!');
         }
+        
+        await mutateFocusState();
       } catch (error) {
         console.error('Failed to toggle course focus:', error);
         toast.error('Failed to update focus. Please try again.');
@@ -587,7 +516,7 @@ export default function HomePage() {
 
   // Daily check-in and challenge handlers
   const handleDailyCheckIn = useCallback(async () => {
-    const result = await ClientAppStateService.recordDailyCheckIn();
+            const result = await AppStateService.recordDailyCheckIn();
 
     if (result._tag === 'Failure') {
       toast.error(result.error);

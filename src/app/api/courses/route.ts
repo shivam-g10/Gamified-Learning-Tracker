@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CourseService } from '@/services/course-service';
+import { prisma } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,14 +15,33 @@ export async function GET(req: NextRequest) {
     const tags = searchParams.get('tags')?.split(',') || undefined;
     const platform = searchParams.get('platform') || undefined;
 
-    const filters = {
-      status,
-      search,
-      tags,
-      platform,
-    };
+    const where: Record<string, unknown> = {};
+    
+    if (status) {
+      where.status = status;
+    }
+    
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { platform: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    
+    if (tags && tags.length > 0) {
+      where.tags = { hasSome: tags };
+    }
+    
+    if (platform) {
+      where.platform = { contains: platform, mode: 'insensitive' };
+    }
 
-    const courses = await CourseService.getCourses(filters);
+    const courses = await prisma.course.findMany({
+      where,
+      orderBy: { updated_at: 'desc' },
+    });
+
     return NextResponse.json(courses);
   } catch (error) {
     console.error('Failed to fetch courses:', error);
@@ -53,14 +74,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const course = await CourseService.createCourse({
-      title,
-      platform,
-      url,
-      total_units,
-      category,
-      description,
-      tags,
+    const course = await prisma.course.create({
+      data: {
+        title,
+        platform,
+        url,
+        total_units,
+        category,
+        description,
+        tags: tags || [],
+        completed_units: 0,
+        status: 'backlog',
+      },
     });
 
     return NextResponse.json(course, { status: 201 });

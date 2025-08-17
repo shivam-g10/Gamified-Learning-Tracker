@@ -1,4 +1,5 @@
-import { prisma } from '@/lib/db';
+'use client';
+
 import { XPService } from './xp-service';
 import type {
   Book,
@@ -6,23 +7,20 @@ import type {
   CreateBookData,
   UpdateBookData,
   LogBookProgressData,
-} from '@/lib/types';
+} from '../lib/types';
+import { Result, succeed, fail } from '../lib/result';
+import { BookAPI } from '../lib/api';
 
 export class BookService {
   /**
    * Creates a new book
    */
   static async createBook(data: CreateBookData): Promise<Book> {
-    return await prisma.book.create({
-      data: {
-        title: data.title,
-        author: data.author,
-        total_pages: data.total_pages,
-        category: data.category,
-        description: data.description,
-        tags: data.tags || [],
-      },
-    });
+    const result = await BookAPI.createBook(data);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
+    return result.data;
   }
 
   /**
@@ -35,45 +33,39 @@ export class BookService {
     category?: string;
   }): Promise<Book[]> {
     try {
-      const whereClause: {
-        status?: 'backlog' | 'reading' | 'finished';
-        OR?: Array<{
-          title?: { contains: string; mode: 'insensitive' };
-          author?: { contains: string; mode: 'insensitive' };
-          category?: { contains: string; mode: 'insensitive' };
-          description?: { contains: string; mode: 'insensitive' };
-        }>;
-        tags?: { hasSome: string[] };
-        category?: string;
-      } = {};
-
+      const result = await BookAPI.getAllBooks();
+      if (result._tag === 'Failure') {
+        throw new Error(result.error);
+      }
+      
+      let books = result.data;
+      
+      // Apply filters client-side since the API doesn't support complex filtering yet
       if (filters?.status) {
-        whereClause.status = filters.status;
+        books = books.filter(book => book.status === filters.status);
       }
-
+      
       if (filters?.search) {
-        whereClause.OR = [
-          { title: { contains: filters.search, mode: 'insensitive' } },
-          { author: { contains: filters.search, mode: 'insensitive' } },
-          { category: { contains: filters.search, mode: 'insensitive' } },
-          { description: { contains: filters.search, mode: 'insensitive' } },
-        ];
+        const searchLower = filters.search.toLowerCase();
+        books = books.filter(book => 
+          book.title.toLowerCase().includes(searchLower) ||
+          (book.author && book.author.toLowerCase().includes(searchLower)) ||
+          book.category.toLowerCase().includes(searchLower) ||
+          (book.description && book.description.toLowerCase().includes(searchLower))
+        );
       }
-
+      
       if (filters?.tags && filters.tags.length > 0) {
-        whereClause.tags = { hasSome: filters.tags };
+        books = books.filter(book => 
+          filters.tags!.some(tag => book.tags.includes(tag))
+        );
       }
-
+      
       if (filters?.category) {
-        whereClause.category = filters.category;
+        books = books.filter(book => book.category === filters.category);
       }
-
-      const books = await prisma.book.findMany({
-        where: whereClause,
-        orderBy: { updated_at: 'desc' },
-      });
-
-      return books;
+      
+      return books.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
     } catch (error) {
       console.error('Failed to fetch books:', error);
       throw new Error('Failed to fetch books');
@@ -84,28 +76,32 @@ export class BookService {
    * Gets a book by ID
    */
   static async getBookById(id: string): Promise<Book | null> {
-    return await prisma.book.findUnique({
-      where: { id },
-    });
+    const result = await BookAPI.getBookById(id);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
+    return result.data;
   }
 
   /**
    * Updates a book
    */
   static async updateBook(id: string, data: UpdateBookData): Promise<Book> {
-    return await prisma.book.update({
-      where: { id },
-      data,
-    });
+    const result = await BookAPI.updateBook(id, data);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
+    return result.data;
   }
 
   /**
    * Deletes a book
    */
   static async deleteBook(id: string): Promise<void> {
-    await prisma.book.delete({
-      where: { id },
-    });
+    const result = await BookAPI.deleteBook(id);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
   }
 
   /**
@@ -121,9 +117,7 @@ export class BookService {
     isFinished: boolean;
     finishBonus: number;
   }> {
-    const book = await prisma.book.findUnique({
-      where: { id: bookId },
-    });
+    const book = await this.getBookById(bookId);
 
     if (!book) {
       throw new Error('Book not found');
@@ -141,27 +135,13 @@ export class BookService {
     // Calculate pages read
     const pagesRead = data.to_page - data.from_page;
 
-    // Create progress entry
-    await prisma.bookProgressEntry.create({
-      data: {
-        book_id: bookId,
-        from_page: data.from_page,
-        to_page: data.to_page,
-        pages_read: pagesRead,
-        notes: data.notes,
-      },
-    });
-
-    // Update book progress
-    const updatedBook = await prisma.book.update({
-      where: { id: bookId },
-      data: {
-        current_page: data.to_page,
-        status: data.to_page >= book.total_pages ? 'finished' : 'reading',
-        started_at: book.started_at || new Date(),
-        finished_at: data.to_page >= book.total_pages ? new Date() : undefined,
-      },
-    });
+    // Create progress entry and update book via API
+    const result = await BookAPI.logProgress(bookId, data);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
+    
+    const updatedBook = result.data;
 
     // Calculate XP with focus boost
     const sessionXP = XPService.calculateBookSessionXP(pagesRead, isInFocus);
@@ -198,13 +178,10 @@ export class BookService {
    * Gets total pages read across all books
    */
   static async getTotalPagesRead(): Promise<number> {
-    const result = await prisma.bookProgressEntry.aggregate({
-      _sum: {
-        pages_read: true,
-      },
-    });
-
-    return result._sum.pages_read || 0;
+    // This would need to be implemented in the API or calculated client-side
+    // For now, we'll get all books and calculate the total
+    const books = await this.getBooks();
+    return books.reduce((total, book) => total + book.current_page, 0);
   }
 
   /**
@@ -213,20 +190,22 @@ export class BookService {
   static async getBooksByStatus(
     status: 'backlog' | 'reading' | 'finished'
   ): Promise<Book[]> {
-    return await prisma.book.findMany({
-      where: { status },
-      orderBy: { updated_at: 'desc' },
-    });
+    const result = await BookAPI.getBooksByStatus(status);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
+    return result.data.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   }
 
   /**
    * Gets reading progress for a book
    */
   static async getBookProgress(bookId: string): Promise<BookProgressEntry[]> {
-    return await prisma.bookProgressEntry.findMany({
-      where: { book_id: bookId },
-      orderBy: { created_at: 'asc' },
-    });
+    const result = await BookAPI.getBookProgressHistory(bookId);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
+    return result.data;
   }
 
   /**
@@ -244,12 +223,9 @@ export class BookService {
    * Gets books that need attention (started but not finished)
    */
   static async getActiveBooks(): Promise<Book[]> {
-    return await prisma.book.findMany({
-      where: {
-        status: 'reading',
-        current_page: { gt: 0 },
-      },
-      orderBy: { updated_at: 'desc' },
-    });
+    const books = await this.getBooks();
+    return books.filter(book => 
+      book.status === 'reading' && book.current_page > 0
+    ).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   }
 }

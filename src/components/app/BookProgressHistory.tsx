@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BookOpen, Calendar, FileText, TrendingUp } from 'lucide-react';
 import type { Book, BookProgressEntry } from '@/lib/types';
+import { BookService } from '@/services/index';
 
 interface BookProgressHistoryProps {
   book: Book;
@@ -32,11 +33,8 @@ export function BookProgressHistory({
   const loadProgressHistory = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/books/${book.id}/progress`);
-      if (response.ok) {
-        const data = await response.json();
-        setProgressEntries(data.progressEntries || []);
-      }
+      const result = await BookService.getBookProgress(book.id);
+      setProgressEntries(result);
     } catch (error) {
       console.error('Failed to load progress history:', error);
     } finally {

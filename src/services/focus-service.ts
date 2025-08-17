@@ -1,46 +1,19 @@
-import { prisma } from '@/lib/db';
-import type { FocusState } from '@/lib/types';
+'use client';
+
+import type { FocusState } from '../lib/types';
+import { Result, succeed, fail } from '../lib/result';
+import { FocusAPI } from '../lib/api';
 
 export class FocusService {
   /**
    * Gets the current focus state
    */
   static async getFocusState(): Promise<FocusState> {
-    const focusSlot = await prisma.focusSlot.findFirst();
-
-    if (!focusSlot) {
-      return {};
+    const result = await FocusAPI.getFocusState();
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
     }
-
-    // Fetch the focused items with their data
-    const [questData, bookData, courseData] = await Promise.all([
-      focusSlot.quest_id
-        ? prisma.quest.findUnique({ where: { id: focusSlot.quest_id } })
-        : null,
-      focusSlot.book_id
-        ? prisma.book.findUnique({ where: { id: focusSlot.book_id } })
-        : null,
-      focusSlot.course_id
-        ? prisma.course.findUnique({ where: { id: focusSlot.course_id } })
-        : null,
-    ]);
-
-    // Transform Prisma data to match our types
-    const quest = questData
-      ? {
-          ...questData,
-          created_at: questData.created_at.toISOString(),
-        }
-      : undefined;
-
-    const book = bookData || undefined;
-    const course = courseData || undefined;
-
-    return {
-      quest,
-      book,
-      course,
-    };
+    return result.data;
   }
 
   /**
@@ -51,36 +24,11 @@ export class FocusService {
     type: 'quest' | 'book' | 'course',
     id: string
   ): Promise<FocusState> {
-    // Get current focus state
-    let focusSlot = await prisma.focusSlot.findFirst();
-
-    if (!focusSlot) {
-      // Create new focus slot
-      focusSlot = await prisma.focusSlot.create({
-        data: {
-          quest_id: type === 'quest' ? id : null,
-          book_id: type === 'book' ? id : null,
-          course_id: type === 'course' ? id : null,
-        },
-      });
-    } else {
-      // Update existing focus slot - only update the specific type
-      // This allows one of each category to be focused
-      const updateData: {
-        quest_id?: string | null;
-        book_id?: string | null;
-        course_id?: string | null;
-      } = {};
-      updateData[`${type}_id`] = id;
-
-      await prisma.focusSlot.update({
-        where: { id: focusSlot.id },
-        data: updateData,
-      });
+    const result = await FocusAPI.setFocus(type, id);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
     }
-
-    // Return updated focus state
-    return await this.getFocusState();
+    return result.data;
   }
 
   /**
@@ -89,25 +37,11 @@ export class FocusService {
   static async removeFocus(
     type: 'quest' | 'book' | 'course'
   ): Promise<FocusState> {
-    const focusSlot = await prisma.focusSlot.findFirst();
-
-    if (!focusSlot) {
-      return {};
+    const result = await FocusAPI.removeFocus(type);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
     }
-
-    const updateData: {
-      quest_id?: string | null;
-      book_id?: string | null;
-      course_id?: string | null;
-    } = {};
-    updateData[`${type}_id`] = null;
-
-    await prisma.focusSlot.update({
-      where: { id: focusSlot.id },
-      data: updateData,
-    });
-
-    return await this.getFocusState();
+    return result.data;
   }
 
   /**
@@ -116,19 +50,24 @@ export class FocusService {
   static async canAddToFocus(
     type: 'quest' | 'book' | 'course'
   ): Promise<boolean> {
-    const focusSlot = await prisma.focusSlot.findFirst();
-
-    if (!focusSlot) {
-      return true; // No focus slot exists, can add
+    try {
+      const focusState = await this.getFocusState();
+      
+      // Check if the type is already in focus
+      if (type === 'quest' && focusState.quest) {
+        return false;
+      }
+      if (type === 'book' && focusState.book) {
+        return false;
+      }
+      if (type === 'course' && focusState.course) {
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      return false;
     }
-
-    // Check if the type is already in focus
-    const currentId = focusSlot[`${type}_id`];
-    if (currentId) {
-      return false; // Already in focus
-    }
-
-    return true;
   }
 
   /**
@@ -152,13 +91,23 @@ export class FocusService {
     type: 'quest' | 'book' | 'course',
     id: string
   ): Promise<boolean> {
-    const focusSlot = await prisma.focusSlot.findFirst();
-
-    if (!focusSlot) {
+    try {
+      const focusState = await this.getFocusState();
+      
+      if (type === 'quest' && focusState.quest?.id === id) {
+        return true;
+      }
+      if (type === 'book' && focusState.book?.id === id) {
+        return true;
+      }
+      if (type === 'course' && focusState.course?.id === id) {
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
       return false;
     }
-
-    return focusSlot[`${type}_id`] === id;
   }
 
   /**
@@ -167,13 +116,23 @@ export class FocusService {
   static async getFocusedId(
     type: 'quest' | 'book' | 'course'
   ): Promise<string | null> {
-    const focusSlot = await prisma.focusSlot.findFirst();
-
-    if (!focusSlot) {
+    try {
+      const focusState = await this.getFocusState();
+      
+      if (type === 'quest' && focusState.quest) {
+        return focusState.quest.id;
+      }
+      if (type === 'book' && focusState.book) {
+        return focusState.book.id;
+      }
+      if (type === 'course' && focusState.course) {
+        return focusState.course.id;
+      }
+      
+      return null;
+    } catch (error) {
       return null;
     }
-
-    return focusSlot[`${type}_id`];
   }
 
   /**
@@ -183,27 +142,9 @@ export class FocusService {
     type: 'quest' | 'book' | 'course',
     newId: string
   ): Promise<FocusState> {
-    const focusSlot = await prisma.focusSlot.findFirst();
-
-    if (!focusSlot) {
-      // Create new focus slot
-      return await this.setFocus(type, newId);
-    }
-
-    // Update the specific type
-    const updateData: {
-      quest_id?: string | null;
-      book_id?: string | null;
-      course_id?: string | null;
-    } = {};
-    updateData[`${type}_id`] = newId;
-
-    await prisma.focusSlot.update({
-      where: { id: focusSlot.id },
-      data: updateData,
-    });
-
-    return await this.getFocusState();
+    // First remove the current focus, then set the new one
+    await this.removeFocus(type);
+    return await this.setFocus(type, newId);
   }
 
   /**
@@ -215,9 +156,20 @@ export class FocusService {
     courseCount: number;
     totalCount: number;
   }> {
-    const focusSlot = await prisma.focusSlot.findFirst();
+    try {
+      const focusState = await this.getFocusState();
+      
+      const questCount = focusState.quest ? 1 : 0;
+      const bookCount = focusState.book ? 1 : 0;
+      const courseCount = focusState.course ? 1 : 0;
 
-    if (!focusSlot) {
+      return {
+        questCount,
+        bookCount,
+        courseCount,
+        totalCount: questCount + bookCount + courseCount,
+      };
+    } catch (error) {
       return {
         questCount: 0,
         bookCount: 0,
@@ -225,34 +177,15 @@ export class FocusService {
         totalCount: 0,
       };
     }
-
-    const questCount = focusSlot.quest_id ? 1 : 0;
-    const bookCount = focusSlot.book_id ? 1 : 0;
-    const courseCount = focusSlot.course_id ? 1 : 0;
-
-    return {
-      questCount,
-      bookCount,
-      courseCount,
-      totalCount: questCount + bookCount + courseCount,
-    };
   }
 
   /**
    * Clears all focus
    */
   static async clearAllFocus(): Promise<void> {
-    const focusSlot = await prisma.focusSlot.findFirst();
-
-    if (focusSlot) {
-      await prisma.focusSlot.update({
-        where: { id: focusSlot.id },
-        data: {
-          quest_id: null,
-          book_id: null,
-          course_id: null,
-        },
-      });
+    const result = await FocusAPI.clearAllFocus();
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
     }
   }
 }

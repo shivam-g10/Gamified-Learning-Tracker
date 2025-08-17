@@ -1,9 +1,12 @@
-import { AppState } from '../lib/types';
+'use client';
+
+import { AppState } from '../lib/api-types';
 import { Result, succeed, fail } from '../lib/result';
+import { AppStateAPI } from '../lib/api';
 
 export interface UpdateAppStateData {
   streak?: number;
-  last_check_in?: Date;
+  last_check_in?: string | null;
   focus?: string[];
 }
 
@@ -12,16 +15,13 @@ export class AppStateService {
    * Records a daily check-in and updates streak
    */
   static async recordDailyCheckIn(): Promise<Result<AppState>> {
-    const response = await fetch('/api/checkin', {
-      method: 'POST',
-    });
-
-    if (!response.ok) {
-      return fail('Failed to record daily check-in');
+    const checkInResult = await AppStateAPI.recordDailyCheckIn();
+    if (checkInResult._tag === 'Failure') {
+      return checkInResult;
     }
-
-    const appState = await response.json();
-    return succeed(appState);
+    
+    // After successful check-in, fetch the updated app state
+    return AppStateAPI.getAppState();
   }
 
   /**
@@ -30,18 +30,7 @@ export class AppStateService {
   static async updateAppState(
     data: UpdateAppStateData
   ): Promise<Result<AppState>> {
-    const response = await fetch('/api/app-state', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      return fail('Failed to update app state');
-    }
-
-    const appState = await response.json();
-    return succeed(appState);
+    return AppStateAPI.updateAppState(data);
   }
 
   /**

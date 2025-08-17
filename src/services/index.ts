@@ -10,6 +10,8 @@ export { CourseService } from './course-service';
 export { CourseManagementService } from './course-management-service';
 export { FocusService } from './focus-service';
 export { SearchService } from './search-service';
+export { ProgressCalculationService } from './progress-calculation-service';
+export { UIHelperService } from './ui-helper-service';
 
 export type { CreateQuestData, UpdateQuestData } from './quest-service';
 export type { UpdateAppStateData } from './app-state-service';

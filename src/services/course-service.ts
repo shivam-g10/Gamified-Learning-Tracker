@@ -1,4 +1,5 @@
-import { prisma } from '@/lib/db';
+'use client';
+
 import { XPService } from './xp-service';
 import type {
   Course,
@@ -6,24 +7,20 @@ import type {
   CreateCourseData,
   UpdateCourseData,
   LogCourseProgressData,
-} from '@/lib/types';
+} from '../lib/types';
+import { Result, succeed, fail } from '../lib/result';
+import { CourseAPI } from '../lib/api';
 
 export class CourseService {
   /**
    * Creates a new course
    */
   static async createCourse(data: CreateCourseData): Promise<Course> {
-    return await prisma.course.create({
-      data: {
-        title: data.title,
-        platform: data.platform,
-        url: data.url,
-        total_units: data.total_units,
-        category: data.category,
-        description: data.description,
-        tags: data.tags || [],
-      },
-    });
+    const result = await CourseAPI.createCourse(data);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
+    return result.data;
   }
 
   /**
@@ -35,50 +32,51 @@ export class CourseService {
     tags?: string[];
     platform?: string;
   }): Promise<Course[]> {
-    const where: {
-      status?: 'backlog' | 'learning' | 'finished';
-      OR?: Array<{
-        title?: { contains: string; mode: 'insensitive' };
-        description?: { contains: string; mode: 'insensitive' };
-        platform?: { contains: string; mode: 'insensitive' };
-      }>;
-      tags?: { hasSome: string[] };
-      platform?: { contains: string; mode: 'insensitive' };
-    } = {};
-
+    const result = await CourseAPI.getAllCourses();
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
+    
+    let courses = result.data;
+    
+    // Apply filters client-side since the API doesn't support complex filtering yet
     if (filters?.status) {
-      where.status = filters.status;
+      courses = courses.filter(course => course.status === filters.status);
     }
 
     if (filters?.search) {
-      where.OR = [
-        { title: { contains: filters.search, mode: 'insensitive' } },
-        { description: { contains: filters.search, mode: 'insensitive' } },
-        { platform: { contains: filters.search, mode: 'insensitive' } },
-      ];
+      const searchLower = filters.search.toLowerCase();
+      courses = courses.filter(course => 
+        course.title.toLowerCase().includes(searchLower) ||
+        (course.description && course.description.toLowerCase().includes(searchLower)) ||
+        (course.platform && course.platform.toLowerCase().includes(searchLower))
+      );
     }
 
     if (filters?.tags && filters.tags.length > 0) {
-      where.tags = { hasSome: filters.tags };
+      courses = courses.filter(course => 
+        filters.tags!.some(tag => course.tags.includes(tag))
+      );
     }
 
     if (filters?.platform) {
-      where.platform = { contains: filters.platform, mode: 'insensitive' };
+      courses = courses.filter(course => 
+        course.platform && course.platform.toLowerCase().includes(filters.platform!.toLowerCase())
+      );
     }
 
-    return await prisma.course.findMany({
-      where,
-      orderBy: { updated_at: 'desc' },
-    });
+    return courses.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   }
 
   /**
    * Gets a course by ID
    */
   static async getCourseById(id: string): Promise<Course | null> {
-    return await prisma.course.findUnique({
-      where: { id },
-    });
+    const result = await CourseAPI.getCourseById(id);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
+    return result.data;
   }
 
   /**
@@ -88,19 +86,21 @@ export class CourseService {
     id: string,
     data: UpdateCourseData
   ): Promise<Course> {
-    return await prisma.course.update({
-      where: { id },
-      data,
-    });
+    const result = await CourseAPI.updateCourse(id, data);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
+    return result.data;
   }
 
   /**
    * Deletes a course
    */
   static async deleteCourse(id: string): Promise<void> {
-    await prisma.course.delete({
-      where: { id },
-    });
+    const result = await CourseAPI.deleteCourse(id);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
   }
 
   /**
@@ -116,9 +116,7 @@ export class CourseService {
     isFinished: boolean;
     finishBonus: number;
   }> {
-    const course = await prisma.course.findUnique({
-      where: { id: courseId },
-    });
+    const course = await this.getCourseById(courseId);
 
     if (!course) {
       throw new Error('Course not found');
@@ -133,28 +131,13 @@ export class CourseService {
       throw new Error('Units completed would exceed total units');
     }
 
-    // Create progress entry
-    await prisma.courseProgressEntry.create({
-      data: {
-        course_id: courseId,
-        units_delta: data.units_delta,
-        notes: data.notes,
-      },
-    });
-
-    // Update course progress
-    const newCompletedUnits = course.completed_units + data.units_delta;
-    const updatedCourse = await prisma.course.update({
-      where: { id: courseId },
-      data: {
-        completed_units: newCompletedUnits,
-        status:
-          newCompletedUnits >= course.total_units ? 'finished' : 'learning',
-        started_at: course.started_at || new Date(),
-        finished_at:
-          newCompletedUnits >= course.total_units ? new Date() : undefined,
-      },
-    });
+    // Create progress entry and update course via API
+    const result = await CourseAPI.logProgress(courseId, data);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
+    
+    const updatedCourse = result.data;
 
     // Calculate XP with focus boost
     const sessionXP = XPService.calculateCourseSessionXP(
@@ -162,11 +145,11 @@ export class CourseService {
       isInFocus
     );
     const finishBonus =
-      newCompletedUnits >= course.total_units
+      updatedCourse.completed_units >= course.total_units
         ? XPService.calculateCourseFinishBonus(course.total_units)
         : 0;
     const totalXP = sessionXP + finishBonus;
-    const isFinished = newCompletedUnits >= course.total_units;
+    const isFinished = updatedCourse.completed_units >= course.total_units;
 
     return {
       course: updatedCourse,
@@ -194,13 +177,10 @@ export class CourseService {
    * Gets total units completed across all courses
    */
   static async getTotalUnitsCompleted(): Promise<number> {
-    const result = await prisma.courseProgressEntry.aggregate({
-      _sum: {
-        units_delta: true,
-      },
-    });
-
-    return result._sum.units_delta || 0;
+    // This would need to be implemented in the API or calculated client-side
+    // For now, we'll get all courses and calculate the total
+    const courses = await this.getCourses();
+    return courses.reduce((total, course) => total + course.completed_units, 0);
   }
 
   /**
@@ -209,10 +189,11 @@ export class CourseService {
   static async getCoursesByStatus(
     status: 'backlog' | 'learning' | 'finished'
   ): Promise<Course[]> {
-    return await prisma.course.findMany({
-      where: { status },
-      orderBy: { updated_at: 'desc' },
-    });
+    const result = await CourseAPI.getCoursesByStatus(status);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
+    return result.data.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   }
 
   /**
@@ -221,10 +202,11 @@ export class CourseService {
   static async getCourseProgress(
     courseId: string
   ): Promise<CourseProgressEntry[]> {
-    return await prisma.courseProgressEntry.findMany({
-      where: { course_id: courseId },
-      orderBy: { created_at: 'asc' },
-    });
+    const result = await CourseAPI.getCourseProgressHistory(courseId);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
+    return result.data;
   }
 
   /**
@@ -242,39 +224,32 @@ export class CourseService {
    * Gets courses that need attention (started but not finished)
    */
   static async getActiveCourses(): Promise<Course[]> {
-    return await prisma.course.findMany({
-      where: {
-        status: 'learning',
-        completed_units: { gt: 0 },
-      },
-      orderBy: { updated_at: 'desc' },
-    });
+    const courses = await this.getCourses();
+    return courses.filter(course => 
+      course.status === 'learning' && course.completed_units > 0
+    ).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   }
 
   /**
    * Gets courses by platform
    */
   static async getCoursesByPlatform(platform: string): Promise<Course[]> {
-    return await prisma.course.findMany({
-      where: { platform: { contains: platform, mode: 'insensitive' } },
-      orderBy: { updated_at: 'desc' },
-    });
+    const result = await CourseAPI.getCoursesByPlatform(platform);
+    if (result._tag === 'Failure') {
+      throw new Error(result.error);
+    }
+    return result.data.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   }
 
   /**
    * Gets unique platforms
    */
   static async getUniquePlatforms(): Promise<string[]> {
-    const courses = await prisma.course.findMany({
-      where: { platform: { not: null } },
-      select: { platform: true },
-    });
-
-    const platforms = courses.map(
-      (c: { platform: string | null }) => c.platform
-    );
-    return platforms.filter(
-      (platform: string | null): platform is string => platform !== null
-    );
+    const courses = await this.getCourses();
+    const platforms = courses
+      .map(course => course.platform)
+      .filter((platform): platform is string => platform !== null);
+    
+    return [...new Set(platforms)];
   }
 }

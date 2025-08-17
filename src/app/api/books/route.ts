@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BookService } from '@/services/book-service';
+import { prisma } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,13 +14,30 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search') || undefined;
     const tags = searchParams.get('tags')?.split(',') || undefined;
 
-    const filters = {
-      status,
-      search,
-      tags,
-    };
+    const where: Record<string, unknown> = {};
+    
+    if (status) {
+      where.status = status;
+    }
+    
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { author: { contains: search, mode: 'insensitive' } },
+        { category: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    
+    if (tags && tags.length > 0) {
+      where.tags = { hasSome: tags };
+    }
 
-    const books = await BookService.getBooks(filters);
+    const books = await prisma.book.findMany({
+      where,
+      orderBy: { updated_at: 'desc' },
+    });
+
     return NextResponse.json(books);
   } catch (error) {
     console.error('Failed to fetch books:', error);
@@ -50,13 +69,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const book = await BookService.createBook({
-      title,
-      author,
-      total_pages,
-      category,
-      description,
-      tags,
+    const book = await prisma.book.create({
+      data: {
+        title,
+        author,
+        total_pages,
+        category,
+        description,
+        tags: tags || [],
+        current_page: 0,
+        status: 'backlog',
+      },
     });
 
     return NextResponse.json(book, { status: 201 });

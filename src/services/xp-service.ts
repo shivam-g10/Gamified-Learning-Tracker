@@ -371,4 +371,41 @@ export class XPService {
       total: questXP + bookXP + courseXP,
     };
   }
+
+  /**
+   * Gets all badge thresholds with names, colors, and earned status
+   */
+  static getBadgeThresholdsWithInfo(totalXp: number): Array<{
+    threshold: number;
+    name: string;
+    earned: boolean;
+    color: string;
+  }> {
+    return this.BADGE_THRESHOLDS.map(threshold => ({
+      threshold,
+      name: this.getBadgeName(threshold),
+      earned: totalXp >= threshold,
+      color: this.getBadgeColor(threshold),
+    }));
+  }
+
+  /**
+   * Gets the color for a badge threshold
+   */
+  static getBadgeColor(threshold: number): string {
+    switch (threshold) {
+      case 150:
+        return 'bg-amber-600';
+      case 400:
+        return 'bg-gray-500';
+      case 800:
+        return 'bg-yellow-500';
+      case 1200:
+        return 'bg-purple-600';
+      case 2000:
+        return 'bg-orange-600';
+      default:
+        return 'bg-blue-500';
+    }
+  }
 }
