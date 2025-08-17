@@ -4,7 +4,7 @@ WORKDIR /app
 # Install OpenSSL dependencies for Prisma and update packages
 RUN apk update && apk add --no-cache openssl curl && apk upgrade
 # Install pnpm
-RUN npm install -g pnpm@latest
+RUN npm install -g pnpm@9.12.2
 COPY package.json pnpm-lock.yaml* ./
 RUN pnpm install --frozen-lockfile || pnpm install
 
@@ -14,7 +14,7 @@ WORKDIR /app
 # Install OpenSSL dependencies for Prisma and update packages
 RUN apk update && apk add --no-cache openssl && apk upgrade
 # Install pnpm
-RUN npm install -g pnpm@latest
+RUN npm install -g pnpm@9.12.2
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Set DATABASE_URL for Prisma client generation with a fallback
@@ -40,7 +40,7 @@ ENV NODE_ENV=production
 # Install OpenSSL dependencies for Prisma runtime and update packages
 RUN apk update && apk add --no-cache openssl postgresql-client && apk upgrade
 # Install pnpm
-RUN npm install -g pnpm@latest
+RUN npm install -g pnpm@9.12.2
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
 # Copy files from builder with verification
