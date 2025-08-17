@@ -1,13 +1,7 @@
 import { FocusState } from '../lib/types';
+import type { ChallengeItem } from '../lib/client-types';
 
-export interface ChallengeItem {
-  id: string;
-  title: string;
-  type: 'quest' | 'book' | 'course';
-  category: string;
-  xp: number;
-  status?: string;
-}
+export type { ChallengeItem } from '../lib/client-types';
 
 export class ChallengeService {
   /**

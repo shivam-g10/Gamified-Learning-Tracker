@@ -21,7 +21,6 @@ import {
   QuestService,
   QuestManagementService,
   AppStateService,
-  CreateQuestData,
   CategoryBadgeService,
   ChallengeService,
   SearchService,
@@ -29,7 +28,7 @@ import {
   BookManagementService,
   CourseManagementService,
 } from '../services';
-import { ChallengeItem } from '../services/challenge-service';
+import type { ChallengeItem, CreateQuestData } from '../lib/client-types';
 import {
   Card,
   CardContent,
