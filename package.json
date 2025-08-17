@@ -24,7 +24,7 @@
     "docker:prod": "docker compose up --build",
     "docker:down": "docker compose down",
     "docker:clean": "docker compose down -v --remove-orphans",
-    "prepare": "node -e \"if (process.env.NODE_ENV !== 'production') { require('child_process').execSync('npx husky', {stdio: 'inherit'}) } else { console.log('Skipping husky prepare in production') }\"",
+    "prepare": "node -e \"if (process.env.NODE_ENV !== 'production') { require('child_process').execSync('npx husky init', {stdio: 'inherit'}) } else { console.log('Skipping husky init in production') }\"",
     "ci:check": "pnpm format:check && pnpm lint && pnpm type-check && pnpm build",
     "ci:check:format": "pnpm format:check",
     "ci:check:lint": "pnpm lint",
