@@ -270,8 +270,11 @@ export class CourseService {
       select: { platform: true },
     });
 
-    return courses
-      .map(c => c.platform)
-      .filter((platform): platform is string => platform !== null);
+    const platforms = courses.map(
+      (c: { platform: string | null }) => c.platform
+    );
+    return platforms.filter(
+      (platform: string | null): platform is string => platform !== null
+    );
   }
 }
