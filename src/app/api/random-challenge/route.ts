@@ -15,21 +15,21 @@ export async function GET() {
 
     // Combine all items into a single array
     const allItems = [
-      ...unfinishedQuests.map(quest => ({
+      ...unfinishedQuests.map((quest: any) => ({
         id: quest.id,
         title: quest.title,
         type: 'quest' as const,
         category: quest.category,
         xp: quest.xp,
       })),
-      ...unfinishedBooks.map(book => ({
+      ...unfinishedBooks.map((book: any) => ({
         id: book.id,
         title: book.title,
         type: 'book' as const,
         category: book.category,
         xp: 50, // Default XP for books
       })),
-      ...unfinishedCourses.map(course => ({
+      ...unfinishedCourses.map((course: any) => ({
         id: course.id,
         title: course.title,
         type: 'course' as const,
