@@ -26,6 +26,7 @@ ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/tracker}
 # Generate Prisma client and build the application
 RUN echo "Generating Prisma client..." && pnpm prisma generate
+RUN echo "Verifying Prisma client..." && ls -la node_modules/.prisma || echo "Prisma client not found"
 RUN echo "Building Next.js application..." && pnpm build
 # Verify that build artifacts exist and fail if they don't
 RUN echo "Verifying build artifacts..." && \
@@ -40,7 +41,8 @@ RUN echo "=== public contents ===" && ls -la /app/public || echo "No public dire
 # Production image, copy all the files and run next
 FROM node:22-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV=production
+ARG NODE_ENV
+ENV NODE_ENV=${NODE_ENV}
 # Install OpenSSL dependencies for Prisma runtime and update packages
 RUN apk update && apk add --no-cache openssl postgresql-client && apk upgrade
 # Install pnpm
@@ -56,7 +58,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY start.sh ./
 
 # Copy the generated Prisma client from builder if it exists
-RUN if [ -d "/app/node_modules/.prisma" ]; then cp -r /app/node_modules/.prisma ./node_modules/; fi
+RUN if [ -d "/app/node_modules/.prisma" ]; then cp -r /app/node_modules/.prisma ./node_modules/; else echo "Prisma client not found in builder"; fi
 
 RUN chmod +x start.sh
 
