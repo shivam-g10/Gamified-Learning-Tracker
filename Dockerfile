@@ -6,6 +6,8 @@ RUN apk update && apk add --no-cache openssl curl && apk upgrade
 # Install pnpm
 RUN npm install -g pnpm@9.12.2
 COPY package.json pnpm-lock.yaml* ./
+ARG NODE_ENV
+ENV NODE_ENV=${NODE_ENV}
 RUN pnpm install --frozen-lockfile || pnpm install
 
 # Rebuild the source code only when needed
@@ -17,6 +19,8 @@ RUN apk update && apk add --no-cache openssl && apk upgrade
 RUN npm install -g pnpm@9.12.2
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ARG NODE_ENV
+ENV NODE_ENV=${NODE_ENV}
 # Set DATABASE_URL for Prisma client generation with a fallback
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/tracker}
