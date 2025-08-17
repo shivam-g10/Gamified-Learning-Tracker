@@ -6,8 +6,8 @@ Thank you for your interest in contributing to GyaanQuest! This document provide
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or yarn
+- Node.js 22.0.0+
+- pnpm package manager
 - Git
 - Docker (optional, for containerized development)
 
@@ -15,16 +15,17 @@ Thank you for your interest in contributing to GyaanQuest! This document provide
 
 1. Fork the repository
 2. Clone your fork:
+
    ```bash
    git clone https://github.com/yourusername/Gamified-Learning-Tracker.git
    cd Gamified-Learning-Tracker
    ```
 
-````
 3. Install dependencies:
+
    ```bash
    pnpm install
-````
+   ```
 
 4. Set up environment:
    ```bash
@@ -44,13 +45,23 @@ Thank you for your interest in contributing to GyaanQuest! This document provide
 
 ### Running Tests
 
+Testing is currently deferred per the project guidelines. There are no test scripts defined yet.
+
+### Optional: Docker-based Development
+
+You can run the stack with Docker for a consistent local environment (PostgreSQL 17 + app):
+
 ```bash
-# Run all tests
-pnpm test
+# Start development environment
+pnpm run docker:dev
 
-# Run tests in watch mode
-pnpm run test:watch
+# Start with watch mode (auto-rebuild on changes)
+pnpm run docker:dev:watch
 
-# Run tests with coverage
-pnpm run test:coverage
+# Stop containers
+pnpm run docker:down
 ```
+
+### Issues and Pull Requests
+
+Please use the templates in `.github/ISSUE_TEMPLATE/` and `.github/pull_request_template.md` when opening issues or PRs.

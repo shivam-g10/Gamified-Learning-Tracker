@@ -4,7 +4,7 @@ This directory contains static assets that are served directly by Next.js.
 
 ## Required Files
 
-- `favicon.ico` - Website favicon (16x16, 32x32, or 48x48 pixels)
+- `favicon.svg` (or `favicon.ico`) - Website favicon
 - `robots.txt` - Generated automatically by Next.js from `src/app/robots.ts`
 - `sitemap.xml` - Generated automatically by Next.js from `src/app/sitemap.ts`
 - `manifest.json` - Static PWA manifest file

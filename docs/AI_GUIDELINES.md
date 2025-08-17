@@ -4,7 +4,7 @@
 
 ## 📋 Document Information
 
-- **Version**: 1.0.0
+- **Version**: 2.0.0
 - **Last Updated**: 2024-12-19
 - **Maintainer**: Project Lead + All Contributors
 - **Review Cycle**: Every 2 weeks or after major changes
@@ -47,9 +47,9 @@ This document establishes mandatory guidelines for all AI agents, developers, an
 
 ### Technical Constraints
 
-- **Frontend**: Next.js 15 with TypeScript 5 (latest versions)
+- **Frontend**: Next.js 15.4.6 with TypeScript 5.4.5 (latest versions)
 - **Backend**: Next.js API routes (no separate backend)
-- **Database**: PostgreSQL with Prisma ORM (latest versions)
+- **Database**: PostgreSQL 17 with Prisma ORM 6.13.0 (latest versions)
 - **UI Components**: Shadcn/ui (latest versions)
 - **Authentication**: Deferred feature (not required for current development)
 - **Storage**: Deferred feature (not required for current development)
@@ -62,23 +62,26 @@ This document establishes mandatory guidelines for all AI agents, developers, an
 
 #### Core Features (Current)
 
-- Quest management (create, edit, delete)
-- XP system with leveling (150 XP per level)
-- Badge system (150, 400, 800, 1200, 2000 XP thresholds)
-- Streak tracking with daily check-ins
-- Focus management (up to 3 quests)
-- Search, filter, and sort quests
-- Random challenge generation
-- Category-based organization
-- Progress tracking and analytics
+- **Quest Management**: Create, edit, delete, and track learning objectives
+- **Books System**: Track reading progress with page-based progress logging
+- **Courses System**: Track learning progress with unit-based completion
+- **XP System**: 150 XP per level with focus boost (20% bonus for focused items)
+- **Badge System**: 150, 400, 800, 1200, 2000 XP thresholds
+- **Streak Tracking**: Daily check-ins with momentum building
+- **Focus Management**: 1+1+1 limit (1 Quest + 1 Book + 1 Course simultaneously)
+- **Search & Filtering**: Advanced search, filter, and sort capabilities
+- **Random Challenge Generation**: Dynamic quest selection with focus validation
+- **Category-based Organization**: Organize content by learning subject
+- **Progress Tracking**: Comprehensive analytics and progress visualization
+- **Tabbed Interface**: Seamless switching between Quests, Books, and Courses
 
 #### Planned Features (Future)
 
-- Reading list tracking
-- Course tracking
-- Skill badges (beyond XP-based badges)
-- Notes and file attachments (when storage is implemented)
-- User authentication (when auth is implemented)
+- **Skill Badges**: Beyond XP-based badges (reading, learning achievements)
+- **Notes and File Attachments**: When storage is implemented
+- **User Authentication**: When auth is implemented
+- **Social Features**: Community sharing and recommendations
+- **Advanced Analytics**: Detailed progress insights and reporting
 
 ---
 
@@ -139,9 +142,11 @@ src/
 │   └── types.ts          # TypeScript type definitions
 ├── services/              # Business logic services
 │   ├── quest-service.ts   # Quest management logic
+│   ├── book-service.ts    # Book management logic
+│   ├── course-service.ts  # Course management logic
+│   ├── focus-service.ts   # Focus management logic
 │   ├── xp-service.ts      # XP and leveling logic
-│   └── badge-service.ts   # Badge calculation logic
-└── types/                 # TypeScript type definitions
+│   └── category-badge-service.ts   # Badge calculation logic
 ```
 
 #### Naming Conventions
@@ -150,7 +155,7 @@ src/
 - **Components**: PascalCase (e.g., `QuestRow`)
 - **Functions**: camelCase (e.g., `calculateXp`)
 - **Constants**: UPPER_SNAKE_CASE (e.g., `XP_PER_LEVEL`)
-- **Types/Interfaces**: PascalCase (e.g., `Quest`, `AppState`)
+- **Types/Interfaces**: PascalCase (e.g., `Quest`, `Book`, `Course`)
 - **Services**: kebab-case with `-service.ts` suffix
 
 #### Import/Export Standards
@@ -181,7 +186,7 @@ src/
 
 #### REST Endpoints
 
-- **Naming**: Use resource-based URLs (e.g., `/api/quests`)
+- **Naming**: Use resource-based URLs (e.g., `/api/quests`, `/api/books`, `/api/courses`)
 - **HTTP Methods**: Use appropriate HTTP methods (GET, POST, PUT, DELETE)
 - **Status Codes**: Return proper HTTP status codes
 - **Error Responses**: Consistent error response format
@@ -263,9 +268,9 @@ interface ApiResponse<T> {
 
 ✅ CORRECT - With confirmation:
 "I have the following changes ready to commit:
-- Added service layer architecture
-- Separated business logic from components
-- Updated TypeScript types
+- Added Books and Courses system
+- Implemented new 1+1+1 focus system
+- Updated XP system with focus boost
 
 Should I commit these changes?"
 ```
@@ -318,7 +323,7 @@ export function getXpForNextLevel(currentXp: number): number;
 - **README.md**: Project overview and setup instructions
 - **DEVELOPMENT_SETUP.md**: Development environment setup
 - **IMPLEMENTATION.md**: Current progress and next steps
-- **DOCKER.md**: Docker setup and deployment instructions
+- **DESIGN_SYSTEM.md**: UI/UX design system and color scheme
 
 #### Update Process
 
@@ -439,17 +444,19 @@ export function getXpForNextLevel(currentXp: number): number;
 - [README.md](./README.md) - Project overview and setup
 - [DEVELOPMENT_SETUP.md](./DEVELOPMENT_SETUP.md) - Development environment setup
 - [IMPLEMENTATION.md](./IMPLEMENTATION.md) - Current progress and next steps
-- [package.json](./package.json) - Dependencies and scripts
-- [tsconfig.json](./tsconfig.json) - TypeScript configuration
-- [docker-compose.yml](./docker-compose.yml) - Docker configuration
+- [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) - UI/UX design system
+- [package.json](../package.json) - Dependencies and scripts
+- [tsconfig.json](../tsconfig.json) - TypeScript configuration
+- [docker-compose.yml](../docker-compose.yml) - Docker configuration
 
 ---
 
 ## 📅 Review and Update History
 
-| Version | Date       | Changes          | Author       |
-| ------- | ---------- | ---------------- | ------------ |
-| 1.0.0   | 2024-12-19 | Initial creation | Project Lead |
+| Version | Date       | Changes                                                                       | Author       |
+| ------- | ---------- | ----------------------------------------------------------------------------- | ------------ |
+| 2.0.0   | 2024-12-19 | Updated with Books & Courses system, new focus system, and current tech stack | Project Lead |
+| 1.0.0   | 2024-12-19 | Initial creation                                                              | Project Lead |
 
 ---
 
@@ -466,11 +473,26 @@ export function getXpForNextLevel(currentXp: number): number;
 - **Categories**: Use consistent category names across the system
 - **Types**: Limit to 'topic', 'project', 'bonus' only
 
+### Books & Courses System
+
+- **Book Structure**: Include title, author, total pages, current page, status, category, tags
+- **Course Structure**: Include title, platform, total units, completed units, status, category, tags
+- **Progress Tracking**: Log progress with from/to pages (books) or units (courses)
+- **Status Management**: Automatic status transitions (backlog → reading/learning → finished)
+
+### Focus Management
+
+- **1+1+1 Limit**: Maximum 1 Quest + 1 Book + 1 Course in focus simultaneously
+- **Focus Boost**: 20% XP bonus for items currently in focus
+- **Validation**: Prevent adding items when focus slots are full
+- **Visual Feedback**: Clear indication of focus state and available actions
+
 ### XP System
 
 - **Level Calculation**: 150 XP per level, starting from level 1
 - **Progress Tracking**: Show progress within current level
 - **Badge Thresholds**: Maintain existing thresholds (150, 400, 800, 1200, 2000)
+- **Focus Boost**: 20% bonus for focused items on session progress
 
 ### UI/UX Standards
 
@@ -478,6 +500,7 @@ export function getXpForNextLevel(currentXp: number): number;
 - **Dark Theme**: Maintain dark theme consistency
 - **Responsive Design**: Ensure mobile-first responsive design
 - **Accessibility**: Include proper ARIA labels and keyboard navigation
+- **Tabbed Interface**: Seamless switching between Quests, Books, and Courses
 
 ### Code Organization
 
@@ -485,3 +508,4 @@ export function getXpForNextLevel(currentXp: number): number;
 - **Component Purity**: Components should only handle presentation and user interaction
 - **Type Safety**: Use strict TypeScript with no `any` types
 - **Error Handling**: Implement proper error boundaries and user feedback
+- **Progress Logging**: Comprehensive progress tracking with API endpoints

@@ -42,8 +42,8 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
     # No external port mapping needed - Coolify handles proxying
-    # ports:
-    #   - '0:3000'
+    ports:
+      - '${HOST_PORT:-3000}:${PORT:-3000}'
     # Restart policy for production
     restart: unless-stopped
     # Network isolation

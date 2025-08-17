@@ -1,12 +1,12 @@
 # 🎮 GyaanQuest
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-14.2.5-black.svg)](https://nextjs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16.x-blue.svg)](https://www.postgresql.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-22+-green.svg)](https://nodejs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.4.6-black.svg)](https://nextjs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17.x-blue.svg)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-✓-blue.svg)](https://www.docker.com/)
 
-A full-stack gamified learning tracker built with Next.js and PostgreSQL. Track your learning progress with XP, levels, streaks, badges, and interactive quests.
+A full-stack gamified learning tracker built with Next.js 15 and PostgreSQL 17. Track your learning progress with XP, levels, streaks, badges, interactive quests, reading progress, and course completion.
 
 ## 📚 Documentation & Guidelines
 
@@ -20,24 +20,48 @@ A full-stack gamified learning tracker built with Next.js and PostgreSQL. Track 
 
 ## ✨ Features
 
-- 🎯 **Quest Management** - Create and track learning objectives
-- ⭐ **XP System** - Earn experience points and level up (150 XP per level)
-- 🔥 **Streaks** - Maintain learning momentum with daily check-ins
-- 🏆 **Badges** - Unlock achievements at XP milestones (150, 400, 800, 1200, 2000 XP)
-- 📚 **Categories** - Organize learning by subject area
-- 🎲 **Random Challenges** - Get random quests to spice up your learning routine
-- 📱 **Responsive Design** - Works on all devices
-- 🎯 **Focus System** - Mark up to 3 quests as current focus areas
-- 🔍 **Advanced Search & Filtering** - Search by title/category, filter by type and category
-- 📊 **Smart Sorting** - Sort quests by title, XP, category, type, completion status, or date created
-- 🐳 **Docker Development** - Hot reloading and watch mode for efficient development
+### 🎯 Core Learning Systems
+
+- **Quest Management** - Create and track learning objectives with XP values
+- **Books System** - Track reading progress with page-based logging and status management
+- **Courses System** - Track learning progress with unit completion and platform integration
+- **Tabbed Interface** - Seamless switching between Quests, Books, and Courses
+
+### ⭐ Gamification & Progress
+
+- **XP System** - Earn experience points and level up (150 XP per level)
+- **Focus Boost** - 20% XP bonus for items currently in focus
+- **Badge System** - Unlock achievements at XP milestones (150, 400, 800, 1200, 2000 XP)
+- **Streaks** - Maintain learning momentum with daily check-ins
+- **Progress Analytics** - Comprehensive tracking and visualization
+
+### 🎯 Focus & Organization
+
+- **Smart Focus System** - 1+1+1 limit (1 Quest + 1 Book + 1 Course simultaneously)
+- **Category Management** - Organize content by learning subject area
+- **Advanced Search & Filtering** - Search by title/category, filter by type, status, and category
+- **Smart Sorting** - Sort by any field with visual indicators
+
+### 🎲 Interactive Features
+
+- **Random Challenges** - Get random quests with focus validation
+- **Progress Logging** - Log reading progress and course completion
+- **Status Tracking** - Automatic status transitions (backlog → active → finished)
+- **Responsive Design** - Works on all devices with mobile-first approach
+
+### 🛠️ Development Features
+
+- **Docker Development** - Hot reloading and watch mode for efficient development
+- **Code Quality Tools** - ESLint v9, Prettier, Husky, and commitlint
+- **Service Layer Architecture** - Clean separation of business logic and presentation
+- **TypeScript 5.4.5** - Strict type safety throughout the application
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
-- [Node.js](https://nodejs.org/) 18+ (for local development)
+- [Node.js](https://nodejs.org/) 22.0.0+ (for local development)
 - [pnpm](https://pnpm.io/) 8.15.0+ (recommended package manager)
 
 ### Security Notice
@@ -112,7 +136,8 @@ For contributors and developers who want to ensure code quality:
 
 ```bash
 pnpm install
-pnpm run prepare
+# Husky is auto-initialized on install. If needed, run:
+pnpm dlx husky@9 init
 ```
 
 3. Verify the setup:
@@ -128,28 +153,38 @@ pnpm run type-check
 ## 🛠️ Tech Stack
 
 - **Frontend**: [Next.js 15.4.6](https://nextjs.org/) with App Router
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **React**: [React 19.1.1](https://react.dev/) with modern hooks and patterns
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) with shadcn/ui components
 - **Database**: [PostgreSQL 17](https://www.postgresql.org/) (latest stable)
-- **ORM**: [Prisma](https://www.prisma.io/) for type-safe database access
+- **ORM**: [Prisma 6.13.0](https://www.prisma.io/) for type-safe database access
+- **Language**: [TypeScript 5.4.5](https://www.typescriptlang.org/) with strict mode
+- **State Management**: [SWR 2.2.5](https://swr.vercel.app/) for data fetching and caching
 - **Containerization**: [Docker](https://www.docker.com/) + [Docker Compose](https://docs.docker.com/compose/) with Watch Mode
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **State Management**: [SWR](https://swr.vercel.app/) for data fetching
 - **Package Manager**: [pnpm](https://pnpm.io/) for fast, disk space efficient package management
-- **Code Quality**: ESLint v9, Prettier, Husky pre-commit hooks
-- **Development**: Hot reloading, automatic rebuilds, watch mode
+- **Code Quality**: ESLint v9, Prettier, Husky v9 pre-commit hooks, commitlint
+- **Development**: Hot reloading, automatic rebuilds, watch mode, service layer architecture
 
 ## 📁 Project Structure
 
 ```
-Gamified-Learning-Tracker/
+GyaanQuest/
 ├── src/
 │   ├── app/                 # Next.js App Router pages
-│   │   ├── api/            # API routes
+│   │   ├── api/            # API routes (quests, books, courses, focus)
 │   │   ├── health/         # Health check endpoint
-│   │   ├── globals.css     # Global styles
+│   │   ├── globals.css     # Global styles and Tailwind
 │   │   └── layout.tsx      # Root layout
 │   ├── components/         # Reusable UI components
-│   └── lib/               # Utility functions and database
+│   │   ├── ui/            # shadcn/ui components
+│   │   └── app/           # App-specific components
+│   ├── lib/               # Utility functions, hooks, and types
+│   └── services/          # Business logic services
+│       ├── quest-service.ts      # Quest management
+│       ├── book-service.ts       # Book management
+│       ├── course-service.ts     # Course management
+│       ├── focus-service.ts      # Focus management
+│       ├── xp-service.ts         # XP calculations
+│       └── ...                   # Additional services
 ├── prisma/                # Database schema and migrations
 ├── public/                # Static assets
 └── docker-compose.yml     # Docker configuration
@@ -172,10 +207,13 @@ NODE_ENV=production
 
 ### Database Setup
 
-The application uses PostgreSQL with Prisma. The database schema includes:
+The application uses PostgreSQL 17 with Prisma. The database schema includes:
 
 - **Quests** - Learning objectives and tasks with XP values
+- **Books** - Reading progress with page tracking and status management
+- **Courses** - Learning progress with unit completion and platform info
 - **AppState** - User progress tracking including streaks and focus areas
+- **FocusSlot** - Focus management with 1+1+1 limit enforcement
 
 ## 🐳 Docker
 
@@ -217,25 +255,76 @@ pnpm run docker:clean
 
 ## 📊 API Endpoints
 
+### Core Endpoints
+
 - `GET /health` - Health check
+- `GET /api/app-state` - Application state (streaks, focus areas)
+- `PUT /api/app-state` - Update application state
+- `POST /api/checkin` - Record daily progress
+
+### Quest Management
+
 - `GET /api/quests` - List all quests (with optional search, type, category, done filters)
+- `POST /api/quests` - Create new quest
 - `GET /api/quests/[id]` - Get specific quest
 - `PATCH /api/quests/[id]` - Update quest (mark as done/undone)
 - `DELETE /api/quests/[id]` - Delete quest
-- `POST /api/checkin` - Record daily progress
-- `GET /api/app-state` - Application state (streaks, focus areas)
-- `PUT /api/app-state` - Update application state
 - `GET /api/random-challenge` - Get random unfinished quest
+
+### Book Management
+
+- `GET /api/books` - List all books with filtering
+- `POST /api/books` - Create new book
+- `GET /api/books/[id]` - Get book details
+- `PATCH /api/books/[id]` - Update book
+- `DELETE /api/books/[id]` - Delete book
+- `POST /api/books/[id]/log` - Log reading progress
+
+### Course Management
+
+- `GET /api/courses` - List all courses with filtering
+- `POST /api/courses` - Create new course
+- `GET /api/courses/[id]` - Get course details
+- `PATCH /api/courses/[id]` - Update course
+- `DELETE /api/courses/[id]` - Delete course
+- `POST /api/courses/[id]/log` - Log learning progress
+
+### Focus Management
+
+- `GET /api/focus` - Get current focus state
+- `PUT /api/focus` - Update focus (set/remove/switch)
+- `DELETE /api/focus` - Clear all focus
 
 ## 🎮 Game Mechanics
 
-- **XP System**: Each quest has an XP value. Complete quests to earn XP and level up
+### XP & Leveling System
+
+- **XP System**: Each quest, book session, and course unit has an XP value
 - **Levels**: Every 150 XP grants a new level
-- **Streaks**: Maintain daily check-ins to build momentum
-- **Focus Areas**: Mark up to 3 quests as your current focus
+- **Focus Boost**: Items in focus receive 20% XP bonus on progress
 - **Badges**: Earn badges at XP milestones (150, 400, 800, 1200, 2000 XP)
+
+### Progress Tracking
+
+- **Quests**: Complete learning objectives for XP
+- **Books**: Log page progress and earn XP for reading sessions
+- **Courses**: Complete units and earn XP for learning progress
+- **Streaks**: Maintain daily check-ins to build momentum
+
+### Focus Management
+
+- **1+1+1 Limit**: Maximum 1 Quest + 1 Book + 1 Course in focus simultaneously
+- **Smart Validation**: Prevents adding items when focus slots are full
+- **Visual Feedback**: Clear indication of focus state and available actions
+- **XP Bonus**: Focused items receive 20% XP boost on progress
+
+### Content Organization
+
 - **Quest Types**: topic, project, or bonus quests
-- **Categories**: Organize quests by learning subject
+- **Book Status**: backlog, reading, or finished
+- **Course Status**: backlog, learning, or finished
+- **Categories**: Organize content by learning subject
+- **Tags**: Flexible labeling system for content organization
 
 ## 🤝 Contributing
 
@@ -263,13 +352,14 @@ We welcome contributions! Please feel free to submit a Pull Request.
 
 ### Code Style
 
-- Use TypeScript for type safety
-- Follow Next.js best practices
+- Use TypeScript 5.4.5 for type safety
+- Follow Next.js 15 best practices
 - Use Tailwind CSS for styling
 - Write meaningful commit messages
 - Use pnpm as the package manager
 - Ensure pnpm-lock.yaml is committed to version control
 - **Follow the established project architecture and patterns**
+- **Keep all business logic in the service layer**
 
 ## 📝 License
 
@@ -277,18 +367,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- Built with [Next.js](https://nextjs.org/)
+- Built with [Next.js 15](https://nextjs.org/)
+- Powered by [React 19](https://react.dev/)
 - Styled with [Tailwind CSS](https://tailwindcss.com/)
-- Database powered by [PostgreSQL](https://www.postgresql.org/)
+- Database powered by [PostgreSQL 17](https://www.postgresql.org/)
 - Containerized with [Docker](https://www.docker.com/)
 - Data fetching with [SWR](https://swr.vercel.app/)
+- UI components from [shadcn/ui](https://ui.shadcn.com/)
 
 ## 📞 Support
 
 If you have any questions or need help:
 
 - **📚 Check our documentation** in the [`docs/`](./docs/) folder
-- **🐛 Open an issue** using our [issue template](.github/ISSUE_TEMPLATE.md)
+- **🐛 Open an issue** using our [issue templates](.github/ISSUE_TEMPLATE/)
 - **🤝 Submit a PR** following our [contributing guidelines](./docs/CONTRIBUTING.md)
 - **📖 Read the [AI Guidelines](./docs/AI_GUIDELINES.md)** if you're an AI agent
 

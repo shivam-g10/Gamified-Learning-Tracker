@@ -120,10 +120,9 @@ async function addQuest(formData: FormData) {
 The XP system uses a level-based progression where each level requires 150 XP:
 
 ```typescript
-// Level calculation
-const level = Math.floor(totalXp / 150) + 1;
-const progress = totalXp % 150;
-const percentage = Math.round((progress / 150) * 100);
+// Level calculation via XPService
+const { level, progress, nextLevelXp, pct } =
+  XPService.calculateLevelInfo(totalXp);
 ```
 
 #### Badge System
@@ -191,29 +190,26 @@ export class CategoryBadgeService {
 
 #### Challenge Service
 
-New service for managing random challenges and focus validation:
+Service for random challenges and per-type focus validation:
 
 ```typescript
+export type ChallengeItem = {
+  id: string;
+  title: string;
+  type: 'quest' | 'book' | 'course';
+  category: string;
+  xp: number;
+};
+
 export class ChallengeService {
-  /**
-   * Gets a random unfinished quest for challenges
-   */
-  static async getRandomChallenge(): Promise<Quest | null>;
-
-  /**
-   * Checks if a quest can be added to focus
-   */
-  static canAddToFocus(currentFocusCount: number): boolean;
-
-  /**
-   * Gets focus limit error message
-   */
-  static getFocusLimitMessage(): string;
-
-  /**
-   * Gets challenge success message
-   */
-  static getChallengeSuccessMessage(quest: Quest): string;
+  static async getRandomChallenge(): Promise<ChallengeItem | null>;
+  static canAddQuestToFocus(state: FocusState): boolean;
+  static canAddBookToFocus(state: FocusState): boolean;
+  static canAddCourseToFocus(state: FocusState): boolean;
+  static getQuestFocusLimitMessage(): string;
+  static getBookFocusLimitMessage(): string;
+  static getCourseFocusLimitMessage(): string;
+  static getChallengeSuccessMessage(item: ChallengeItem): string;
 }
 ```
 
@@ -258,8 +254,8 @@ model AppState {
 function todayDateString(): string {
   const now = new Date();
   const yyyy = now.getUTCFullYear();
-  const mm = String(now.getUTCFullMonth() + 1).padStart(2, '0');
-  const dd = String(now.getUTCFullDate()).padStart(2, '0');
+  const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(now.getUTCDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
 }
 
@@ -307,49 +303,57 @@ export async function POST() {
 
 #### Implementation Details
 
-- **Maximum Focus**: Limited to 3 quests simultaneously
+- **1+1+1 Focus Model**: At most 1 quest, 1 book, and 1 course in focus simultaneously
 - **Toggle Functionality**: Easy add/remove from focus
-- **Visual Indicators**: Clear display of focused quests
+- **Visual Indicators**: Clear display of focused items in dedicated slots
 - **State Synchronization**: Focus state persists across sessions
+- See the "Books, Courses & Focus System Implementation" section for the server model (`FocusSlot`) and the `/api/focus` endpoints
 
 #### Frontend Implementation
 
 ```typescript
-async function toggleFocus(q: Quest) {
-  if (!appState) return;
-  const focus = new Set(appState.focus || []);
-
-  if (focus.has(q.id)) {
-    focus.delete(q.id);
-  } else {
-    if (focus.size >= 3) return; // enforce client-side cap
-    focus.add(q.id);
-  }
-
-  await fetch('/api/app-state', {
+// Set focus for an item
+async function setFocus(type: 'quest' | 'book' | 'course', id: string) {
+  await fetch('/api/focus', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ focus: Array.from(focus) }),
+    body: JSON.stringify({ type, id }),
   });
-  await mutateState();
+  await mutateFocusState();
+}
+
+// Remove focus for a type
+async function removeFocus(type: 'quest' | 'book' | 'course') {
+  await fetch('/api/focus', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type, action: 'remove' }),
+  });
+  await mutateFocusState();
 }
 ```
 
 #### Focus Display
 
 ```typescript
-function FocusChips() {
-  if (!appState) return null;
-  const focusSet = new Set(appState.focus || []);
-  const focusQuests = (quests || []).filter(q => focusSet.has(q.id));
+function FocusChips({ focusState }: { focusState: FocusState }) {
+  if (!focusState) return null;
+  const items: Array<{ label: string; type: 'quest' | 'book' | 'course'; title: string }> = [];
+  if (focusState.quest) items.push({ label: 'Quest', type: 'quest', title: focusState.quest.title });
+  if (focusState.book) items.push({ label: 'Book', type: 'book', title: focusState.book.title });
+  if (focusState.course) items.push({ label: 'Course', type: 'course', title: focusState.course.title });
 
   return (
     <div className="flex flex-wrap gap-2">
-      {focusQuests.map(q => (
-        <span key={q.id} className="chip">
-          {q.title}
-          <button className="ml-1 text-neutral-400 hover:text-neutral-200"
-                  onClick={() => toggleFocus(q)}>✕</button>
+      {items.map((it) => (
+        <span key={`${it.type}:${it.title}`} className="chip">
+          {it.title}
+          <button
+            className="ml-1 text-neutral-400 hover:text-neutral-200"
+            onClick={() => removeFocus(it.type)}
+          >
+            ✕
+          </button>
         </span>
       ))}
     </div>
@@ -425,68 +429,100 @@ const filtered = useMemo(() => {
 ```typescript
 // src/app/api/random-challenge/route.ts
 export async function GET() {
-  const quests = await prisma.quest.findMany({
-    where: { done: false },
-  });
+  // Get all unfinished items across quests, books, and courses
+  const [unfinishedQuests, unfinishedBooks, unfinishedCourses] =
+    await Promise.all([
+      prisma.quest.findMany({ where: { done: false } }),
+      prisma.book.findMany({ where: { status: { not: 'finished' } } }),
+      prisma.course.findMany({ where: { status: { not: 'finished' } } }),
+    ]);
 
-  if (quests.length === 0) return NextResponse.json(null);
+  const allItems = [
+    ...unfinishedQuests.map(quest => ({
+      id: quest.id,
+      title: quest.title,
+      type: 'quest' as const,
+      category: quest.category,
+      xp: quest.xp,
+    })),
+    ...unfinishedBooks.map(book => ({
+      id: book.id,
+      title: book.title,
+      type: 'book' as const,
+      category: book.category,
+      xp: 50, // default XP for books
+    })),
+    ...unfinishedCourses.map(course => ({
+      id: course.id,
+      title: course.title,
+      type: 'course' as const,
+      category: course.category,
+      xp: 75, // default XP for courses
+    })),
+  ];
 
-  const idx = Math.floor(Math.random() * quests.length);
-  return NextResponse.json(quests[idx]);
+  if (allItems.length === 0) return NextResponse.json(null);
+
+  const randomIndex = Math.floor(Math.random() * allItems.length);
+  return NextResponse.json(allItems[randomIndex]);
 }
 ```
 
 #### Frontend Integration
 
-The random challenge system has been enhanced with a modal interface and proper focus validation:
+The random challenge system returns a `ChallengeItem` (quest/book/course). Validate against the current 1+1+1 focus state and accept accordingly:
 
 ```typescript
 // Challenge modal state management
-const [challengeQuest, setChallengeQuest] = useState<Quest | null>(null);
+const [challengeItem, setChallengeItem] = useState<ChallengeItem | null>(null);
 const [isChallengeModalOpen, setIsChallengeModalOpen] = useState(false);
 
-// Enhanced random challenge handler with focus validation
+// Request a random challenge and validate focus per type
 const handleRandomChallenge = useCallback(async () => {
   try {
-    const challenge = await ChallengeService.getRandomChallenge();
-    if (!challenge) {
-      toast.info('All quests are done — nice!');
+    const item = await ChallengeService.getRandomChallenge();
+    if (!item) {
+      toast.info('All items are finished — great job!');
       return;
     }
 
-    // Check focus limit before showing challenge
-    const currentFocusCount = AppStateService.getFocusCount(
-      appState?.focus || []
-    );
-    if (!ChallengeService.canAddToFocus(currentFocusCount)) {
-      toast.error(ChallengeService.getFocusLimitMessage());
+    // Validate based on current focus state (1 quest, 1 book, 1 course)
+    if (
+      (item.type === 'quest' &&
+        !ChallengeService.canAddQuestToFocus(focusState)) ||
+      (item.type === 'book' &&
+        !ChallengeService.canAddBookToFocus(focusState)) ||
+      (item.type === 'course' &&
+        !ChallengeService.canAddCourseToFocus(focusState))
+    ) {
+      const msg =
+        item.type === 'quest'
+          ? ChallengeService.getQuestFocusLimitMessage()
+          : item.type === 'book'
+            ? ChallengeService.getBookFocusLimitMessage()
+            : ChallengeService.getCourseFocusLimitMessage();
+      toast.error(msg);
       return;
     }
 
-    setChallengeQuest(challenge);
+    setChallengeItem(item);
     setIsChallengeModalOpen(true);
   } catch (error) {
     console.error('Failed to get random challenge:', error);
     toast.error('Failed to get random challenge. Please try again.');
   }
-}, [appState]);
+}, [focusState]);
 
-// Challenge acceptance handler
-const handleChallengeAccept = useCallback(
-  async (quest: Quest) => {
-    if (!appState) return;
-
-    try {
-      await AppStateService.toggleQuestFocus(quest.id, appState.focus || []);
-      await mutateState();
-      toast.success(ChallengeService.getChallengeSuccessMessage(quest));
-    } catch (error) {
-      console.error('Failed to add challenge to focus:', error);
-      toast.error('Failed to add challenge to focus. Please try again.');
-    }
-  },
-  [appState, mutateState]
-);
+// Accept a challenge by setting focus via /api/focus
+const handleChallengeAccept = useCallback(async (item: ChallengeItem) => {
+  await fetch('/api/focus', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: item.type, id: item.id }),
+  });
+  await mutateFocusState();
+  toast.success(ChallengeService.getChallengeSuccessMessage(item));
+}, []);
 ```
 
 #### Challenge Modal Component
@@ -584,32 +620,13 @@ export function ChallengeModal({
 
 #### Focus Validation System
 
-The challenge system now includes comprehensive focus validation to prevent exceeding the 3-quest limit:
+Validation enforces the 1+1+1 rule via `FocusState` (one of each type):
 
 ```typescript
 // src/services/challenge-service.ts
-export class ChallengeService {
-  /**
-   * Checks if a quest can be added to focus
-   */
-  static canAddToFocus(currentFocusCount: number): boolean {
-    return currentFocusCount < 3;
-  }
-
-  /**
-   * Gets focus limit error message
-   */
-  static getFocusLimitMessage(): string {
-    return 'Focus queue is full (3/3). Remove a quest to add another.';
-  }
-
-  /**
-   * Gets challenge success message
-   */
-  static getChallengeSuccessMessage(quest: Quest): string {
-    return `Challenge accepted! "${quest.title}" added to focus.`;
-  }
-}
+static canAddQuestToFocus(state: FocusState): boolean { return !state.quest }
+static canAddBookToFocus(state: FocusState): boolean { return !state.book }
+static canAddCourseToFocus(state: FocusState): boolean { return !state.course }
 ```
 
 #### Toast Notification System
@@ -1504,7 +1521,7 @@ const handleQuestToggle = useCallback(
 - **XP & Leveling**: 150 XP per level with progress tracking
 - **Badge System**: Milestone-based achievements (150, 400, 800, 1200, 2000 XP)
 - **Streak Tracking**: Daily check-ins with momentum building
-- **Focus Management**: Up to 3 quest focus areas with visual indicators
+- **Focus Management**: 1+1+1 model (1 quest + 1 book + 1 course) with visual indicators
 - **Advanced Search**: Real-time search across title and category
 - **Smart Filtering**: Type, category, and completion status filters
 - **Multi-criteria Sorting**: Sort by any field with visual indicators

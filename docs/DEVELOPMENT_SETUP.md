@@ -13,25 +13,25 @@ This guide will help you set up the development environment with all the necessa
 ### 1. Clone and Install Dependencies
 
 ```bash
-git clone <your-repo-url>
-cd foundation_upskill
+git clone https://github.com/yourusername/Gamified-Learning-Tracker.git
+cd Gamified-Learning-Tracker
 pnpm install
 ```
 
 ### 2. Setup Pre-commit Hooks
 
-The project uses Husky v9 to manage Git hooks. After installation, set up the hooks:
+The project uses Husky v9 to manage Git hooks. Husky is auto-initialized on install via the postinstall script. If you need to (re)initialize manually:
 
 ```bash
 # Initialize Husky (creates .husky directory and hooks)
-npx husky init
+pnpm dlx husky@9 init
 
-# The hooks are now automatically configured to run:
+# The hooks will then be configured to run:
 # - pre-commit: lint-staged (formatting and linting)
 # - commit-msg: commitlint (commit message validation)
 ```
 
-**Note**: If you're setting up an existing project, the hooks should already be configured. If you need to reset them, run `npx husky init` again.
+**Note**: If you're setting up an existing project, the hooks should already be configured. If you need to reset them, run `pnpm dlx husky@9 init` again.
 
 ### 3. Environment Setup
 
@@ -55,7 +55,7 @@ cp env.example .env
 **Quick Start:**
 
 1. Copy `env.example` to `.env`
-2. Start development: `docker-compose -f docker-compose.dev.yml up`
+2. Start development: `pnpm run docker:dev` (or `docker compose -f docker-compose.dev.yml up`)
 3. Access app at: http://localhost:3000
 4. Database accessible at: localhost:5433
 
@@ -141,13 +141,7 @@ git commit -m "updates"
 
 ### Prettier Configuration
 
-The project uses Prettier with the following settings:
-
-- **Semicolons**: Always
-- **Quotes**: Single quotes
-- **Line Length**: 80 characters
-- **Tab Width**: 2 spaces
-- **Trailing Commas**: ES5 compatible
+The project uses Prettier with default settings. You can format code using the provided scripts.
 
 ### Auto-formatting
 
@@ -208,7 +202,7 @@ Your commit will be blocked if:
 ```bash
 # Reinstall Husky v9
 rm -rf .husky
-npx husky init
+pnpm dlx husky@9 init
 ```
 
 #### Pre-commit Hook Not Running
@@ -218,7 +212,7 @@ npx husky init
 ls -la .husky/
 
 # Reinstall if missing
-npx husky init
+pnpm dlx husky@9 init
 ```
 
 #### Permission Denied on Hooks
@@ -246,7 +240,7 @@ rm -rf node_modules .husky .next
 
 # Reinstall everything
 pnpm install
-npx husky init
+pnpm dlx husky@9 init
 ```
 
 ## 🔄 Workflow
