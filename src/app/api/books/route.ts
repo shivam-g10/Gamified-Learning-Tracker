@@ -1,93 +1,82 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '../../../lib/db';
+import { withUserAuth } from '../../../lib/auth-utils';
+import { Result, succeed, fail } from '../../../lib/result';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest) {
+async function getBooks(
+  userId: string,
+  req: NextRequest
+): Promise<Result<NextResponse, string>> {
   try {
     const { searchParams } = new URL(req.url);
-    const status = searchParams.get('status') as
-      | 'backlog'
-      | 'reading'
-      | 'finished'
-      | undefined;
     const search = searchParams.get('search') || undefined;
-    const tags = searchParams.get('tags')?.split(',') || undefined;
-
-    const where: Record<string, unknown> = {};
-
-    if (status) {
-      where.status = status;
-    }
-
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { author: { contains: search, mode: 'insensitive' } },
-        { category: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    if (tags && tags.length > 0) {
-      where.tags = { hasSome: tags };
-    }
+    const status = searchParams.get('status') || undefined;
+    const category = searchParams.get('category') || undefined;
 
     const books = await prisma.book.findMany({
-      where,
-      orderBy: { updated_at: 'desc' },
+      where: {
+        user_id: userId,
+        AND: [
+          search
+            ? {
+                OR: [
+                  { title: { contains: search, mode: 'insensitive' } },
+                  { author: { contains: search, mode: 'insensitive' } },
+                  { category: { contains: search, mode: 'insensitive' } },
+                ],
+              }
+            : {},
+          status
+            ? { status: status as 'backlog' | 'reading' | 'finished' }
+            : {},
+          category
+            ? { category: { equals: category, mode: 'insensitive' } }
+            : {},
+        ],
+      },
+      orderBy: { created_at: 'desc' },
     });
 
-    return NextResponse.json(books);
+    return succeed(NextResponse.json(books));
   } catch (error) {
-    console.error('Failed to fetch books:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch books' },
-      { status: 500 }
-    );
+    console.error('Error fetching books:', error);
+    return fail('Failed to fetch books');
   }
 }
 
-export async function POST(req: NextRequest) {
+async function createBook(
+  userId: string,
+  req: NextRequest
+): Promise<Result<NextResponse, string>> {
   try {
     const body = await req.json();
-    const { title, author, total_pages, category, description, tags } = body;
+    const { title, author, total_pages, description, category, tags } =
+      body || {};
 
-    // Validation
-    if (
-      !title ||
-      typeof total_pages !== 'number' ||
-      total_pages < 0 ||
-      !category
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            'Invalid payload. Title, total_pages, and category are required.',
-        },
-        { status: 400 }
-      );
+    if (!title) {
+      return fail('Title is required');
     }
 
     const book = await prisma.book.create({
       data: {
         title,
         author,
-        total_pages,
-        category,
+        total_pages: total_pages || 0,
         description,
+        category: category || 'Uncategorized',
         tags: tags || [],
-        current_page: 0,
-        status: 'backlog',
+        user_id: userId,
       },
     });
 
-    return NextResponse.json(book, { status: 201 });
+    return succeed(NextResponse.json(book, { status: 201 }));
   } catch (error) {
-    console.error('Failed to create book:', error);
-    return NextResponse.json(
-      { error: 'Failed to create book' },
-      { status: 500 }
-    );
+    console.error('Error creating book:', error);
+    return fail('Failed to create book');
   }
 }
+
+export const GET = withUserAuth(getBooks);
+export const POST = withUserAuth(createBook);

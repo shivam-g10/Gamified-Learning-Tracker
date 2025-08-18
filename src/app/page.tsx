@@ -11,19 +11,19 @@ export default function RootPage() {
   useEffect(() => {
     if (status === 'loading') return;
 
-    if (session) {
-      // User is authenticated, redirect to home
+    if (session?.user?.id) {
+      // User is authenticated and has a valid user ID, redirect to home
       router.push('/home');
     } else {
-      // User is not authenticated, redirect to sign-in
-      router.push('/auth/signin');
+      // User is not authenticated or session is invalid, show sign-in
+      // Don't redirect, just stay on root page
     }
   }, [session, status, router]);
 
   // Show loading state while determining redirect
   if (status === 'loading') {
     return (
-      <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted'>
+      <div className='min-h-screen flex items-center justify-center'>
         <div className='text-center space-y-4'>
           <div className='w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto'>
             <span className='text-2xl'>🎯</span>
@@ -36,5 +36,29 @@ export default function RootPage() {
     );
   }
 
-  return null;
+  // Show sign-in interface when not authenticated
+  return (
+    <div className='min-h-screen flex items-center justify-center'>
+      <div className='text-center space-y-6 p-8'>
+        <div className='w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto'>
+          <span className='text-4xl'>🎯</span>
+        </div>
+        <div className='space-y-4'>
+          <h1 className='text-4xl font-bold'>GyaanQuest</h1>
+          <p className='text-xl text-muted-foreground max-w-md'>
+            Your personal learning journey tracker. Sign in to start building
+            your quest for knowledge.
+          </p>
+        </div>
+        <div className='pt-4'>
+          <a
+            href='/auth/signin'
+            className='inline-flex items-center px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors'
+          >
+            Continue with Google
+          </a>
+        </div>
+      </div>
+    </div>
+  );
 }

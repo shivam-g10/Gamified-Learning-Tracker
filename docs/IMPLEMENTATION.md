@@ -992,20 +992,15 @@ if (process.env.NODE_ENV !== 'production') {
 - **Automatic Timestamps**: Creation time tracking
 - **Default Values**: Sensible defaults for new records
 
-### Data Seeding
+### Database Setup
 
-The system includes a comprehensive seed file with 50+ pre-configured quests across multiple categories:
+The system uses a clean database approach where users create their own content:
 
-- Core CS (7 quests)
-- Systems (5 quests)
-- Networking (5 quests)
-- Databases (5 quests)
-- Distributed Systems (8 quests)
-- Software Engineering (6 quests)
-- Performance & Debugging (5 quests)
-- Security (5 quests)
-- Architecture & Leadership (6 quests)
-- Math (5 quests)
+- **User-Driven Content**: Users create quests, books, and courses based on their learning goals
+- **No Pre-seeded Data**: Fresh database starts with proper user authentication
+- **Dynamic Categories**: Users can create custom categories for their learning areas
+- **Personalized Experience**: Each user builds their own learning journey
+- **Scalable Architecture**: Database grows organically with user activity
 
 ## 🔄 State Management
 

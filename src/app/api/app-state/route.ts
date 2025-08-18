@@ -1,58 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '../../../lib/db';
+import { withUserAuth } from '../../../lib/auth-utils';
+import { Result, succeed, fail } from '../../../lib/result';
 
 export const dynamic = 'force-dynamic';
 
-async function ensureAppState() {
-  const existing = await prisma.appState.findUnique({ where: { id: 1 } });
-  if (existing) return existing;
-  return prisma.appState.create({
-    data: {
-      id: 1,
-      streak: 0,
-      focus: [],
-      last_check_in: null,
-    },
-  });
-}
+async function getAppState(
+  userId: string,
+  _req: NextRequest
+): Promise<Result<NextResponse, string>> {
+  try {
+    let appState = await prisma.appState.findUnique({
+      where: { user_id: userId },
+    });
 
-export async function GET() {
-  const state = await ensureAppState();
-  return NextResponse.json(state);
-}
+    if (!appState) {
+      // Create default app state for the user if it doesn't exist
+      appState = await prisma.appState.create({
+        data: {
+          user_id: userId,
+          streak: 0,
+          focus: [],
+        },
+      });
+    }
 
-export async function PUT(req: NextRequest) {
-  const body = await req.json();
-  const { streak, last_check_in, focus } = body || {};
-
-  // Validate focus array
-  if (focus && Array.isArray(focus) && focus.length > 3) {
-    return NextResponse.json({ error: 'Focus max 3' }, { status: 400 });
+    return succeed(NextResponse.json(appState));
+  } catch (error) {
+    console.error('Error fetching app state:', error);
+    return fail('Failed to fetch app state');
   }
-
-  const data: Partial<{
-    streak: number;
-    last_check_in: Date | null;
-    focus: string[];
-  }> = {};
-
-  if (typeof streak === 'number') data.streak = streak;
-  if (last_check_in === null) data.last_check_in = null;
-  if (typeof last_check_in === 'string')
-    data.last_check_in = new Date(last_check_in);
-
-  // Ensure focus is always an array (even if empty)
-  if (Array.isArray(focus)) {
-    data.focus = focus;
-  } else if (focus === null || focus === undefined) {
-    data.focus = [];
-  }
-
-  const updated = await prisma.appState.upsert({
-    where: { id: 1 },
-    update: data,
-    create: { id: 1, streak: 0, focus: [], last_check_in: null, ...data },
-  });
-
-  return NextResponse.json(updated);
 }
+
+async function updateAppState(
+  userId: string,
+  req: NextRequest
+): Promise<Result<NextResponse, string>> {
+  try {
+    const body = await req.json();
+    const { streak, last_check_in, focus } = body || {};
+
+    const appState = await prisma.appState.upsert({
+      where: { user_id: userId },
+      update: {
+        streak: streak !== undefined ? streak : undefined,
+        last_check_in: last_check_in !== undefined ? last_check_in : undefined,
+        focus: focus !== undefined ? focus : undefined,
+      },
+      create: {
+        user_id: userId,
+        streak: streak || 0,
+        last_check_in: last_check_in || null,
+        focus: focus || [],
+      },
+    });
+
+    return succeed(NextResponse.json(appState));
+  } catch (error) {
+    console.error('Error updating app state:', error);
+    return fail('Failed to update app state');
+  }
+}
+
+export const GET = withUserAuth(getAppState);
+export const PUT = withUserAuth(updateAppState);

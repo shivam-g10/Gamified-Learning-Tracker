@@ -1,77 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '../../../lib/db';
+import { withUserAuth } from '../../../lib/auth-utils';
+import { Result, succeed, fail } from '../../../lib/result';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest) {
+async function getCourses(
+  userId: string,
+  req: NextRequest
+): Promise<Result<NextResponse, string>> {
   try {
     const { searchParams } = new URL(req.url);
-    const status = searchParams.get('status') as
-      | 'backlog'
-      | 'learning'
-      | 'finished'
-      | undefined;
     const search = searchParams.get('search') || undefined;
-    const tags = searchParams.get('tags')?.split(',') || undefined;
-    const platform = searchParams.get('platform') || undefined;
-
-    const where: Record<string, unknown> = {};
-
-    if (status) {
-      where.status = status;
-    }
-
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { platform: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    if (tags && tags.length > 0) {
-      where.tags = { hasSome: tags };
-    }
-
-    if (platform) {
-      where.platform = { contains: platform, mode: 'insensitive' };
-    }
+    const status = searchParams.get('status') || undefined;
+    const category = searchParams.get('category') || undefined;
 
     const courses = await prisma.course.findMany({
-      where,
-      orderBy: { updated_at: 'desc' },
+      where: {
+        user_id: userId,
+        AND: [
+          search
+            ? {
+                OR: [
+                  { title: { contains: search, mode: 'insensitive' } },
+                  { platform: { contains: search, mode: 'insensitive' } },
+                  { category: { contains: search, mode: 'insensitive' } },
+                ],
+              }
+            : {},
+          status
+            ? { status: status as 'backlog' | 'learning' | 'finished' }
+            : {},
+          category
+            ? { category: { equals: category, mode: 'insensitive' } }
+            : {},
+        ],
+      },
+      orderBy: { created_at: 'desc' },
     });
 
-    return NextResponse.json(courses);
+    return succeed(NextResponse.json(courses));
   } catch (error) {
-    console.error('Failed to fetch courses:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch courses' },
-      { status: 500 }
-    );
+    console.error('Error fetching courses:', error);
+    return fail('Failed to fetch courses');
   }
 }
 
-export async function POST(req: NextRequest) {
+async function createCourse(
+  userId: string,
+  req: NextRequest
+): Promise<Result<NextResponse, string>> {
   try {
     const body = await req.json();
     const { title, platform, url, total_units, description, category, tags } =
-      body;
+      body || {};
 
-    // Validation
-    if (
-      !title ||
-      typeof total_units !== 'number' ||
-      total_units < 0 ||
-      !category
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            'Invalid payload. Title, total_units, and category are required.',
-        },
-        { status: 400 }
-      );
+    if (!title) {
+      return fail('Title is required');
     }
 
     const course = await prisma.course.create({
@@ -79,21 +64,20 @@ export async function POST(req: NextRequest) {
         title,
         platform,
         url,
-        total_units,
-        category,
+        total_units: total_units || 0,
         description,
+        category: category || 'Uncategorized',
         tags: tags || [],
-        completed_units: 0,
-        status: 'backlog',
+        user_id: userId,
       },
     });
 
-    return NextResponse.json(course, { status: 201 });
+    return succeed(NextResponse.json(course, { status: 201 }));
   } catch (error) {
-    console.error('Failed to create course:', error);
-    return NextResponse.json(
-      { error: 'Failed to create course' },
-      { status: 500 }
-    );
+    console.error('Error creating course:', error);
+    return fail('Failed to create course');
   }
 }
+
+export const GET = withUserAuth(getCourses);
+export const POST = withUserAuth(createCourse);

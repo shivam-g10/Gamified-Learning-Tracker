@@ -1,163 +1,208 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import type { FocusState } from '@/lib/types';
+import { prisma } from '../../../lib/db';
+import { withUserAuth } from '../../../lib/auth-utils';
+import { Result, succeed, fail } from '../../../lib/result';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+async function getFocusSlot(
+  userId: string,
+  _req: NextRequest
+): Promise<Result<NextResponse, string>> {
   try {
-    // Get the current focus state from the database
-    const focusSlot = await prisma.focusSlot.findFirst();
+    const focusSlot = await prisma.focusSlot.findUnique({
+      where: { user_id: userId },
+    });
 
     if (!focusSlot) {
-      // Create a default focus slot if none exists
+      // Create default focus slot for the user if it doesn't exist
       await prisma.focusSlot.create({
+        data: {
+          user_id: userId,
+          quest_id: null,
+          book_id: null,
+          course_id: null,
+        },
+      });
+
+      // Return empty focus state
+      return succeed(
+        NextResponse.json({
+          quest: null,
+          book: null,
+          course: null,
+        })
+      );
+    }
+
+    // Fetch the actual objects for the focused items
+    const [quest, book, course] = await Promise.all([
+      focusSlot.quest_id
+        ? prisma.quest.findUnique({ where: { id: focusSlot.quest_id } })
+        : null,
+      focusSlot.book_id
+        ? prisma.book.findUnique({ where: { id: focusSlot.book_id } })
+        : null,
+      focusSlot.course_id
+        ? prisma.course.findUnique({ where: { id: focusSlot.course_id } })
+        : null,
+    ]);
+
+    // Return proper FocusState object
+    const focusState = {
+      quest: quest || null,
+      book: book || null,
+      course: course || null,
+    };
+
+    return succeed(NextResponse.json(focusState));
+  } catch (error) {
+    console.error('Error fetching focus slot:', error);
+    return fail('Failed to fetch focus slot');
+  }
+}
+
+async function updateFocusSlot(
+  userId: string,
+  req: NextRequest
+): Promise<Result<NextResponse, string>> {
+  try {
+    const body = await req.json();
+    const { type, id, quest_id, book_id, course_id } = body || {};
+
+    // Handle the new payload format: { type, id }
+    const updateData: {
+      quest_id: string | null;
+      book_id: string | null;
+      course_id: string | null;
+    } = {
+      quest_id: quest_id !== undefined ? quest_id : null,
+      book_id: book_id !== undefined ? book_id : null,
+      course_id: course_id !== undefined ? course_id : null,
+    };
+
+    // If type and id are provided, update the appropriate field
+    if (type && id) {
+      switch (type) {
+        case 'quest':
+          updateData.quest_id = id;
+          break;
+        case 'book':
+          updateData.book_id = id;
+          break;
+        case 'course':
+          updateData.course_id = id;
+          break;
+        default:
+          return fail('Invalid type. Must be quest, book, or course');
+      }
+    }
+
+    // Validate that only one of each type can be focused
+    const focusCount = [
+      updateData.quest_id,
+      updateData.book_id,
+      updateData.course_id,
+    ].filter(Boolean).length;
+    if (focusCount > 3) {
+      return fail('Maximum 3 items can be focused');
+    }
+
+    const focusSlot = await prisma.focusSlot.upsert({
+      where: { user_id: userId },
+      update: updateData,
+      create: {
+        user_id: userId,
+        quest_id: updateData.quest_id,
+        book_id: updateData.book_id,
+        course_id: updateData.course_id,
+      },
+    });
+
+    // Fetch the actual objects for the updated focus items
+    const [quest, book, course] = await Promise.all([
+      focusSlot.quest_id
+        ? prisma.quest.findUnique({ where: { id: focusSlot.quest_id } })
+        : null,
+      focusSlot.book_id
+        ? prisma.book.findUnique({ where: { id: focusSlot.book_id } })
+        : null,
+      focusSlot.course_id
+        ? prisma.course.findUnique({ where: { id: focusSlot.course_id } })
+        : null,
+    ]);
+
+    // Return proper FocusState object
+    const focusState = {
+      quest: quest || null,
+      book: book || null,
+      course: course || null,
+    };
+
+    return succeed(NextResponse.json(focusState));
+  } catch (error) {
+    console.error('Error updating focus slot:', error);
+    return fail('Failed to update focus slot');
+  }
+}
+
+export const GET = withUserAuth(getFocusSlot);
+export const PUT = withUserAuth(updateFocusSlot);
+
+async function clearFocus(
+  userId: string,
+  req: NextRequest
+): Promise<Result<NextResponse, string>> {
+  try {
+    const body = await req.json();
+    const { type } = body || {};
+
+    if (type) {
+      // Remove specific type from focus
+      const updateData: { quest_id?: null; book_id?: null; course_id?: null } =
+        {};
+
+      switch (type) {
+        case 'quest':
+          updateData.quest_id = null;
+          break;
+        case 'book':
+          updateData.book_id = null;
+          break;
+        case 'course':
+          updateData.course_id = null;
+          break;
+        default:
+          return fail('Invalid type. Must be quest, book, or course');
+      }
+
+      await prisma.focusSlot.updateMany({
+        where: { user_id: userId },
+        data: updateData,
+      });
+    } else {
+      // Clear all focus
+      await prisma.focusSlot.updateMany({
+        where: { user_id: userId },
         data: {
           quest_id: null,
           book_id: null,
           course_id: null,
         },
       });
-      return NextResponse.json({
+    }
+
+    return succeed(
+      NextResponse.json({
         quest: null,
         book: null,
         course: null,
-      });
-    }
-
-    // Build the focus state by fetching the focused items
-    const focusState: FocusState = {};
-
-    if (focusSlot.quest_id) {
-      const quest = await prisma.quest.findUnique({
-        where: { id: focusSlot.quest_id },
-      });
-      if (quest) {
-        focusState.quest = {
-          ...quest,
-          created_at: quest.created_at.toISOString(),
-        };
-      }
-    }
-
-    if (focusSlot.book_id) {
-      const book = await prisma.book.findUnique({
-        where: { id: focusSlot.book_id },
-      });
-      if (book) {
-        focusState.book = {
-          ...book,
-          created_at: book.created_at.toISOString(),
-          updated_at: book.updated_at.toISOString(),
-          started_at: book.started_at?.toISOString() || null,
-          finished_at: book.finished_at?.toISOString() || null,
-        };
-      }
-    }
-
-    if (focusSlot.course_id) {
-      const course = await prisma.course.findUnique({
-        where: { id: focusSlot.course_id },
-      });
-      if (course) {
-        focusState.course = {
-          ...course,
-          created_at: course.created_at.toISOString(),
-          updated_at: course.updated_at.toISOString(),
-          started_at: course.started_at?.toISOString() || null,
-          finished_at: course.finished_at?.toISOString() || null,
-        };
-      }
-    }
-
-    return NextResponse.json(focusState);
-  } catch (error) {
-    console.error('Failed to get focus state:', error);
-    return NextResponse.json(
-      { error: 'Failed to get focus state' },
-      { status: 500 }
+      })
     );
-  }
-}
-
-export async function PUT(request: NextRequest) {
-  try {
-    const { type, id, action } = await request.json();
-
-    if (!type || !['quest', 'book', 'course'].includes(type)) {
-      return NextResponse.json(
-        { error: 'Invalid focus type' },
-        { status: 400 }
-      );
-    }
-
-    let focusState: FocusState;
-
-    if (action === 'remove') {
-      // Remove focus from the specified type
-      await prisma.focusSlot.updateMany({
-        data: { [`${type}_id`]: null },
-      });
-
-      // Return empty focus state for this type
-      focusState = { [type]: null };
-    } else {
-      if (!id) {
-        return NextResponse.json(
-          { error: 'ID is required for setting focus' },
-          { status: 400 }
-        );
-      }
-
-      // Set focus for the specified type
-      await prisma.focusSlot.updateMany({
-        data: { [`${type}_id`]: id },
-      });
-
-      // Fetch the focused item
-      let focusedItem;
-      if (type === 'quest') {
-        focusedItem = await prisma.quest.findUnique({ where: { id } });
-      } else if (type === 'book') {
-        focusedItem = await prisma.book.findUnique({ where: { id } });
-      } else if (type === 'course') {
-        focusedItem = await prisma.course.findUnique({ where: { id } });
-      }
-
-      focusState = { [type]: focusedItem };
-    }
-
-    return NextResponse.json(focusState);
-  } catch (error) {
-    console.error('Failed to update focus:', error);
-    return NextResponse.json(
-      { error: 'Failed to update focus' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE() {
-  try {
-    // Clear all focus
-    await prisma.focusSlot.updateMany({
-      data: {
-        quest_id: null,
-        book_id: null,
-        course_id: null,
-      },
-    });
-
-    return NextResponse.json({
-      quest: null,
-      book: null,
-      course: null,
-    });
   } catch (error) {
     console.error('Failed to clear focus:', error);
-    return NextResponse.json(
-      { error: 'Failed to clear focus' },
-      { status: 500 }
-    );
+    return fail('Failed to clear focus');
   }
 }
+
+export const DELETE = withUserAuth(clearFocus);

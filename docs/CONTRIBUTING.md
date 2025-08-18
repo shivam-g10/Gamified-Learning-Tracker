@@ -36,7 +36,6 @@ Thank you for your interest in contributing to GyaanQuest! This document provide
    ```bash
    pnpm prisma generate
    pnpm prisma db push
-   pnpm run db:seed
    ```
 6. Start the development server:
    ```bash

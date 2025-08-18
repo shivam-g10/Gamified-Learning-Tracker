@@ -46,7 +46,7 @@ This folder contains the development infrastructure setup for the project.
    ```bash
    pnpm prisma generate
    pnpm prisma db push
-   pnpm prisma db seed
+   pnpm prisma db push
    ```
 
 ### Stopping the Database

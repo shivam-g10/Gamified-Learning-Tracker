@@ -17,13 +17,13 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/auth/signin');
+      router.push('/');
     }
   }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
     return (
-      <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted'>
+      <div className='min-h-screen flex items-center justify-center'>
         <div className='text-center space-y-4'>
           <div className='w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto'>
             <span className='text-2xl'>🎯</span>
@@ -38,7 +38,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!isAuthenticated) {
     return (
-      <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4'>
+      <div className='min-h-screen flex items-center justify-center p-4'>
         <Card className='w-full max-w-md'>
           <CardHeader className='text-center space-y-4'>
             <div className='mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center'>
@@ -50,10 +50,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             </p>
           </CardHeader>
           <CardContent className='space-y-4'>
-            <Button
-              onClick={() => router.push('/auth/signin')}
-              className='w-full'
-            >
+            <Button onClick={() => router.push('/')} className='w-full'>
               Sign In
             </Button>
             <Button

@@ -7,22 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// NextAuth.js Models
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -39,12 +37,17 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?    @unique
   emailVerified DateTime?
   image         String?
   accounts      Account[]
+  appState      AppState?
+  books         Book[]
+  courses       Course[]
+  focusSlot     FocusSlot?
+  quests        Quest[]
   sessions      Session[]
 
   @@map("users")
@@ -60,47 +63,46 @@ model VerificationToken {
 }
 
 model Quest {
-  id          String     @id @default(uuid()) @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
   title       String
   description String?
   xp          Int
   type        QuestType
   category    String
-  done        Boolean    @default(false)
-  created_at  DateTime   @default(now())
+  done        Boolean   @default(false)
+  created_at  DateTime  @default(now())
+  user_id     String
+  user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@index([user_id])
+  @@index([user_id, done])
+  @@index([user_id, category])
+  @@index([user_id, type])
   @@map("quests")
 }
 
-enum QuestType {
-  topic
-  project
-  bonus
-}
-
 model Book {
-  id                    String                @id @default(uuid()) @db.Uuid
+  id                    String              @id @default(uuid()) @db.Uuid
   title                 String
   author                String?
-  total_pages           Int                   @default(0)
-  current_page          Int                   @default(0)
-  status                BookStatus            @default(backlog)
+  total_pages           Int                 @default(0)
+  current_page          Int                 @default(0)
+  status                BookStatus          @default(backlog)
   description           String?
-  category              String                @default("Uncategorized")
+  category              String              @default("Uncategorized")
   tags                  String[]
   started_at            DateTime?
   finished_at           DateTime?
-  created_at            DateTime              @default(now())
-  updated_at            DateTime              @updatedAt
+  created_at            DateTime            @default(now())
+  updated_at            DateTime            @updatedAt
+  user_id               String
   book_progress_entries BookProgressEntry[]
+  user                  User                @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@index([user_id])
+  @@index([user_id, status])
+  @@index([user_id, category])
   @@map("books")
-}
-
-enum BookStatus {
-  backlog
-  reading
-  finished
 }
 
 model BookProgressEntry {
@@ -113,33 +115,33 @@ model BookProgressEntry {
   created_at DateTime @default(now())
   book       Book     @relation(fields: [book_id], references: [id], onDelete: Cascade)
 
+  @@index([book_id])
   @@map("book_progress_entries")
 }
 
 model Course {
-  id                    String                 @id @default(uuid()) @db.Uuid
-  title                 String
-  platform              String?
-  url                   String?
-  total_units           Int                    @default(0)
-  completed_units       Int                    @default(0)
-  status                CourseStatus           @default(backlog)
-  description           String?
-  category              String                 @default("Uncategorized")
-  tags                  String[]
-  started_at            DateTime?
-  finished_at           DateTime?
-  created_at            DateTime               @default(now())
-  updated_at            DateTime               @updatedAt
+  id                      String                @id @default(uuid()) @db.Uuid
+  title                   String
+  platform                String?
+  url                     String?
+  total_units             Int                   @default(0)
+  completed_units         Int                   @default(0)
+  status                  CourseStatus          @default(backlog)
+  description             String?
+  category                String                @default("Uncategorized")
+  tags                    String[]
+  started_at              DateTime?
+  finished_at             DateTime?
+  created_at              DateTime              @default(now())
+  updated_at              DateTime              @updatedAt
+  user_id                 String
   course_progress_entries CourseProgressEntry[]
+  user                    User                  @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@index([user_id])
+  @@index([user_id, status])
+  @@index([user_id, category])
   @@map("courses")
-}
-
-enum CourseStatus {
-  backlog
-  learning
-  finished
 }
 
 model CourseProgressEntry {
@@ -150,6 +152,7 @@ model CourseProgressEntry {
   created_at  DateTime @default(now())
   course      Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
 
+  @@index([course_id])
   @@map("course_progress_entries")
 }
 
@@ -158,7 +161,10 @@ model AppState {
   streak        Int       @default(0)
   last_check_in DateTime? @db.Date
   focus         String[]  @db.Uuid
+  user_id       String    @unique
+  user          User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@index([user_id])
   @@map("app_states")
 }
 
@@ -168,9 +174,28 @@ model FocusSlot {
   book_id    String?  @db.Uuid
   course_id  String?  @db.Uuid
   updated_at DateTime @updatedAt
-  
-  @@unique([quest_id, book_id, course_id])
+  user_id    String   @unique
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([quest_id, book_id, course_id, user_id])
+  @@index([user_id])
   @@map("focus_slots")
 }
 
+enum QuestType {
+  topic
+  project
+  bonus
+}
 
+enum BookStatus {
+  backlog
+  reading
+  finished
+}
+
+enum CourseStatus {
+  backlog
+  learning
+  finished
+}

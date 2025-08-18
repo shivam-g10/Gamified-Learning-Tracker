@@ -28,5 +28,5 @@ Write-Host ""
 Write-Host "💡 Next steps:" -ForegroundColor Yellow
 Write-Host "   1. Run: pnpm prisma generate" -ForegroundColor White
 Write-Host "   2. Run: pnpm prisma db push" -ForegroundColor White
-Write-Host "   3. Run: pnpm run db:seed" -ForegroundColor White
+    Write-Host "   3. Database is ready to use" -ForegroundColor White
 Write-Host "   4. Run: pnpm dev" -ForegroundColor White

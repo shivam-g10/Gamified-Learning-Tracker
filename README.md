@@ -100,7 +100,6 @@ cd ..
 ```bash
 pnpm prisma generate
 pnpm prisma db push
-pnpm run db:seed
 ```
 
 5. Start the development server:
@@ -133,7 +132,6 @@ cp env.example .env
 ```bash
 pnpm prisma generate
 pnpm prisma db push
-pnpm run db:seed
 ```
 
 4. Run the development server:
