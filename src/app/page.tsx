@@ -59,6 +59,7 @@ import {
   LogCourseProgressDialog,
   BookProgressHistory,
   CourseProgressHistory,
+  BulkSetupDialog,
 } from '../components/app';
 
 /**
@@ -622,6 +623,7 @@ export default function HomePage() {
           <CardHeader>
             <div className='flex items-center justify-between'>
               <CardTitle className='text-lg'>Learning Items</CardTitle>
+              <BulkSetupDialog />
             </div>
           </CardHeader>
           <CardContent>

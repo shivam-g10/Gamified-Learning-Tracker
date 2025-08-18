@@ -23,3 +23,4 @@ export { LogBookProgressDialog } from './LogBookProgressDialog';
 export { LogCourseProgressDialog } from './LogCourseProgressDialog';
 export { BookProgressHistory } from './BookProgressHistory';
 export { CourseProgressHistory } from './CourseProgressHistory';
+export { BulkSetupDialog } from './BulkSetupDialog';

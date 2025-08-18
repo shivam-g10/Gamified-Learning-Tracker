@@ -15,6 +15,8 @@ model Quest {
   category   String
   done       Boolean  @default(false)
   created_at DateTime @default(now())
+
+  @@map("quests")
 }
 
 enum QuestType {
@@ -38,6 +40,8 @@ model Book {
   created_at            DateTime              @default(now())
   updated_at            DateTime              @updatedAt
   book_progress_entries BookProgressEntry[]
+
+  @@map("books")
 }
 
 enum BookStatus {
@@ -55,6 +59,8 @@ model BookProgressEntry {
   notes      String?
   created_at DateTime @default(now())
   book       Book     @relation(fields: [book_id], references: [id], onDelete: Cascade)
+
+  @@map("book_progress_entries")
 }
 
 model Course {
@@ -73,6 +79,8 @@ model Course {
   created_at            DateTime               @default(now())
   updated_at            DateTime               @updatedAt
   course_progress_entries CourseProgressEntry[]
+
+  @@map("courses")
 }
 
 enum CourseStatus {
@@ -88,6 +96,8 @@ model CourseProgressEntry {
   notes       String?
   created_at  DateTime @default(now())
   course      Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+
+  @@map("course_progress_entries")
 }
 
 model AppState {
@@ -95,6 +105,8 @@ model AppState {
   streak        Int       @default(0)
   last_check_in DateTime? @db.Date
   focus         String[]  @db.Uuid
+
+  @@map("app_states")
 }
 
 model FocusSlot {
@@ -105,6 +117,7 @@ model FocusSlot {
   updated_at DateTime @updatedAt
   
   @@unique([quest_id, book_id, course_id])
+  @@map("focus_slots")
 }
 
 
