@@ -69,13 +69,34 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <link rel='icon' href='/favicon.svg' type='image/svg+xml' />
         <link rel='shortcut icon' href='/favicon.svg' />
-        <meta name='robots' content='noindex, nofollow, noarchive, nosnippet, noimageindex' />
-        <meta name='googlebot' content='noindex, nofollow, noarchive, nosnippet, noimageindex' />
-        <meta name='bingbot' content='noindex, nofollow, noarchive, nosnippet, noimageindex' />
-        <meta name='slurp' content='noindex, nofollow, noarchive, nosnippet, noimageindex' />
-        <meta name='duckduckbot' content='noindex, nofollow, noarchive, nosnippet, noimageindex' />
-        <meta name='baiduspider' content='noindex, nofollow, noarchive, nosnippet, noimageindex' />
-        <meta name='yandex' content='noindex, nofollow, noarchive, nosnippet, noimageindex' />
+        <meta
+          name='robots'
+          content='noindex, nofollow, noarchive, nosnippet, noimageindex'
+        />
+        <meta
+          name='googlebot'
+          content='noindex, nofollow, noarchive, nosnippet, noimageindex'
+        />
+        <meta
+          name='bingbot'
+          content='noindex, nofollow, noarchive, nosnippet, noimageindex'
+        />
+        <meta
+          name='slurp'
+          content='noindex, nofollow, noarchive, nosnippet, noimageindex'
+        />
+        <meta
+          name='duckduckbot'
+          content='noindex, nofollow, noarchive, nosnippet, noimageindex'
+        />
+        <meta
+          name='baiduspider'
+          content='noindex, nofollow, noarchive, nosnippet, noimageindex'
+        />
+        <meta
+          name='yandex'
+          content='noindex, nofollow, noarchive, nosnippet, noimageindex'
+        />
       </head>
       <body>
         <Providers>{children}</Providers>
