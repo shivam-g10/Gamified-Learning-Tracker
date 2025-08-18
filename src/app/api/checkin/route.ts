@@ -35,8 +35,10 @@ async function processCheckin(
     });
 
     if (!appState) {
-      appState = await prisma.appState.create({
-        data: {
+      appState = await prisma.appState.upsert({
+        where: { user_id: userId },
+        update: {},
+        create: {
           user_id: userId,
           streak: 0,
           focus: [],

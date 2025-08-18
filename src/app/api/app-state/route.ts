@@ -15,8 +15,10 @@ async function getAppState(
 
     if (!appState) {
       // Create default app state for the user if it doesn't exist
-      appState = await prisma.appState.create({
-        data: {
+      appState = await prisma.appState.upsert({
+        where: { user_id: userId },
+        update: {},
+        create: {
           user_id: userId,
           streak: 0,
           focus: [],

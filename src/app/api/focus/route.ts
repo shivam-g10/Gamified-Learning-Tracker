@@ -15,8 +15,10 @@ async function getFocusSlot(
 
     if (!focusSlot) {
       // Create default focus slot for the user if it doesn't exist
-      await prisma.focusSlot.create({
-        data: {
+      await prisma.focusSlot.upsert({
+        where: { user_id: userId },
+        update: {},
+        create: {
           user_id: userId,
           quest_id: null,
           book_id: null,

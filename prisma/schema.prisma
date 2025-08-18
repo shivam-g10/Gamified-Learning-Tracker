@@ -157,7 +157,7 @@ model CourseProgressEntry {
 }
 
 model AppState {
-  id            Int       @id @default(1)
+  id            String    @id @default(uuid()) @db.Uuid
   streak        Int       @default(0)
   last_check_in DateTime? @db.Date
   focus         String[]  @db.Uuid
