@@ -6,8 +6,7 @@ import { Result, succeed, fail } from '../../../lib/result';
 export const dynamic = 'force-dynamic';
 
 async function getFocusSlot(
-  userId: string,
-  _req: NextRequest
+  userId: string
 ): Promise<Result<NextResponse, string>> {
   try {
     const focusSlot = await prisma.focusSlot.findUnique({
@@ -68,7 +67,12 @@ async function updateFocusSlot(
 ): Promise<Result<NextResponse, string>> {
   try {
     const body = await req.json();
-    const { type, id, quest_id, book_id, course_id } = body || {};
+    const { type, id } = body || {};
+
+    // First, get the current focus state to preserve existing focus
+    const currentFocusSlot = await prisma.focusSlot.findUnique({
+      where: { user_id: userId },
+    });
 
     // Handle the new payload format: { type, id }
     const updateData: {
@@ -76,25 +80,43 @@ async function updateFocusSlot(
       book_id: string | null;
       course_id: string | null;
     } = {
-      quest_id: quest_id !== undefined ? quest_id : null,
-      book_id: book_id !== undefined ? book_id : null,
-      course_id: course_id !== undefined ? course_id : null,
+      quest_id: currentFocusSlot?.quest_id || null,
+      book_id: currentFocusSlot?.book_id || null,
+      course_id: currentFocusSlot?.course_id || null,
     };
 
     // If type and id are provided, update the appropriate field
-    if (type && id) {
-      switch (type) {
-        case 'quest':
-          updateData.quest_id = id;
-          break;
-        case 'book':
-          updateData.book_id = id;
-          break;
-        case 'course':
-          updateData.course_id = id;
-          break;
-        default:
-          return fail('Invalid type. Must be quest, book, or course');
+    if (type) {
+      if (id === null) {
+        // Remove focus for this type
+        switch (type) {
+          case 'quest':
+            updateData.quest_id = null;
+            break;
+          case 'book':
+            updateData.book_id = null;
+            break;
+          case 'course':
+            updateData.course_id = null;
+            break;
+          default:
+            return fail('Invalid type. Must be quest, book, or course');
+        }
+      } else if (id) {
+        // Set focus for this type
+        switch (type) {
+          case 'quest':
+            updateData.quest_id = id;
+            break;
+          case 'book':
+            updateData.book_id = id;
+            break;
+          case 'course':
+            updateData.course_id = id;
+            break;
+          default:
+            return fail('Invalid type. Must be quest, book, or course');
+        }
       }
     }
 
@@ -158,7 +180,7 @@ async function clearFocus(
     const { type } = body || {};
 
     if (type) {
-      // Remove specific type from focus
+      // Remove specific type from focus while preserving others
       const updateData: { quest_id?: null; book_id?: null; course_id?: null } =
         {};
 
@@ -180,6 +202,33 @@ async function clearFocus(
         where: { user_id: userId },
         data: updateData,
       });
+
+      // Return updated focus state (preserving other types)
+      const updatedFocusSlot = await prisma.focusSlot.findUnique({
+        where: { user_id: userId },
+      });
+
+      if (updatedFocusSlot) {
+        const [quest, book, course] = await Promise.all([
+          updatedFocusSlot.quest_id
+            ? prisma.quest.findUnique({
+                where: { id: updatedFocusSlot.quest_id },
+              })
+            : null,
+          updatedFocusSlot.book_id
+            ? prisma.book.findUnique({
+                where: { id: updatedFocusSlot.book_id },
+              })
+            : null,
+          updatedFocusSlot.course_id
+            ? prisma.course.findUnique({
+                where: { id: updatedFocusSlot.course_id },
+              })
+            : null,
+        ]);
+
+        return succeed(NextResponse.json({ quest, book, course }));
+      }
     } else {
       // Clear all focus
       await prisma.focusSlot.updateMany({

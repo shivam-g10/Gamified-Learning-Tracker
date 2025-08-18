@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/db';
 import { withUserAuth } from '../../../lib/auth-utils';
 import { Result, succeed, fail } from '../../../lib/result';
@@ -6,8 +6,7 @@ import { Result, succeed, fail } from '../../../lib/result';
 export const dynamic = 'force-dynamic';
 
 async function generateRandomChallenge(
-  userId: string,
-  _req: NextRequest
+  userId: string
 ): Promise<Result<NextResponse, string>> {
   try {
     // Get all available quests for the user

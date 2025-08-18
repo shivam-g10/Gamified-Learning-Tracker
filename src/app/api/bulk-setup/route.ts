@@ -12,7 +12,28 @@ async function processBulkSetup(
 ): Promise<Result<NextResponse, string>> {
   try {
     const body = await req.json();
-    const { quests, books, courses } = body || {};
+    const { type, data, replace } = body || {};
+
+    if (!type || !data || !Array.isArray(data)) {
+      return fail('Invalid request: type and data array are required');
+    }
+
+    // Handle replace mode - delete existing items of the specified type
+    if (replace) {
+      switch (type) {
+        case 'quests':
+          await prisma.quest.deleteMany({ where: { user_id: userId } });
+          break;
+        case 'books':
+          await prisma.book.deleteMany({ where: { user_id: userId } });
+          break;
+        case 'courses':
+          await prisma.course.deleteMany({ where: { user_id: userId } });
+          break;
+        default:
+          return fail('Invalid type specified');
+      }
+    }
 
     const results = {
       quests: [] as Quest[],
@@ -20,82 +41,96 @@ async function processBulkSetup(
       courses: [] as Course[],
     };
 
-    // Create quests
-    if (quests && Array.isArray(quests)) {
-      for (const quest of quests) {
-        const { title, description, xp, type, category } = quest;
-        if (title && typeof xp === 'number' && xp >= 0 && type && category) {
-          const createdQuest = await prisma.quest.create({
-            data: {
-              title,
-              description,
-              xp,
-              type,
-              category,
-              user_id: userId,
-            },
-          });
-          results.quests.push(createdQuest);
+    // Create items based on type
+    switch (type) {
+      case 'quests':
+        for (const item of data) {
+          const { title, description, xp, type: questType, category } = item;
+          if (
+            title &&
+            typeof xp === 'number' &&
+            xp >= 0 &&
+            questType &&
+            category
+          ) {
+            const createdQuest = await prisma.quest.create({
+              data: {
+                title,
+                description,
+                xp,
+                type: questType,
+                category,
+                user_id: userId,
+              },
+            });
+            results.quests.push(createdQuest);
+          }
         }
-      }
+        break;
+
+      case 'books':
+        for (const item of data) {
+          const { title, author, total_pages, description, category, tags } =
+            item;
+          if (title) {
+            const createdBook = await prisma.book.create({
+              data: {
+                title,
+                author,
+                total_pages: total_pages || 0,
+                description,
+                category: category || 'Uncategorized',
+                tags: tags || [],
+                user_id: userId,
+              },
+            });
+            results.books.push(createdBook);
+          }
+        }
+        break;
+
+      case 'courses':
+        for (const item of data) {
+          const {
+            title,
+            platform,
+            url,
+            total_units,
+            description,
+            category,
+            tags,
+          } = item;
+          if (title) {
+            const createdCourse = await prisma.course.create({
+              data: {
+                title,
+                platform,
+                url,
+                total_units: total_units || 0,
+                description,
+                category: category || 'Uncategorized',
+                tags: tags || [],
+                user_id: userId,
+              },
+            });
+            results.courses.push(createdCourse);
+          }
+        }
+        break;
+
+      default:
+        return fail('Invalid type specified');
     }
 
-    // Create books
-    if (books && Array.isArray(books)) {
-      for (const book of books) {
-        const { title, author, total_pages, description, category, tags } =
-          book;
-        if (title) {
-          const createdBook = await prisma.book.create({
-            data: {
-              title,
-              author,
-              total_pages: total_pages || 0,
-              description,
-              category: category || 'Uncategorized',
-              tags: tags || [],
-              user_id: userId,
-            },
-          });
-          results.books.push(createdBook);
-        }
-      }
-    }
-
-    // Create courses
-    if (courses && Array.isArray(courses)) {
-      for (const course of courses) {
-        const {
-          title,
-          platform,
-          url,
-          total_units,
-          description,
-          category,
-          tags,
-        } = course;
-        if (title) {
-          const createdCourse = await prisma.course.create({
-            data: {
-              title,
-              platform,
-              url,
-              total_units: total_units || 0,
-              description,
-              category: category || 'Uncategorized',
-              tags: tags || [],
-              user_id: userId,
-            },
-          });
-          results.courses.push(createdCourse);
-        }
-      }
-    }
+    const totalCreated =
+      results.quests.length + results.books.length + results.courses.length;
 
     return succeed(
       NextResponse.json({
-        message: 'Bulk setup completed successfully',
-        results,
+        success: true,
+        message: `Successfully created ${totalCreated} ${type}`,
+        count: totalCreated,
+        type,
       })
     );
   } catch (error) {

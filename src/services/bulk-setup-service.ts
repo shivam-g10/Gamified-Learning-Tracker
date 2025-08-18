@@ -21,12 +21,12 @@ export class BulkSetupService {
         );
       }
 
-      const headers = lines[0].split(',').map(h => h.trim());
+      const headers = this.parseCsvLine(lines[0]);
       const data: BulkSetupData[] = [];
 
       for (let i = 1; i < lines.length; i++) {
         if (lines[i].trim()) {
-          const values = lines[i].split(',').map(v => v.trim());
+          const values = this.parseCsvLine(lines[i]);
           const item = this.parseCsvRow(headers, values);
           data.push(item);
         }
@@ -37,9 +37,43 @@ export class BulkSetupService {
       }
 
       return succeed(data);
-    } catch {
+    } catch (error) {
+      console.error('CSV parsing error:', error);
       return fail('Failed to parse CSV file');
     }
+  }
+
+  /**
+   * Parse a CSV line properly handling quoted values
+   */
+  private static parseCsvLine(line: string): string[] {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          // Handle escaped quotes
+          current += '"';
+          i++; // Skip next quote
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+
+    // Add the last field
+    result.push(current.trim());
+
+    return result;
   }
 
   /**
@@ -52,16 +86,16 @@ export class BulkSetupService {
     const item: Record<string, string | number | boolean | string[]> = {};
 
     headers.forEach((header, index) => {
-      let value = values[index] || '';
-
-      // Handle quoted values (e.g., "programming,clean-code")
-      if (value.startsWith('"') && value.endsWith('"')) {
-        value = value.slice(1, -1);
-      }
+      const value = values[index] || '';
 
       // Parse specific fields based on type
       if (this.isNumericField(header)) {
-        item[header] = parseInt(value) || 0;
+        const parsedValue = parseInt(value.trim());
+        if (isNaN(parsedValue)) {
+          item[header] = 0;
+        } else {
+          item[header] = parsedValue;
+        }
       } else if (header === 'done') {
         item[header] = value.toLowerCase() === 'true';
       } else if (header === 'tags') {
@@ -216,35 +250,40 @@ export class BulkSetupService {
    * Generate CSV template for a specific type
    * Includes all available columns - only title and category are required
    */
-  static generateCsvTemplate(type: 'quests' | 'books' | 'courses'): {
-    content: string;
-    filename: string;
-  } {
-    let csvContent = '';
-    let filename = '';
+  static generateCsvTemplate(
+    type: 'quests' | 'books' | 'courses'
+  ): Result<{ content: string; filename: string }> {
+    try {
+      let csvContent = '';
+      let filename = '';
 
-    switch (type) {
-      case 'quests':
-        // All available fields: title, description, xp, type, category, done
-        csvContent =
-          'title,description,xp,type,category,done\nLearn React Hooks,Master the fundamentals of React Hooks including useState, useEffect, and custom hooks,100,topic,Frontend Development,false\nBuild a Todo App,Create a complete todo application using React and modern web technologies,150,project,Frontend Development,false\nMaster TypeScript,Learn TypeScript from basics to advanced concepts including generics and utility types,200,topic,Programming Languages,false';
-        filename = 'quests_template.csv';
-        break;
-      case 'books':
-        // All available fields: title, category, author, description, total_pages, current_page, status, tags
-        csvContent =
-          'title,category,author,description,total_pages,current_page,status,tags\nClean Code,Software Engineering,Robert C. Martin,A handbook of agile software craftsmanship,464,0,backlog,"programming,clean-code"\nDesign Patterns,Software Engineering,Erich Gamma et al.,Elements of Reusable Object-Oriented Software,416,0,backlog,"design-patterns,architecture"';
-        filename = 'books_template.csv';
-        break;
-      case 'courses':
-        // All available fields: title, category, platform, url, description, total_units, completed_units, status, tags
-        csvContent =
-          'title,category,platform,url,description,total_units,completed_units,status,tags\nComplete React Developer,Frontend Development,Udemy,https://udemy.com/react-complete-guide,Learn React from scratch to advanced concepts,20,0,backlog,"react,javascript,frontend"\nNode.js Complete Guide,Backend Development,Udemy,https://udemy.com/nodejs-complete-guide,Master Node.js backend development,25,0,backlog,"nodejs,javascript,backend"';
-        filename = 'courses_template.csv';
-        break;
+      switch (type) {
+        case 'quests':
+          // All available fields: title, description, xp, type, category, done
+          csvContent =
+            'title,description,xp,type,category,done\nLearn React Hooks,"Master the fundamentals of React Hooks including useState, useEffect, and custom hooks",100,topic,Frontend Development,false\nBuild a Todo App,"Create a complete todo application using React and modern web technologies",150,project,Frontend Development,false\nMaster TypeScript,"Learn TypeScript from basics to advanced concepts including generics and utility types",200,topic,Programming Languages,false';
+          filename = 'quests_template.csv';
+          break;
+        case 'books':
+          // All available fields: title, category, author, description, total_pages, current_page, status, tags
+          csvContent =
+            'title,category,author,description,total_pages,current_page,status,tags\nClean Code,Software Engineering,Robert C. Martin,"A handbook of agile software craftsmanship",464,0,backlog,"programming,clean-code"\nDesign Patterns,Software Engineering,Erich Gamma et al.,"Elements of Reusable Object-Oriented Software",416,0,backlog,"design-patterns,architecture"';
+          filename = 'books_template.csv';
+          break;
+        case 'courses':
+          // All available fields: title, category, platform, url, description, total_units, completed_units, status, tags
+          csvContent =
+            'title,category,platform,url,description,total_units,completed_units,status,tags\nComplete React Developer,Frontend Development,Udemy,https://udemy.com/react-complete-guide,"Learn React from scratch to advanced concepts",20,0,backlog,"react,javascript,frontend"\nNode.js Complete Guide,Backend Development,Udemy,https://udemy.com/nodejs-complete-guide,"Master Node.js backend development",25,0,backlog,"nodejs,javascript,backend"';
+          filename = 'courses_template.csv';
+          break;
+        default:
+          return fail('Unsupported template type');
+      }
+
+      return succeed({ content: csvContent, filename });
+    } catch {
+      return fail('Failed to generate CSV template');
     }
-
-    return { content: csvContent, filename };
   }
 
   /**
@@ -254,16 +293,21 @@ export class BulkSetupService {
     content: string,
     filename: string,
     mimeType: string = 'text/csv;charset=utf-8;'
-  ): void {
-    const blob = new Blob([content], { type: mimeType });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  ): Result<void> {
+    try {
+      const blob = new Blob([content], { type: mimeType });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      return succeed(undefined);
+    } catch {
+      return fail('Failed to download CSV file');
+    }
   }
 }

@@ -6,8 +6,7 @@ import { Result, succeed, fail } from '../../../lib/result';
 export const dynamic = 'force-dynamic';
 
 async function getAppState(
-  userId: string,
-  _req: NextRequest
+  userId: string
 ): Promise<Result<NextResponse, string>> {
   try {
     let appState = await prisma.appState.findUnique({

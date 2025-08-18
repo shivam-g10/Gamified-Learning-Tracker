@@ -37,7 +37,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-export function BulkSetupDialog() {
+interface BulkSetupDialogProps {
+  onDataRefresh?: () => void;
+}
+
+export function BulkSetupDialog({ onDataRefresh }: BulkSetupDialogProps) {
   const [type, setType] = useState<'quests' | 'books' | 'courses'>('quests');
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,10 +53,25 @@ export function BulkSetupDialog() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const downloadCsvTemplate = () => {
-    const { content: csvContent, filename } =
-      BulkSetupService.generateCsvTemplate(type);
-    BulkSetupService.downloadFile(csvContent, filename);
-    toast.success(`Downloaded ${filename}`);
+    try {
+      const templateResult = BulkSetupService.generateCsvTemplate(type);
+      if (templateResult._tag === 'Failure') {
+        toast.error(templateResult.error);
+        return;
+      }
+
+      const dlResult = BulkSetupService.downloadFile(
+        templateResult.data.content,
+        templateResult.data.filename
+      );
+      if (dlResult._tag === 'Failure') {
+        toast.error(dlResult.error);
+        return;
+      }
+      toast.success(`Downloaded ${templateResult.data.filename}`);
+    } catch {
+      toast.error('Failed to download CSV template');
+    }
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,8 +157,10 @@ export function BulkSetupDialog() {
       setCsvData([]);
       setCsvFileName('');
 
-      // Refresh the page to show new data
-      window.location.reload();
+      // Trigger a refresh of the data
+      if (onDataRefresh) {
+        onDataRefresh();
+      }
     } catch (error) {
       toast.error('Failed to setup data');
       console.error('Error setting up data:', error);

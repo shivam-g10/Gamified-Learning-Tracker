@@ -624,7 +624,15 @@ function HomePageContent() {
           <CardHeader>
             <div className='flex items-center justify-between'>
               <CardTitle className='text-lg'>Learning Items</CardTitle>
-              <BulkSetupDialog />
+              <BulkSetupDialog
+                onDataRefresh={() => {
+                  // Refresh all data after bulk setup
+                  mutateQuests();
+                  mutateBooks();
+                  mutateCourses();
+                  mutateFocusState();
+                }}
+              />
             </div>
           </CardHeader>
           <CardContent>
@@ -645,7 +653,7 @@ function HomePageContent() {
                   <Accordion type='single' collapsible className='w-full mb-6'>
                     <AccordionItem
                       value='quest-category-progress'
-                      className='border rounded-lg data-[state=open]:border-blue-400 data-[state=open]:shadow-[0_0_0_1px_rgba(59,130,246,0.4)] data-[state=open]:shadow-blue-500/30 data-[state=open]:shadow-lg transition-all duration-300'
+                      className='border rounded-lg data-[state=open]:border-blue-400 data-[state=open]:shadow-[0_0_0_1px_rgba(59,130,246,0.4)] data-[state=open]:shadow-blue-500/30 transition-all duration-300'
                     >
                       <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-blue-600'>
                         <div className='flex items-center gap-2'>
@@ -736,7 +744,7 @@ function HomePageContent() {
                   <Accordion type='single' collapsible className='w-full mb-6'>
                     <AccordionItem
                       value='book-category-progress'
-                      className='border rounded-lg data-[state=open]:border-green-400 data-[state=open]:shadow-[0_0_0_1px_rgba(34,197,94,0.4)] data-[state=open]:shadow-green-500/30 data-[state=open]:shadow-lg transition-all duration-300'
+                      className='border rounded-lg data-[state=open]:border-green-400 data-[state=open]:shadow-[0_0_0_1px_rgba(34,197,94,0.4)] data-[state=open]:shadow-green-500/30 transition-all duration-300'
                     >
                       <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-green-600'>
                         <div className='flex items-center gap-2'>
@@ -831,7 +839,7 @@ function HomePageContent() {
                   <Accordion type='single' collapsible className='w-full mb-6'>
                     <AccordionItem
                       value='course-category-progress'
-                      className='border rounded-lg data-[state=open]:border-purple-400 data-[state=open]:shadow-[0_0_0_1px_rgba(168,85,247,0.4)] data-[state=open]:shadow-purple-500/30 data-[state=open]:shadow-lg transition-all duration-300'
+                      className='border rounded-lg data-[state=open]:border-purple-400 data-[state=open]:shadow-[0_0_0_1px_rgba(168,85,247,0.4)] data-[state=open]:shadow-purple-500/30 transition-all duration-300'
                     >
                       <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-purple-600'>
                         <div className='flex items-center gap-2'>
