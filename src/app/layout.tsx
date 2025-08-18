@@ -1,9 +1,7 @@
 import './globals.css';
 import { ReactNode } from 'react';
 import { Metadata, Viewport } from 'next';
-import { ThemeProvider } from '../components/theme-provider';
-import { ThemeToggle } from '../components/theme-toggle';
-import { Toaster } from '../components/ui/sonner';
+import { Providers } from './providers';
 
 export const metadata: Metadata = {
   title: 'GyaanQuest',
@@ -71,63 +69,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <link rel='icon' href='/favicon.svg' type='image/svg+xml' />
         <link rel='shortcut icon' href='/favicon.svg' />
-        <meta
-          name='robots'
-          content='noindex, nofollow, noarchive, nosnippet, noimageindex'
-        />
-        <meta
-          name='googlebot'
-          content='noindex, nofollow, noarchive, nosnippet, noimageindex'
-        />
-        <meta
-          name='bingbot'
-          content='noindex, nofollow, noarchive, nosnippet, noimageindex'
-        />
-        <meta
-          name='slurp'
-          content='noindex, nofollow, noarchive, nosnippet, noimageindex'
-        />
-        <meta
-          name='duckduckbot'
-          content='noindex, nofollow, noarchive, nosnippet, noimageindex'
-        />
-        <meta
-          name='baiduspider'
-          content='noindex, nofollow, noarchive, nosnippet, noimageindex'
-        />
-        <meta
-          name='yandex'
-          content='noindex, nofollow, noarchive, nosnippet, noimageindex'
-        />
+        <meta name='robots' content='noindex, nofollow, noarchive, nosnippet, noimageindex' />
+        <meta name='googlebot' content='noindex, nofollow, noarchive, nosnippet, noimageindex' />
+        <meta name='bingbot' content='noindex, nofollow, noarchive, nosnippet, noimageindex' />
+        <meta name='slurp' content='noindex, nofollow, noarchive, nosnippet, noimageindex' />
+        <meta name='duckduckbot' content='noindex, nofollow, noarchive, nosnippet, noimageindex' />
+        <meta name='baiduspider' content='noindex, nofollow, noarchive, nosnippet, noimageindex' />
+        <meta name='yandex' content='noindex, nofollow, noarchive, nosnippet, noimageindex' />
       </head>
       <body>
-        <ThemeProvider
-          attribute='class'
-          defaultTheme='system'
-          enableSystem
-          disableTransitionOnChange
-        >
-          <header className='border-b border-border bg-background'>
-            <div className='container-narrow py-4 flex items-center justify-between'>
-              <h1 className='text-lg font-semibold text-foreground'>
-                GyaanQuest
-              </h1>
-              <div className='flex items-center gap-2'>
-                <ThemeToggle />
-                <a className='chip' href='/health'>
-                  Health
-                </a>
-              </div>
-            </div>
-          </header>
-          <main className='container-narrow py-6 text-foreground'>
-            {children}
-          </main>
-          <footer className='container-narrow py-8 text-sm text-muted-foreground bg-background'>
-            Built with Next.js + Postgres + Docker
-          </footer>
-          <Toaster />
-        </ThemeProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
