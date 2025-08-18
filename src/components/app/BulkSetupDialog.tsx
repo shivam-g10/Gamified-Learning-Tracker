@@ -516,7 +516,8 @@ export function BulkSetupDialog() {
               <li>Select the type of items you want to setup</li>
               <li>Download the CSV template to see all available columns</li>
               <li>
-                Fill in your data - only title and category are required for
+                Fill in your data - only title, xp, type, and category are
+                required for quests; only title and category are required for
                 books/courses
               </li>
               <li>Upload your CSV file</li>
@@ -532,14 +533,15 @@ export function BulkSetupDialog() {
                 <div>
                   <strong>Required columns:</strong> title, xp, type, category
                   <br />
-                  <strong>Optional columns:</strong> done
+                  <strong>Optional columns:</strong> description, done
                   <br />
                   <strong>Type values:</strong> topic, project, bonus
                   <br />
                   <strong>XP values:</strong> Any non-negative number
                   <br />
-                  <strong>Example:</strong> Learn React Hooks,100,topic,Frontend
-                  Development,false
+                  <strong>Example:</strong> Learn React Hooks,Master the
+                  fundamentals of React Hooks including useState and
+                  useEffect,100,topic,Frontend Development,false
                   <br />
                   <strong>Note:</strong> All columns are available in the
                   template - only title, xp, type, and category are required
