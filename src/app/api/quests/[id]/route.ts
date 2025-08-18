@@ -9,13 +9,14 @@ export async function PUT(
 ) {
   const { id } = await params;
   const body = await req.json();
-  const { title, xp, type, category, done } = body || {};
+  const { title, description, xp, type, category, done } = body || {};
 
   try {
     const updated = await prisma.quest.update({
       where: { id },
       data: {
         ...(title !== undefined ? { title } : {}),
+        ...(description !== undefined ? { description } : {}),
         ...(xp !== undefined ? { xp } : {}),
         ...(type !== undefined ? { type } : {}),
         ...(category !== undefined ? { category } : {}),
@@ -34,13 +35,14 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const body = await req.json();
-  const { title, xp, type, category, done } = body || {};
+  const { title, description, xp, type, category, done } = body || {};
 
   try {
     const updated = await prisma.quest.update({
       where: { id },
       data: {
         ...(title !== undefined ? { title } : {}),
+        ...(description !== undefined ? { description } : {}),
         ...(xp !== undefined ? { xp } : {}),
         ...(type !== undefined ? { type } : {}),
         ...(category !== undefined ? { category } : {}),

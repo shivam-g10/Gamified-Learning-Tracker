@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
 import {
   Select,
   SelectContent,
@@ -29,6 +30,7 @@ export function AddQuestDialog({ onSubmit }: AddQuestDialogProps) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<CreateQuestData>({
     title: '',
+    description: '',
     xp: 50,
     type: 'topic',
     category: '',
@@ -38,7 +40,13 @@ export function AddQuestDialog({ onSubmit }: AddQuestDialogProps) {
     e.preventDefault();
     try {
       await onSubmit(formData);
-      setFormData({ title: '', xp: 50, type: 'topic', category: '' });
+      setFormData({
+        title: '',
+        description: '',
+        xp: 50,
+        type: 'topic',
+        category: '',
+      });
       setOpen(false);
     } catch (error) {
       console.error('Failed to add quest:', error);
@@ -76,6 +84,17 @@ export function AddQuestDialog({ onSubmit }: AddQuestDialogProps) {
               value={formData.title}
               onChange={e => handleInputChange('title', e.target.value)}
               required
+            />
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='description'>Description (Optional)</Label>
+            <Textarea
+              id='description'
+              placeholder='Describe what this quest involves...'
+              value={formData.description}
+              onChange={e => handleInputChange('description', e.target.value)}
+              rows={3}
             />
           </div>
 

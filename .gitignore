@@ -12,5 +12,6 @@ coverage
 /.pnpm-store
 /prisma/dev.db
 /prisma/dev.db-journal
+tsconfig.tsbuildinfo
 
 

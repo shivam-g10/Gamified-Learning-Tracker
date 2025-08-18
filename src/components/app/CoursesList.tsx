@@ -4,10 +4,18 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { GraduationCap, Plus, Edit, Trash2 } from 'lucide-react';
+import { GraduationCap, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { SearchAndFilters } from './SearchAndFilters';
 import { SearchService } from '@/services/search-service';
 import type { Course } from '@/lib/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface CoursesListProps {
   courses: Course[];
@@ -101,6 +109,13 @@ export function CoursesList({
     return [...new Set(platforms)];
   };
 
+  const getDescriptionPreview = (description: string, max: number = 80) => {
+    if (!description) return '';
+    return description.length > max
+      ? description.slice(0, max) + '...'
+      : description;
+  };
+
   return (
     <div className='space-y-4'>
       {/* Item Count */}
@@ -170,6 +185,64 @@ export function CoursesList({
                   on {course.platform}
                 </p>
               )}
+
+              {/* Description preview + popup */}
+              {course.description && (
+                <div className='flex items-start justify-between gap-2 mb-2'>
+                  <p className='text-xs text-muted-foreground leading-relaxed line-clamp-2 flex-1'>
+                    {getDescriptionPreview(course.description, 80)}
+                  </p>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        className='p-1 h-5 w-5 hover:bg-muted/20 text-muted-foreground hover:text-foreground'
+                        title='View description'
+                      >
+                        <Eye className='w-3 h-3' />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className='sm:max-w-[520px] w-full max-w-full'>
+                      <DialogHeader>
+                        <DialogTitle className='text-lg'>
+                          {course.title}
+                        </DialogTitle>
+                        <DialogDescription className='text-sm text-muted-foreground'>
+                          Course Details
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className='space-y-4 w-full min-w-0'>
+                        <div className='flex items-center gap-2 flex-wrap w-full min-w-0'>
+                          <Badge
+                            variant='outline'
+                            className='text-xs border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/20'
+                          >
+                            {course.category}
+                          </Badge>
+                          {getStatusBadge(course.status)}
+                          {course.platform && (
+                            <Badge variant='outline' className='text-xs'>
+                              {course.platform}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className='space-y-2 w-full min-w-0'>
+                          <h4 className='font-medium text-sm text-foreground'>
+                            Description
+                          </h4>
+                          <div className='p-3 bg-muted/20 rounded border border-muted-foreground/20 w-full min-w-0 overflow-hidden'>
+                            <p className='text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed w-full min-w-0'>
+                              {course.description}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              )}
+
               <div className='flex items-center gap-2 mb-2 flex-wrap'>
                 {/* Category Badge */}
                 <Badge

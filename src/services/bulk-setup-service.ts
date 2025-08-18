@@ -225,9 +225,9 @@ export class BulkSetupService {
 
     switch (type) {
       case 'quests':
-        // All available fields: title, xp, type, category, done
+        // All available fields: title, description, xp, type, category, done
         csvContent =
-          'title,xp,type,category,done\nLearn React Hooks,100,topic,Frontend Development,false\nBuild a Todo App,150,project,Frontend Development,false\nMaster TypeScript,200,topic,Programming Languages,false';
+          'title,description,xp,type,category,done\nLearn React Hooks,Master the fundamentals of React Hooks including useState, useEffect, and custom hooks,100,topic,Frontend Development,false\nBuild a Todo App,Create a complete todo application using React and modern web technologies,150,project,Frontend Development,false\nMaster TypeScript,Learn TypeScript from basics to advanced concepts including generics and utility types,200,topic,Programming Languages,false';
         filename = 'quests_template.csv';
         break;
       case 'books':

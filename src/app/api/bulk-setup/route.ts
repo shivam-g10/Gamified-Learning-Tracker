@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
         result = await prisma.quest.createMany({
           data: data.map((quest: BulkSetupData) => ({
             title: quest.title,
+            description: quest.description,
             xp: quest.xp || 0,
             type: (quest.type === 'project' || quest.type === 'bonus'
               ? quest.type

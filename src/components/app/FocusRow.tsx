@@ -5,8 +5,16 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { BookOpen, GraduationCap, Target, Plus, X } from 'lucide-react';
+import { BookOpen, GraduationCap, Target, Plus, X, Eye } from 'lucide-react';
 import type { Quest, Book, Course, FocusState } from '@/lib/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface FocusRowProps {
   focusState: FocusState;
@@ -100,6 +108,162 @@ export function FocusRow({
     return null;
   };
 
+  // Function to get a truncated description preview
+  const getDescriptionPreview = (
+    description: string,
+    maxLength: number = 80
+  ) => {
+    if (!description || description.trim().length === 0) return null;
+    if (description.length <= maxLength) return description;
+    return description.substring(0, maxLength) + '...';
+  };
+
+  // Function to render description preview and popup
+  const renderDescriptionSection = (item: Quest | Book | Course) => {
+    const description = 'description' in item ? item.description : null;
+    const descriptionPreview = description
+      ? getDescriptionPreview(description, 60)
+      : null;
+
+    if (!descriptionPreview) return null;
+
+    return (
+      <div className='mb-2'>
+        <div className='flex items-start justify-between gap-2'>
+          <div className='flex items-start gap-1.5 flex-1'>
+            <div className='text-xs text-muted-foreground leading-relaxed line-clamp-2'>
+              {descriptionPreview}
+            </div>
+          </div>
+
+          {/* View Full Description Button */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='p-1 h-4 w-4 hover:bg-muted/30 transition-all duration-200 flex-shrink-0 text-muted-foreground hover:text-foreground'
+              >
+                <Eye className='w-3 h-3' />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='sm:max-w-[500px] w-full max-w-full'>
+              <DialogHeader>
+                <DialogTitle className='text-lg'>{item.title}</DialogTitle>
+                <DialogDescription className='text-sm text-muted-foreground'>
+                  {'done' in item
+                    ? 'Quest'
+                    : 'current_page' in item
+                      ? 'Book'
+                      : 'Course'}{' '}
+                  Details
+                </DialogDescription>
+              </DialogHeader>
+              <div className='space-y-4 w-full min-w-0'>
+                {/* Item Metadata */}
+                <div className='flex items-center gap-2 flex-wrap w-full min-w-0'>
+                  {'done' in item ? (
+                    // Quest metadata
+                    <>
+                      <Badge
+                        variant='outline'
+                        className='text-xs border-primary/30 text-primary'
+                      >
+                        {item.type}
+                      </Badge>
+                      <Badge
+                        variant='outline'
+                        className='text-xs border-accent/30 text-accent'
+                      >
+                        {item.category}
+                      </Badge>
+                      <Badge
+                        variant='default'
+                        className='bg-secondary text-secondary-foreground text-xs'
+                      >
+                        +{item.xp} XP
+                      </Badge>
+                      {item.done && (
+                        <Badge
+                          variant='default'
+                          className='bg-green-600 text-xs'
+                        >
+                          Completed
+                        </Badge>
+                      )}
+                    </>
+                  ) : (
+                    // Book/Course metadata
+                    <>
+                      <Badge
+                        variant='outline'
+                        className={`text-xs ${
+                          'current_page' in item
+                            ? 'border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20'
+                            : 'border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/20'
+                        }`}
+                      >
+                        {item.category}
+                      </Badge>
+                      {('current_page' in item
+                        ? item.author
+                        : item.platform) && (
+                        <Badge variant='outline' className='text-xs'>
+                          {'current_page' in item ? item.author : item.platform}
+                        </Badge>
+                      )}
+                      {getStatusBadge(item)}
+                    </>
+                  )}
+                </div>
+
+                {/* Full Description */}
+                <div className='space-y-2 w-full min-w-0'>
+                  <h4 className='font-medium text-sm text-foreground'>
+                    Description
+                  </h4>
+                  <div className='p-3 bg-muted/20 rounded-lg border border-muted-foreground/20 w-full min-w-0 overflow-hidden'>
+                    <p className='text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words w-full min-w-0'>
+                      {description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress Information */}
+                {!('done' in item) && (
+                  <div className='space-y-2'>
+                    <h4 className='font-medium text-sm text-foreground'>
+                      Progress
+                    </h4>
+                    <div className='p-3 bg-muted/20 rounded-lg border border-muted-foreground/20'>
+                      <div className='flex justify-between text-sm text-muted-foreground mb-2'>
+                        <span>Current Progress</span>
+                        <span>{getProgressPercentage(item)}%</span>
+                      </div>
+                      <Progress
+                        value={getProgressPercentage(item)}
+                        className='h-2 mb-2'
+                      />
+                      <div className='text-sm text-muted-foreground'>
+                        {getProgressLabel(item)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Focus Status */}
+                <div className='flex items-center gap-2 text-sm text-primary/70 bg-primary/5 p-2 rounded border border-primary/20'>
+                  <Target className='w-4 h-4' />
+                  <span>Currently focused for learning</span>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+    );
+  };
+
   const renderFocusSlot = (
     type: 'quest' | 'book' | 'course',
     item: Quest | Book | Course | undefined,
@@ -112,11 +276,12 @@ export function FocusRow({
       const statusBadge = getStatusBadge(item);
 
       return (
-        <Card className='p-4 border-primary/20 bg-primary/5'>
-          <div className='flex items-start justify-between mb-3'>
+        <Card className='p-3 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/15 transition-all duration-200'>
+          {/* Header with icon, title, and close button */}
+          <div className='flex items-start justify-between mb-2'>
             <div className='flex items-center gap-2'>
               {icon}
-              <span className='text-sm font-medium text-muted-foreground'>
+              <span className='text-xs font-medium text-primary/70 uppercase tracking-wide'>
                 {title}
               </span>
             </div>
@@ -125,61 +290,55 @@ export function FocusRow({
               size='sm'
               onClick={() => handleFocusAction(type, null)}
               disabled={isLoading === type}
-              className='h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive'
+              className='h-5 w-5 p-0 hover:bg-destructive/10 hover:text-destructive opacity-60 hover:opacity-100 transition-opacity'
             >
               <X className='h-3 w-3' />
             </Button>
           </div>
 
-          <div className='mb-3'>
-            <h4 className='font-medium text-sm line-clamp-2 mb-2'>
+          {/* Main content - compact layout */}
+          <div className='space-y-2'>
+            {/* Title */}
+            <h4 className='font-medium text-sm line-clamp-2 leading-tight'>
               {item.title}
             </h4>
-            {'done' in item ? (
-              // Quest metadata - show type, category, XP
-              <div className='flex items-center gap-2 mb-2 flex-wrap'>
-                <Badge
-                  variant='outline'
-                  className='text-xs border-primary/20 text-primary'
-                >
-                  {item.type}
-                </Badge>
-                <Badge
-                  variant='outline'
-                  className='text-xs border-accent/20 text-accent'
-                >
-                  {item.category}
-                </Badge>
-                <Badge
-                  variant='default'
-                  className='bg-secondary text-secondary-foreground text-xs font-medium'
-                >
-                  +{item.xp} XP
-                </Badge>
-              </div>
-            ) : (
-              // Book/Course - show status badge
-              statusBadge
-            )}
-          </div>
 
-          <div className='mb-3'>
-            {'done' in item ? null : ( // Quest - no status display needed
-              // Book/Course progress - show percentage
-              <>
-                <div className='flex justify-between text-xs text-muted-foreground mb-1'>
-                  <span>Progress</span>
-                  <span>{progress}%</span>
-                </div>
-                <Progress value={progress} className='h-2' />
-                <div className='text-xs text-muted-foreground mt-1'>
-                  {progressLabel}
-                </div>
-                {/* Category display for books and courses */}
-                <div className='mt-2'>
+            {/* Description Summary */}
+            {renderDescriptionSection(item)}
+
+            {/* Metadata Row - compact badges */}
+            <div className='flex items-center gap-1.5 flex-wrap'>
+              {'done' in item ? (
+                // Quest metadata - compact badges
+                <>
                   <Badge
                     variant='outline'
-                    className={`text-xs ${
+                    className='text-xs border-primary/20 text-primary px-1.5 py-0.5 h-5'
+                  >
+                    {item.type}
+                  </Badge>
+                  <Badge
+                    variant='outline'
+                    className='text-xs border-accent/20 text-accent px-1.5 py-0.5 h-5'
+                  >
+                    {item.category}
+                  </Badge>
+                  <Badge
+                    variant='default'
+                    className='bg-secondary text-secondary-foreground text-xs px-1.5 py-0.5 h-5'
+                  >
+                    +{item.xp} XP
+                  </Badge>
+                </>
+              ) : (
+                // Book/Course - compact status and category
+                <>
+                  {statusBadge && (
+                    <div className='scale-75 origin-left'>{statusBadge}</div>
+                  )}
+                  <Badge
+                    variant='outline'
+                    className={`text-xs px-1.5 py-0.5 h-5 ${
                       'current_page' in item
                         ? 'border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20'
                         : 'border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/20'
@@ -187,48 +346,64 @@ export function FocusRow({
                   >
                     {item.category}
                   </Badge>
-                </div>
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
 
-          <Button
-            size='sm'
-            className='w-full'
-            onClick={() => {
-              if ('done' in item && onToggleQuestDone) {
-                onToggleQuestDone(item);
-              } else if ('current_page' in item && onUpdateBookProgress) {
-                // Book progress update
-                onUpdateBookProgress(item);
-              } else if ('completed_units' in item && onUpdateCourseProgress) {
-                // Course progress update
-                onUpdateCourseProgress(item);
-              }
-            }}
-          >
-            {'done' in item
-              ? item.done
-                ? 'Mark as Active'
-                : 'Mark Complete'
-              : 'Update Progress'}
-          </Button>
+            {/* Progress Section - only for books/courses */}
+            {!('done' in item) && (
+              <div className='space-y-1'>
+                <div className='flex justify-between text-xs text-muted-foreground'>
+                  <span>Progress</span>
+                  <span className='font-medium'>{progress}%</span>
+                </div>
+                <Progress value={progress} className='h-1.5' />
+                <div className='text-xs text-muted-foreground/70'>
+                  {progressLabel}
+                </div>
+              </div>
+            )}
+
+            {/* Action Button */}
+            <Button
+              size='sm'
+              className='w-full h-8 text-xs'
+              onClick={() => {
+                if ('done' in item && onToggleQuestDone) {
+                  onToggleQuestDone(item);
+                } else if ('current_page' in item && onUpdateBookProgress) {
+                  onUpdateBookProgress(item);
+                } else if (
+                  'completed_units' in item &&
+                  onUpdateCourseProgress
+                ) {
+                  onUpdateCourseProgress(item);
+                }
+              }}
+            >
+              {'done' in item
+                ? item.done
+                  ? 'Mark as Active'
+                  : 'Mark Complete'
+                : 'Update Progress'}
+            </Button>
+          </div>
         </Card>
       );
     }
 
     return (
-      <Card className='p-4 border-dashed border-muted-foreground/30 bg-muted/5'>
-        <div className='flex flex-col items-center justify-center h-32 text-center'>
+      <Card className='p-3 border-dashed border-muted-foreground/30 bg-muted/5 hover:bg-muted/10 transition-colors'>
+        <div className='flex flex-col items-center justify-center h-24 text-center'>
           {icon}
-          <p className='text-sm text-muted-foreground mt-2'>Set a Focus</p>
-          <p className='text-xs text-muted-foreground/70 mt-1'>
-            Choose a {type} to focus on
+          <p className='text-xs text-muted-foreground mt-1.5'>Set a Focus</p>
+          <p className='text-xs text-muted-foreground/70 mt-0.5'>
+            Choose a {type}
           </p>
           <Button
             variant='outline'
             size='sm'
-            className='mt-3'
+            className='mt-2 h-6 text-xs px-2'
             onClick={() =>
               onNavigateToTab(
                 type === 'quest'
@@ -239,8 +414,8 @@ export function FocusRow({
               )
             }
           >
-            <Plus className='h-4 w-4 mr-1' />
-            Select {title}
+            <Plus className='w-3 h-3 mr-1' />
+            Select
           </Button>
         </div>
       </Card>

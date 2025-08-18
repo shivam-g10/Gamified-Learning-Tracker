@@ -1,6 +1,7 @@
 export interface Quest {
   id: string;
   title: string;
+  description: string | null;
   xp: number;
   type: 'topic' | 'project' | 'bonus';
   category: string;
@@ -43,6 +44,7 @@ export interface Course {
 
 export interface CreateQuestData {
   title: string;
+  description?: string;
   xp: number;
   type: 'topic' | 'project' | 'bonus';
   category: string;
@@ -51,6 +53,7 @@ export interface CreateQuestData {
 export interface UpdateQuestData {
   done?: boolean;
   title?: string;
+  description?: string;
   xp?: number;
   type?: 'topic' | 'project' | 'bonus';
   category?: string;

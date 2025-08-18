@@ -6,6 +6,7 @@ import { QuestAPI } from '../lib/api';
 
 export interface CreateQuestData {
   title: string;
+  description?: string;
   xp: number;
   type: 'topic' | 'project' | 'bonus';
   category: string;
@@ -14,6 +15,7 @@ export interface CreateQuestData {
 export interface UpdateQuestData {
   done?: boolean;
   title?: string;
+  description?: string;
   xp?: number;
   type?: 'topic' | 'project' | 'bonus';
   category?: string;

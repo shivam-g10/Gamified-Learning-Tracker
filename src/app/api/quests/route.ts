@@ -35,12 +35,12 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { title, xp, type, category } = body || {};
+  const { title, description, xp, type, category } = body || {};
   if (!title || typeof xp !== 'number' || xp < 0 || !type || !category) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
   }
   const quest = await prisma.quest.create({
-    data: { title, xp, type, category },
+    data: { title, description, xp, type, category },
   });
   return NextResponse.json(quest, { status: 201 });
 }

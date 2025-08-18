@@ -1,6 +1,7 @@
 export type Quest = {
   id: string;
   title: string;
+  description: string | null;
   xp: number;
   type: 'topic' | 'project' | 'bonus';
   category: string;
