@@ -9,31 +9,128 @@ async function generateRandomChallenge(
   userId: string
 ): Promise<Result<NextResponse, string>> {
   try {
-    // Get all available quests for the user
-    const quests = await prisma.quest.findMany({
-      where: {
-        user_id: userId,
-        done: false,
-      },
-      orderBy: { created_at: 'desc' },
+    // Get current focus state to check available slots
+    const focusSlot = await prisma.focusSlot.findUnique({
+      where: { user_id: userId },
     });
 
-    if (quests.length === 0) {
+    // Determine which types can be added to focus
+    const availableTypes: Array<'quest' | 'book' | 'course'> = [];
+
+    if (!focusSlot?.quest_id) {
+      availableTypes.push('quest');
+    }
+    if (!focusSlot?.book_id) {
+      availableTypes.push('book');
+    }
+    if (!focusSlot?.course_id) {
+      availableTypes.push('course');
+    }
+
+    // If all focus slots are full, return appropriate message
+    if (availableTypes.length === 0) {
       return succeed(
         NextResponse.json({
-          message: 'No available quests for random challenge',
-          quest: null,
+          message:
+            'All focus slots are full. Complete or remove items from focus to get new challenges.',
+          challenge: null,
+          focusSlotsFull: true,
         })
       );
     }
 
-    // Select a random quest
-    const randomIndex = Math.floor(Math.random() * quests.length);
-    const selectedQuest = quests[randomIndex];
+    // Randomly select an available type
+    const selectedType =
+      availableTypes[Math.floor(Math.random() * availableTypes.length)];
+
+    let challenge: {
+      id: string;
+      title: string;
+      type: 'quest' | 'book' | 'course';
+      category: string;
+      xp: number;
+    } | null = null;
+
+    switch (selectedType) {
+      case 'quest':
+        const quests = await prisma.quest.findMany({
+          where: {
+            user_id: userId,
+            done: false,
+          },
+          orderBy: { created_at: 'desc' },
+        });
+
+        if (quests.length > 0) {
+          const randomQuest = quests[Math.floor(Math.random() * quests.length)];
+          challenge = {
+            id: randomQuest.id,
+            title: randomQuest.title,
+            type: 'quest' as const,
+            category: randomQuest.category,
+            xp: randomQuest.xp,
+          };
+        }
+        break;
+
+      case 'book':
+        const books = await prisma.book.findMany({
+          where: {
+            user_id: userId,
+            status: { not: 'finished' },
+          },
+          orderBy: { created_at: 'desc' },
+        });
+
+        if (books.length > 0) {
+          const randomBook = books[Math.floor(Math.random() * books.length)];
+          challenge = {
+            id: randomBook.id,
+            title: randomBook.title,
+            type: 'book' as const,
+            category: randomBook.category,
+            xp: 50, // Default XP for book challenges
+          };
+        }
+        break;
+
+      case 'course':
+        const courses = await prisma.course.findMany({
+          where: {
+            user_id: userId,
+            status: { not: 'finished' },
+          },
+          orderBy: { created_at: 'desc' },
+        });
+
+        if (courses.length > 0) {
+          const randomCourse =
+            courses[Math.floor(Math.random() * courses.length)];
+          challenge = {
+            id: randomCourse.id,
+            title: randomCourse.title,
+            type: 'course' as const,
+            category: randomCourse.category,
+            xp: 75, // Default XP for course challenges
+          };
+        }
+        break;
+    }
+
+    if (!challenge) {
+      return succeed(
+        NextResponse.json({
+          message: `No available ${selectedType}s for random challenge`,
+          challenge: null,
+          focusSlotsFull: false,
+        })
+      );
+    }
 
     return succeed(
       NextResponse.json({
-        quest: selectedQuest,
+        challenge,
+        focusSlotsFull: false,
       })
     );
   } catch (error) {

@@ -10,8 +10,20 @@ async function processCheckin(
   req: NextRequest
 ): Promise<Result<NextResponse, string>> {
   try {
-    const body = await req.json();
-    const { date } = body || {};
+    let body: { date?: string } = {};
+
+    // Only try to parse JSON if there's content
+    const contentType = req.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        body = await req.json();
+      } catch {
+        // If JSON parsing fails, use empty body
+        body = {};
+      }
+    }
+
+    const { date } = body;
 
     const checkInDate = date ? new Date(date) : new Date();
     const today = new Date();

@@ -5,7 +5,15 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { BookOpen, GraduationCap, Target, Plus, X, Eye } from 'lucide-react';
+import {
+  BookOpen,
+  GraduationCap,
+  Target,
+  Plus,
+  X,
+  Eye,
+  ExternalLink,
+} from 'lucide-react';
 import type { Quest, Book, Course, FocusState } from '@/lib/types';
 import {
   Dialog,
@@ -208,9 +216,33 @@ export function FocusRow({
                       {('current_page' in item
                         ? item.author
                         : item.platform) && (
-                        <Badge variant='outline' className='text-xs'>
-                          {'current_page' in item ? item.author : item.platform}
-                        </Badge>
+                        <div className='flex items-center gap-1'>
+                          <Badge variant='outline' className='text-xs'>
+                            {'current_page' in item
+                              ? item.author
+                              : item.platform}
+                          </Badge>
+                          {!('current_page' in item) &&
+                            'url' in item &&
+                            item.url && (
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                className='h-4 w-4 p-0 hover:bg-muted/20 text-muted-foreground hover:text-foreground'
+                                title='Open course in new tab'
+                                onClick={() =>
+                                  item.url &&
+                                  window.open(
+                                    item.url,
+                                    '_blank',
+                                    'noopener,noreferrer'
+                                  )
+                                }
+                              >
+                                <ExternalLink className='w-2.5 h-2.5' />
+                              </Button>
+                            )}
+                        </div>
                       )}
                       {getStatusBadge(item)}
                     </>
@@ -298,10 +330,27 @@ export function FocusRow({
 
           {/* Main content - compact layout */}
           <div className='space-y-2'>
-            {/* Title */}
-            <h4 className='font-medium text-sm line-clamp-2 leading-tight'>
-              {item.title}
-            </h4>
+            {/* Title + external link for course */}
+            <div className='flex items-start justify-between gap-2'>
+              <h4 className='font-medium text-sm line-clamp-2 leading-tight flex-1'>
+                {item.title}
+              </h4>
+              {/* Show external link only for Course with URL */}
+              {'completed_units' in item && 'url' in item && item.url && (
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  className='p-1 h-5 w-5 hover:bg-muted/30 transition-all duration-200 flex-shrink-0 text-muted-foreground hover:text-foreground'
+                  title='Open course in new tab'
+                  onClick={() =>
+                    item.url &&
+                    window.open(item.url, '_blank', 'noopener,noreferrer')
+                  }
+                >
+                  <ExternalLink className='w-3 h-3' />
+                </Button>
+              )}
+            </div>
 
             {/* Description Summary */}
             {renderDescriptionSection(item)}

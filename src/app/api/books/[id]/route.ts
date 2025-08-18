@@ -1,69 +1,91 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { withUserAuth } from '@/lib/auth-utils';
+import { Result, succeed, fail } from '@/lib/result';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
+async function getBook(
+  userId: string,
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Result<NextResponse, string>> {
   try {
     const { id } = await params;
     const book = await prisma.book.findUnique({
-      where: { id },
+      where: { id, user_id: userId },
     });
 
     if (!book) {
-      return NextResponse.json({ error: 'Book not found' }, { status: 404 });
+      return fail('Book not found');
     }
 
-    return NextResponse.json(book);
+    return succeed(NextResponse.json(book));
   } catch (error) {
     console.error('Error fetching book:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch book' },
-      { status: 500 }
-    );
+    return fail('Failed to fetch book');
   }
 }
 
-export async function PATCH(
+async function updateBook(
+  userId: string,
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Result<NextResponse, string>> {
   try {
     const { id } = await params;
     const body = await req.json();
 
+    // Verify the book belongs to the user
+    const existingBook = await prisma.book.findUnique({
+      where: { id, user_id: userId },
+    });
+
+    if (!existingBook) {
+      return fail('Book not found');
+    }
+
     const book = await prisma.book.update({
-      where: { id },
+      where: { id, user_id: userId },
       data: body,
     });
-    return NextResponse.json(book);
+
+    return succeed(NextResponse.json(book));
   } catch (error) {
     console.error('Error updating book:', error);
-    return NextResponse.json(
-      { error: 'Failed to update book' },
-      { status: 500 }
-    );
+    return fail('Failed to update book');
   }
 }
 
-export async function DELETE(
+async function deleteBook(
+  userId: string,
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Result<NextResponse, string>> {
   try {
     const { id } = await params;
-    await prisma.book.delete({
-      where: { id },
+
+    // Verify the book belongs to the user
+    const existingBook = await prisma.book.findUnique({
+      where: { id, user_id: userId },
     });
-    return NextResponse.json({ success: true });
+
+    if (!existingBook) {
+      return fail('Book not found');
+    }
+
+    await prisma.book.delete({
+      where: { id, user_id: userId },
+    });
+
+    return succeed(NextResponse.json({ success: true }));
   } catch (error) {
     console.error('Error deleting book:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete book' },
-      { status: 500 }
-    );
+    return fail('Failed to delete book');
   }
 }
+
+export const GET = withUserAuth(getBook);
+export const PATCH = withUserAuth(updateBook);
+export const PUT = withUserAuth(updateBook);
+export const DELETE = withUserAuth(deleteBook);

@@ -11,7 +11,13 @@ export class ChallengeAPI {
         return fail('Failed to get random challenge');
       }
       const data = await response.json();
-      return succeed(data);
+
+      // Handle the new response format
+      if (data.focusSlotsFull) {
+        return succeed(null); // Return null to indicate focus slots are full
+      }
+
+      return succeed(data.challenge || null);
     } catch {
       return fail('Failed to get random challenge');
     }

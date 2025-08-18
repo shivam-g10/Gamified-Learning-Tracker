@@ -17,7 +17,7 @@ export class AppStateAPI {
     }
   }
 
-  static async recordDailyCheckIn(): Promise<Result<void>> {
+  static async recordDailyCheckIn(): Promise<Result<AppState>> {
     try {
       const response = await fetch('/api/checkin', {
         method: 'POST',
@@ -25,7 +25,8 @@ export class AppStateAPI {
       if (!response.ok) {
         return fail('Failed to record check-in');
       }
-      return succeed(undefined);
+      const data = await response.json();
+      return succeed(data);
     } catch {
       return fail('Failed to record check-in');
     }

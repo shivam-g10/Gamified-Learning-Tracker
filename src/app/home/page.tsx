@@ -530,6 +530,12 @@ function HomePageContent() {
   }, [mutateState]);
 
   const handleRandomChallenge = useCallback(async () => {
+    // First check if all focus slots are full
+    if (ChallengeService.areAllFocusSlotsFull(focusState)) {
+      toast.info(ChallengeService.getAllFocusSlotsFullMessage());
+      return;
+    }
+
     const result = await ChallengeService.getRandomChallenge();
 
     if (result._tag === 'Failure') {
@@ -539,11 +545,12 @@ function HomePageContent() {
 
     const challenge = result.data;
     if (!challenge) {
-      toast.info('All learning items are completed — nice!');
+      // This should not happen since we checked focus slots above, but handle gracefully
+      toast.info('No challenges available at the moment. Try again later!');
       return;
     }
 
-    // Check focus limit based on challenge type
+    // Double-check focus limit based on challenge type (safety check)
     let canAdd = false;
     let errorMessage = '';
 
@@ -605,6 +612,7 @@ function HomePageContent() {
           xpBreakdown={xpBreakdown}
           badgeThresholds={badgeThresholds}
           appState={appState}
+          focusState={focusState}
           onCheckIn={handleDailyCheckIn}
           onRandomChallenge={handleRandomChallenge}
         />

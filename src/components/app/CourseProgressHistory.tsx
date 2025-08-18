@@ -10,7 +10,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { GraduationCap, Calendar, FileText, TrendingUp } from 'lucide-react';
+import {
+  GraduationCap,
+  TrendingUp,
+  FileText,
+  Calendar,
+  ExternalLink,
+} from 'lucide-react';
 import type { Course, CourseProgressEntry } from '@/lib/types';
 import { CourseService } from '@/services/index';
 
@@ -108,9 +114,25 @@ export function CourseProgressHistory({
                 {course.category}
               </Badge>
               {course.platform && (
-                <span className='text-xs text-muted-foreground'>
-                  on {course.platform}
-                </span>
+                <div className='flex items-center gap-1'>
+                  <span className='text-xs text-muted-foreground'>
+                    on {course.platform}
+                  </span>
+                  {course.url && (
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      className='h-4 w-4 p-0 hover:bg-muted/20 text-muted-foreground hover:text-foreground'
+                      title='Open course in new tab'
+                      onClick={() =>
+                        course.url &&
+                        window.open(course.url, '_blank', 'noopener,noreferrer')
+                      }
+                    >
+                      <ExternalLink className='w-2.5 h-2.5' />
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           </div>

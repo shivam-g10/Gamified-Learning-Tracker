@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppState } from '@/lib/types';
+import { FocusState } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,6 +32,7 @@ export interface ProgressOverviewProps {
     color: string;
   }>;
   appState: AppState | undefined;
+  focusState?: FocusState;
   onCheckIn: () => void;
   onRandomChallenge: () => void;
 }
@@ -45,6 +47,7 @@ export function ProgressOverview({
   xpBreakdown,
   badgeThresholds,
   appState,
+  focusState,
   onCheckIn,
   onRandomChallenge,
 }: ProgressOverviewProps) {
@@ -52,6 +55,16 @@ export function ProgressOverview({
     appState?.last_check_in &&
     new Date(appState.last_check_in).toDateString() ===
       new Date().toDateString();
+
+  // Calculate focus slot status
+  const focusSlotsUsed = [
+    focusState?.quest ? 1 : 0,
+    focusState?.book ? 1 : 0,
+    focusState?.course ? 1 : 0,
+  ].reduce((sum, count) => sum + count, 0);
+
+  const allFocusSlotsFull = focusSlotsUsed >= 3;
+  const availableFocusSlots = 3 - focusSlotsUsed;
 
   return (
     <Card>
@@ -100,13 +113,20 @@ export function ProgressOverview({
                     onClick={onRandomChallenge}
                     variant='outline'
                     size='sm'
-                    className='transition-all duration-200 focus:ring-1 focus:ring-ring focus:ring-offset-2 hover:bg-muted/50 hover:border-muted-foreground/50'
+                    disabled={allFocusSlotsFull}
+                    className={`transition-all duration-200 focus:ring-1 focus:ring-ring focus:ring-offset-2 ${
+                      allFocusSlotsFull
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:bg-muted/50 hover:border-muted-foreground/50'
+                    }`}
                   >
                     <Dices className='w-4 h-4 mr-1' />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  Get a random quest, book, or course challenge
+                  {allFocusSlotsFull
+                    ? 'All focus slots are full. Complete or remove items to get new challenges.'
+                    : `Get a random challenge (${availableFocusSlots} slot${availableFocusSlots !== 1 ? 's' : ''} available)`}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

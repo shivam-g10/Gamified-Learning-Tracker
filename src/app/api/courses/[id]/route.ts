@@ -1,69 +1,91 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { withUserAuth } from '@/lib/auth-utils';
+import { Result, succeed, fail } from '@/lib/result';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
+async function getCourse(
+  userId: string,
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Result<NextResponse, string>> {
   try {
     const { id } = await params;
     const course = await prisma.course.findUnique({
-      where: { id },
+      where: { id, user_id: userId },
     });
 
     if (!course) {
-      return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+      return fail('Course not found');
     }
 
-    return NextResponse.json(course);
+    return succeed(NextResponse.json(course));
   } catch (error) {
     console.error('Error fetching course:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch course' },
-      { status: 500 }
-    );
+    return fail('Failed to fetch course');
   }
 }
 
-export async function PATCH(
+async function updateCourse(
+  userId: string,
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Result<NextResponse, string>> {
   try {
     const { id } = await params;
     const body = await req.json();
 
+    // Verify the course belongs to the user
+    const existingCourse = await prisma.course.findUnique({
+      where: { id, user_id: userId },
+    });
+
+    if (!existingCourse) {
+      return fail('Course not found');
+    }
+
     const course = await prisma.course.update({
-      where: { id },
+      where: { id, user_id: userId },
       data: body,
     });
-    return NextResponse.json(course);
+
+    return succeed(NextResponse.json(course));
   } catch (error) {
     console.error('Error updating course:', error);
-    return NextResponse.json(
-      { error: 'Failed to update course' },
-      { status: 500 }
-    );
+    return fail('Failed to update course');
   }
 }
 
-export async function DELETE(
+async function deleteCourse(
+  userId: string,
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Result<NextResponse, string>> {
   try {
     const { id } = await params;
-    await prisma.course.delete({
-      where: { id },
+
+    // Verify the course belongs to the user
+    const existingCourse = await prisma.course.findUnique({
+      where: { id, user_id: userId },
     });
-    return NextResponse.json({ success: true });
+
+    if (!existingCourse) {
+      return fail('Course not found');
+    }
+
+    await prisma.course.delete({
+      where: { id, user_id: userId },
+    });
+
+    return succeed(NextResponse.json({ success: true }));
   } catch (error) {
     console.error('Error deleting course:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete course' },
-      { status: 500 }
-    );
+    return fail('Failed to delete course');
   }
 }
+
+export const GET = withUserAuth(getCourse);
+export const PATCH = withUserAuth(updateCourse);
+export const PUT = withUserAuth(updateCourse);
+export const DELETE = withUserAuth(deleteCourse);

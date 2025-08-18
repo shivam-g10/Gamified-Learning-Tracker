@@ -15,13 +15,7 @@ export class AppStateService {
    * Records a daily check-in and updates streak
    */
   static async recordDailyCheckIn(): Promise<Result<AppState>> {
-    const checkInResult = await AppStateAPI.recordDailyCheckIn();
-    if (checkInResult._tag === 'Failure') {
-      return checkInResult;
-    }
-
-    // After successful check-in, fetch the updated app state
-    return AppStateAPI.getAppState();
+    return AppStateAPI.recordDailyCheckIn();
   }
 
   /**

@@ -1962,4 +1962,150 @@ The system has been enhanced to handle long text content in description dialogs:
 
 ---
 
+## 🔧 Recent API Fixes and Improvements
+
+### Challenge System Enhancements
+
+#### Focus Slot Validation
+
+The challenge system has been enhanced to properly validate focus slots before suggesting challenges:
+
+- **Pre-check Validation**: System checks available focus slots before requesting challenges
+- **Smart Challenge Generation**: Only suggests challenges for types with available focus slots
+- **User Feedback**: Clear messages when all slots are full
+- **Visual Indicators**: Progress overview shows focus status and available actions
+
+**Implementation Details:**
+
+```typescript
+// Pre-check for focus slots
+if (ChallengeService.areAllFocusSlotsFull(focusState)) {
+  toast.info(ChallengeService.getAllFocusSlotsFullMessage());
+  return;
+}
+
+// Generate appropriate challenge based on available slots
+const challenge = await ChallengeService.getRandomChallenge();
+```
+
+**Components Updated:**
+
+- `ProgressOverview.tsx` - Added focus slot status display
+- `ChallengeModal.tsx` - Enhanced challenge presentation
+- `FocusRow.tsx` - Added external link for courses
+
+#### Multi-Type Challenge Support
+
+The random challenge system now supports all three learning types:
+
+- **Quests**: Random unfinished quests with XP values
+- **Books**: Unfinished books with default 50 XP
+- **Courses**: Unfinished courses with default 75 XP
+- **Focus-Aware**: Only suggests challenges for available focus types
+
+### API Security and Authentication
+
+#### User Data Protection
+
+All book and course endpoints now include proper authentication and user validation:
+
+- **Authentication Middleware**: All endpoints wrapped with `withUserAuth()`
+- **User Ownership Validation**: Users can only modify their own learning items
+- **Secure Updates**: All operations scoped to authenticated user's data
+- **Error Handling**: Proper Result type pattern implementation
+
+**Endpoints Secured:**
+
+- `GET /api/books/[id]` - User-scoped book retrieval
+- `PUT /api/books/[id]` - User-scoped book updates
+- `PATCH /api/books/[id]` - User-scoped book patches
+- `DELETE /api/books/[id]` - User-scoped book deletion
+- `GET /api/courses/[id]` - User-scoped course retrieval
+- `PUT /api/courses/[id]` - User-scoped course updates
+- `PATCH /api/courses/[id]` - User-scoped course patches
+- `DELETE /api/courses/[id]` - User-scoped course deletion
+
+**Technical Implementation:**
+
+```typescript
+async function updateBook(userId: string, req: NextRequest, { params }) {
+  // Verify ownership first
+  const existingBook = await prisma.book.findUnique({
+    where: { id, user_id: userId },
+  });
+
+  if (!existingBook) {
+    return fail('Book not found');
+  }
+
+  const book = await prisma.book.update({
+    where: { id, user_id: userId },
+    data: body,
+  });
+}
+```
+
+#### HTTP Method Support
+
+Fixed HTTP method mismatches between frontend and backend:
+
+- **Frontend**: Sends `PUT` requests for updates
+- **Backend**: Now supports both `PUT` and `PATCH` methods
+- **Backward Compatibility**: Existing `PATCH` support maintained
+- **Consistent API**: Same handler function for both methods
+
+### Check-in System Reliability
+
+#### Robust JSON Parsing
+
+The daily check-in API has been enhanced to handle various request scenarios:
+
+- **Content-Type Detection**: Only attempts JSON parsing when appropriate
+- **Graceful Fallback**: Continues with empty body if parsing fails
+- **Type Safety**: Proper TypeScript typing for request bodies
+- **Error Recovery**: Handles malformed requests without crashing
+
+**Implementation:**
+
+```typescript
+let body: { date?: string } = {};
+
+// Only try to parse JSON if there's content
+const contentType = req.headers.get('content-type');
+if (contentType && contentType.includes('application/json')) {
+  try {
+    body = await req.json();
+  } catch {
+    // If JSON parsing fails, use empty body
+    body = {};
+  }
+}
+```
+
+### Course Link Accessibility
+
+#### External Link Integration
+
+Added easy access to course URLs throughout the interface:
+
+- **External Link Buttons**: Clickable icons that open course URLs in new tabs
+- **Multiple Locations**: Available in course lists, focus views, and progress history
+- **Security**: Uses `noopener,noreferrer` for safe external linking
+- **Visual Consistency**: Same styling and behavior across all components
+
+**Components Enhanced:**
+
+- `CoursesList.tsx` - Main course grid with external links
+- `FocusRow.tsx` - Focused course cards with external links
+- `CourseProgressHistory.tsx` - Progress history with external links
+
+**Technical Features:**
+
+- Only shows when course has a URL
+- Opens in new tab with proper security attributes
+- Consistent icon and tooltip usage
+- Proper TypeScript null handling
+
+---
+
 This implementation documentation provides a comprehensive technical overview of the GyaanQuest system. Each feature is implemented with modern best practices, ensuring maintainability, performance, and user experience.

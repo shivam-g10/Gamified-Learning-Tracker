@@ -16,6 +16,24 @@ export class ChallengeService {
   }
 
   /**
+   * Checks if all focus slots are full
+   */
+  static areAllFocusSlotsFull(currentFocusState: FocusState): boolean {
+    return !!(
+      currentFocusState?.quest &&
+      currentFocusState?.book &&
+      currentFocusState?.course
+    );
+  }
+
+  /**
+   * Gets message when all focus slots are full
+   */
+  static getAllFocusSlotsFullMessage(): string {
+    return 'All focus slots are full. Complete or remove items from focus to get new challenges.';
+  }
+
+  /**
    * Checks if a quest can be added to focus (only 1 quest allowed)
    */
   static canAddQuestToFocus(currentFocusState: FocusState): boolean {

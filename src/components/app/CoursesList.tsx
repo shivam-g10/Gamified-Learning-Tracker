@@ -4,7 +4,14 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { GraduationCap, Plus, Edit, Trash2, Eye } from 'lucide-react';
+import {
+  GraduationCap,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  ExternalLink,
+} from 'lucide-react';
 import { SearchAndFilters } from './SearchAndFilters';
 import { SearchService } from '@/services/search-service';
 import type { Course } from '@/lib/types';
@@ -181,9 +188,25 @@ export function CoursesList({
                 {course.title}
               </h3>
               {course.platform && (
-                <p className='text-xs text-muted-foreground mb-2'>
-                  on {course.platform}
-                </p>
+                <div className='flex items-center gap-2 mb-2'>
+                  <p className='text-xs text-muted-foreground'>
+                    on {course.platform}
+                  </p>
+                  {course.url && (
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      className='h-5 w-5 p-0 hover:bg-muted/20 text-muted-foreground hover:text-foreground'
+                      title='Open course in new tab'
+                      onClick={() =>
+                        course.url &&
+                        window.open(course.url, '_blank', 'noopener,noreferrer')
+                      }
+                    >
+                      <ExternalLink className='w-3 h-3' />
+                    </Button>
+                  )}
+                </div>
               )}
 
               {/* Description preview + popup */}
