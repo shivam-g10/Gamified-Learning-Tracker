@@ -26,61 +26,16 @@ import {
 } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Download, Upload, FileText } from 'lucide-react';
-
-interface BulkSetupData {
-  title: string;
-  xp?: number;
-  type?: 'topic' | 'project' | 'bonus';
-  category: string;
-  done?: boolean;
-  author?: string;
-  total_pages?: number;
-  current_page?: number;
-  status?: 'backlog' | 'reading' | 'finished' | 'learning';
-  description?: string;
-  tags?: string[];
-  platform?: string;
-  url?: string;
-  total_units?: number;
-  completed_units?: number;
-}
-
-interface CsvRow {
-  [key: string]: string | number | boolean | string[];
-}
-
-function parseCsvRow(headers: string[], values: string[]): BulkSetupData {
-  const item: CsvRow = {};
-  
-  headers.forEach((header, index) => {
-    let value = values[index] || '';
-    
-    // Handle quoted values (e.g., "programming,clean-code")
-    if (value.startsWith('"') && value.endsWith('"')) {
-      value = value.slice(1, -1);
-    }
-    
-    // Parse specific fields
-    if (header === 'xp' || header === 'total_pages' || header === 'current_page' || header === 'total_units' || header === 'completed_units') {
-      item[header] = parseInt(value) || 0;
-    } else if (header === 'done') {
-      item[header] = value.toLowerCase() === 'true';
-    } else if (header === 'tags') {
-      item[header] = value ? value.split(',').map(t => t.trim()) : [];
-    } else {
-      item[header] = value;
-    }
-  });
-  
-  // Ensure required fields have defaults
-  const result: BulkSetupData = {
-    title: item.title as string || 'Untitled',
-    category: item.category as string || 'Uncategorized',
-    ...item
-  };
-  
-  return result;
-}
+import { BulkSetupService } from '@/services/bulk-setup-service';
+import { BulkSetupAPI } from '@/lib/api/bulk-setup-api';
+import type { BulkSetupData } from '@/lib/api-types';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export function BulkSetupDialog() {
   const [type, setType] = useState<'quests' | 'books' | 'courses'>('quests');
@@ -88,37 +43,15 @@ export function BulkSetupDialog() {
   const [isLoading, setIsLoading] = useState(false);
   const [csvData, setCsvData] = useState<BulkSetupData[]>([]);
   const [csvFileName, setCsvFileName] = useState<string>('');
+  const [replaceMode, setReplaceMode] = useState<boolean>(true);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const downloadCsvTemplate = () => {
-    let csvContent = '';
-    let filename = '';
-
-    switch (type) {
-      case 'quests':
-        csvContent = 'title,xp,type,category,done,description\nLearn React Hooks,100,topic,Frontend Development,false,Learn the basics of React hooks\nBuild a Todo App,150,project,Frontend Development,false,Create a simple todo application\nMaster TypeScript,200,topic,Programming Languages,false,Learn TypeScript fundamentals';
-        filename = 'quests_template.csv';
-        break;
-      case 'books':
-        csvContent = 'title,author,total_pages,current_page,status,category,description,tags\nClean Code,Robert C. Martin,464,0,backlog,Software Engineering,A handbook of agile software craftsmanship,"programming,clean-code,best-practices"\nDesign Patterns,Erich Gamma et al.,416,0,backlog,Software Engineering,Elements of Reusable Object-Oriented Software,"design-patterns,object-oriented,architecture"';
-        filename = 'books_template.csv';
-        break;
-      case 'courses':
-        csvContent = 'title,platform,url,total_units,completed_units,status,category,description,tags\nComplete React Developer,Udemy,https://udemy.com/react-complete-guide,20,0,backlog,Frontend Development,Learn React from scratch to advanced concepts,"react,javascript,frontend"\nNode.js Complete Guide,Udemy,https://udemy.com/nodejs-complete-guide,25,0,backlog,Backend Development,Master Node.js backend development,"nodejs,javascript,backend"';
-        filename = 'courses_template.csv';
-        break;
-    }
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
+    const { content: csvContent, filename } =
+      BulkSetupService.generateCsvTemplate(type);
+    BulkSetupService.downloadFile(csvContent, filename);
     toast.success(`Downloaded ${filename}`);
   };
 
@@ -133,31 +66,55 @@ export function BulkSetupDialog() {
 
     setCsvFileName(file.name);
     const reader = new FileReader();
-    
-    reader.onload = (e) => {
+
+    reader.onload = async e => {
       try {
         const csvText = e.target?.result as string;
-        const lines = csvText.split('\n');
-        const headers = lines[0].split(',').map(h => h.trim());
-        
-        const data: BulkSetupData[] = [];
-        
-        for (let i = 1; i < lines.length; i++) {
-          if (lines[i].trim()) {
-            const values = lines[i].split(',').map(v => v.trim());
-            const item = parseCsvRow(headers, values);
-            data.push(item);
-          }
+
+        // Parse CSV data using service
+        const parseResult = BulkSetupService.parseCsvData(csvText);
+        if (parseResult._tag === 'Failure') {
+          toast.error(parseResult.error);
+          return;
         }
-        
-        setCsvData(data);
-        toast.success(`Loaded ${data.length} items from ${file.name}`);
+
+        // Validate data using service
+        const validationResult = BulkSetupService.validateBulkSetupData(
+          parseResult.data,
+          type
+        );
+        if (validationResult._tag === 'Failure') {
+          toast.error(validationResult.error);
+          return;
+        }
+
+        const validation = validationResult.data;
+        setValidationErrors(validation.errors);
+        setValidationWarnings(validation.warnings);
+
+        if (!validation.valid) {
+          toast.error(
+            `CSV validation failed with ${validation.errors.length} errors`
+          );
+          return;
+        }
+
+        setCsvData(parseResult.data);
+        if (validation.warnings.length > 0) {
+          toast.warning(
+            `Loaded ${parseResult.data.length} items with ${validation.warnings.length} warnings`
+          );
+        } else {
+          toast.success(
+            `Loaded ${parseResult.data.length} items from ${file.name}`
+          );
+        }
       } catch (error) {
         toast.error('Failed to parse CSV file');
         console.error('CSV parsing error:', error);
       }
     };
-    
+
     reader.readAsText(file);
   };
 
@@ -169,20 +126,18 @@ export function BulkSetupDialog() {
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/bulk-setup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, data: csvData }),
-      });
+      const result = await BulkSetupAPI.bulkSetup(type, csvData, replaceMode);
 
-      if (!response.ok) throw new Error('Failed to setup data');
-      
-      const result = await response.json();
-      toast.success(result.message);
+      if (result._tag === 'Failure') {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(result.data.message);
       setIsOpen(false);
       setCsvData([]);
       setCsvFileName('');
-      
+
       // Refresh the page to show new data
       window.location.reload();
     } catch (error) {
@@ -191,6 +146,19 @@ export function BulkSetupDialog() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleReset = () => {
+    setCsvData([]);
+    setCsvFileName('');
+    setType('quests');
+    setReplaceMode(true);
+    setValidationErrors([]);
+    setValidationWarnings([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    toast.success('Form reset successfully');
   };
 
   const getTypeLabel = (type: string) => {
@@ -233,8 +201,21 @@ export function BulkSetupDialog() {
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      // Reset form when dialog is closed
+      setCsvData([]);
+      setCsvFileName('');
+      setType('quests');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant='outline' size='sm'>
           📊 Bulk Setup
@@ -278,7 +259,7 @@ export function BulkSetupDialog() {
                 <Download className='w-4 h-4' />
                 Download Template
               </Button>
-              
+
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 variant='outline'
@@ -288,7 +269,7 @@ export function BulkSetupDialog() {
                 <Upload className='w-4 h-4' />
                 Upload CSV
               </Button>
-              
+
               <input
                 ref={fileInputRef}
                 type='file'
@@ -382,7 +363,7 @@ export function BulkSetupDialog() {
                     </CardContent>
                   </Card>
                 ))}
-                
+
                 {csvData.length > 5 && (
                   <div className='text-center text-sm text-muted-foreground py-2'>
                     ... and {csvData.length - 5} more items
@@ -390,13 +371,141 @@ export function BulkSetupDialog() {
                 )}
               </div>
 
-              <Button
-                onClick={handleBulkSetup}
-                disabled={isLoading}
-                className='w-full bg-green-600 hover:bg-green-700'
-              >
-                {isLoading ? 'Setting up...' : `✅ Setup All ${csvData.length} ${type}`}
-              </Button>
+              {/* Validation Results */}
+              {(validationErrors.length > 0 ||
+                validationWarnings.length > 0) && (
+                <div className='space-y-3'>
+                  {validationErrors.length > 0 && (
+                    <div className='bg-red-50 border border-red-200 rounded-lg p-3'>
+                      <h4 className='font-medium text-red-800 mb-2 flex items-center gap-2'>
+                        <svg
+                          className='w-4 h-4'
+                          fill='none'
+                          stroke='currentColor'
+                          viewBox='0 0 24 24'
+                        >
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth={2}
+                            d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                          />
+                        </svg>
+                        Validation Errors ({validationErrors.length})
+                      </h4>
+                      <ul className='text-sm text-red-700 space-y-1'>
+                        {validationErrors.map((error, index) => (
+                          <li key={index} className='flex items-start gap-2'>
+                            <span className='text-red-500 mt-0.5'>•</span>
+                            {error}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {validationWarnings.length > 0 && (
+                    <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-3'>
+                      <h4 className='font-medium text-yellow-800 mb-2 flex items-center gap-2'>
+                        <svg
+                          className='w-4 h-4'
+                          fill='none'
+                          stroke='currentColor'
+                          viewBox='0 0 24 24'
+                        >
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth={2}
+                            d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z'
+                          />
+                        </svg>
+                        Validation Warnings ({validationWarnings.length})
+                      </h4>
+                      <ul className='text-sm text-yellow-700 space-y-1'>
+                        {validationWarnings.map((warning, index) => (
+                          <li key={index} className='flex items-start gap-2'>
+                            <span className='text-yellow-500 mt-0.5'>•</span>
+                            {warning}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className='space-y-4'>
+                {/* Replace toggle with checkbox */}
+                <div className='flex items-center gap-3 text-sm'>
+                  <label className='font-medium'>Replace existing data:</label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className='flex items-center gap-2'>
+                          <Checkbox
+                            checked={replaceMode}
+                            onCheckedChange={checked =>
+                              setReplaceMode(checked === true)
+                            }
+                            className='data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600'
+                          />
+                          <span
+                            className={
+                              replaceMode
+                                ? 'text-red-600 font-medium'
+                                : 'text-green-600 font-medium'
+                            }
+                          >
+                            {replaceMode ? 'Replace All' : 'Append'}
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className='max-w-xs'>
+                          {replaceMode
+                            ? '⚠️ This will DELETE all existing items of this type before adding new ones. This action is irreversible!'
+                            : '✅ New items will be added without affecting existing data.'}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+
+                {/* Action buttons */}
+                <div className='flex gap-3'>
+                  <Button
+                    onClick={handleBulkSetup}
+                    disabled={isLoading}
+                    className='flex-1 bg-green-600 hover:bg-green-700'
+                  >
+                    {isLoading
+                      ? 'Setting up...'
+                      : `✅ Setup All ${csvData.length} ${type}`}
+                  </Button>
+
+                  <Button
+                    onClick={handleReset}
+                    variant='outline'
+                    className='px-6 text-orange-600 hover:text-orange-700 hover:bg-orange-50'
+                  >
+                    <svg
+                      className='w-4 h-4 mr-2'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                      />
+                    </svg>
+                    Reset
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -405,16 +514,13 @@ export function BulkSetupDialog() {
             <h4 className='font-semibold text-blue-900 mb-2'>How to use:</h4>
             <ol className='text-sm text-blue-800 space-y-1 list-decimal list-inside'>
               <li>Select the type of items you want to setup</li>
+              <li>Download the CSV template to see all available columns</li>
               <li>
-                Download the CSV template to see the required format
+                Fill in your data - only title and category are required for
+                books/courses
               </li>
-              <li>Fill in your data following the template format</li>
               <li>Upload your CSV file</li>
               <li>Review the preview and click &quot;Setup All&quot;</li>
-              <li>
-                <strong>Note:</strong> This will replace all existing items of
-                the selected type
-              </li>
             </ol>
           </div>
 
@@ -424,26 +530,60 @@ export function BulkSetupDialog() {
             <div className='text-sm text-gray-700 space-y-2'>
               {type === 'quests' && (
                 <div>
-                  <strong>Required columns:</strong> title, xp, type, category<br />
-                  <strong>Optional columns:</strong> done, description<br />
-                  <strong>Type values:</strong> topic, project, bonus<br />
-                  <strong>Done values:</strong> true, false
+                  <strong>Required columns:</strong> title, xp, type, category
+                  <br />
+                  <strong>Optional columns:</strong> done
+                  <br />
+                  <strong>Type values:</strong> topic, project, bonus
+                  <br />
+                  <strong>XP values:</strong> Any non-negative number
+                  <br />
+                  <strong>Example:</strong> Learn React Hooks,100,topic,Frontend
+                  Development,false
+                  <br />
+                  <strong>Note:</strong> All columns are available in the
+                  template - only title, xp, type, and category are required
                 </div>
               )}
               {type === 'books' && (
                 <div>
-                  <strong>Required columns:</strong> title, category<br />
-                  <strong>Optional columns:</strong> author, total_pages, current_page, status, description, tags<br />
-                  <strong>Status values:</strong> backlog, reading, finished<br />
-                  <strong>Tags format:</strong> &quot;tag1,tag2,tag3&quot; (comma-separated)
+                  <strong>Required columns:</strong> title, category
+                  <br />
+                  <strong>Optional columns:</strong> author, description,
+                  total_pages, current_page, status, tags
+                  <br />
+                  <strong>Status values:</strong> backlog, reading, finished
+                  <br />
+                  <strong>Tags format:</strong> &quot;tag1,tag2,tag3&quot;
+                  (comma-separated)
+                  <br />
+                  <strong>Example:</strong> Clean Code,Software
+                  Engineering,Robert C. Martin,A handbook of agile software
+                  craftsmanship,464,0,backlog,&quot;programming,clean-code&quot;
+                  <br />
+                  <strong>Note:</strong> All columns are available in the
+                  template - only title and category are required
                 </div>
               )}
               {type === 'courses' && (
                 <div>
-                  <strong>Required columns:</strong> title, category<br />
-                  <strong>Optional columns:</strong> platform, url, total_units, completed_units, status, description, tags<br />
-                  <strong>Status values:</strong> backlog, learning, finished<br />
-                  <strong>Tags format:</strong> &quot;tag1,tag2,tag3&quot; (comma-separated)
+                  <strong>Required columns:</strong> title, category
+                  <br />
+                  <strong>Optional columns:</strong> platform, url, description,
+                  total_units, completed_units, status, tags
+                  <br />
+                  <strong>Status values:</strong> backlog, learning, finished
+                  <br />
+                  <strong>Tags format:</strong> &quot;tag1,tag2,tag3&quot;
+                  (comma-separated)
+                  <br />
+                  <strong>Example:</strong> Complete React Developer,Frontend
+                  Development,Udemy,https://udemy.com/react-complete-guide,Learn
+                  React from scratch to advanced
+                  concepts,20,0,backlog,&quot;react,javascript,frontend&quot;
+                  <br />
+                  <strong>Note:</strong> All columns are available in the
+                  template - only title and category are required
                 </div>
               )}
             </div>

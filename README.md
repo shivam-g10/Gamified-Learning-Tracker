@@ -72,7 +72,7 @@ A full-stack gamified learning tracker built with Next.js 15 and PostgreSQL 17. 
 - Use strong, unique passwords in production
 - Never commit `.env` files to version control
 
-### Option 1: Docker (Recommended)
+### Option 1: Docker Development Database
 
 1. Clone the repository:
 
@@ -85,16 +85,31 @@ cd Gamified-Learning-Tracker
 
 ```bash
 cp env.example .env
-# Edit .env and set secure passwords
 ```
 
-3. Start the application:
+3. Start the development database:
 
 ```bash
-docker compose up --build
+cd dev_infra
+docker compose up -d
+cd ..
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+4. Set up the database:
+
+```bash
+pnpm prisma generate
+pnpm prisma db push
+pnpm run db:seed
+```
+
+5. Start the development server:
+
+```bash
+pnpm dev
+```
+
+6. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ### Option 2: Local Development
 
@@ -159,7 +174,7 @@ pnpm run type-check
 - **ORM**: [Prisma 6.13.0](https://www.prisma.io/) for type-safe database access
 - **Language**: [TypeScript 5.4.5](https://www.typescriptlang.org/) with strict mode
 - **State Management**: [SWR 2.2.5](https://swr.vercel.app/) for data fetching and caching
-- **Containerization**: [Docker](https://www.docker.com/) + [Docker Compose](https://docs.docker.com/compose/) with Watch Mode
+- **Containerization**: [Docker](https://www.docker.com/) for development database setup
 - **Package Manager**: [pnpm](https://pnpm.io/) for fast, disk space efficient package management
 - **Code Quality**: ESLint v9, Prettier, Husky v9 pre-commit hooks, commitlint
 - **Development**: Hot reloading, automatic rebuilds, watch mode, service layer architecture
@@ -187,7 +202,7 @@ GyaanQuest/
 │       └── ...                   # Additional services
 ├── prisma/                # Database schema and migrations
 ├── public/                # Static assets
-└── docker-compose.yml     # Docker configuration
+└── dev_infra/            # Development infrastructure (Docker database)
 ```
 
 ## 🔧 Configuration
@@ -198,11 +213,10 @@ Create a `.env` file based on `env.example`:
 
 ```env
 # Database Configuration
-POSTGRES_PASSWORD=your_secure_password_here
-POSTGRES_DB=tracker
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tracker?schema=public
 
 # Application Environment
-NODE_ENV=production
+NODE_ENV=development
 ```
 
 ### Database Setup
@@ -217,40 +231,38 @@ The application uses PostgreSQL 17 with Prisma. The database schema includes:
 
 ## 🐳 Docker
 
+The application uses Docker for development database setup and production deployment:
+
+### Development Database
+
+For local development, use the included Docker Compose setup:
+
+```bash
+# Start development database
+cd dev_infra
+docker compose up -d
+
+# Stop database
+docker compose down
+
+# Reset database (removes all data)
+docker compose down -v
+docker compose up -d
+```
+
+### Production Deployment
+
 The application is containerized with multi-stage builds for optimal production images:
 
 - **deps stage**: Installs dependencies using Node 22
 - **builder stage**: Builds the application
 - **runner stage**: Production-ready image
 
-### Development with Docker
-
-For development with hot reloading and watch mode:
-
-```bash
-# Start development environment with watch mode
-pnpm run docker:dev:watch
-
-# Start development environment without watch mode
-pnpm run docker:dev
-
-# Start production environment
-pnpm run docker:prod
-
-# Stop all containers
-pnpm run docker:down
-
-# Clean up volumes and containers
-pnpm run docker:clean
-```
-
 ### Security Features
 
-- **Database isolation**: Database is not exposed to external ports in production
-- **Network isolation**: Services communicate only within Docker network
+- **Database isolation**: Development database runs in isolated container
 - **Environment variables**: Secure credential management
 - **Health checks**: Automatic service monitoring
-- **Restart policies**: Production-ready reliability
 - **PostgreSQL 17**: Latest stable database version with enhanced performance
 
 ## 📊 API Endpoints

@@ -66,6 +66,7 @@ export async function POST(
         book_id: id,
         from_page,
         to_page,
+        pages_read: pagesRead, // Store the calculated pages read
         notes: notes || null,
       },
     });

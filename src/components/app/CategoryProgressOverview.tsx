@@ -43,9 +43,9 @@ export function CategoryProgressOverview({
           <Accordion type='single' collapsible className='w-full'>
             <AccordionItem
               value='quest-category-progress'
-              className='border rounded-lg data-[state=open]:border-blue-400 data-[state=open]:shadow-[0_0_0_1px_rgba(59,130,246,0.4)] data-[state=open]:shadow-blue-500/20 transition-all duration-200'
+              className='border rounded-lg data-[state=open]:border-primary data-[state=open]:shadow-[0_0_0_1px_rgba(var(--primary),0.4)] data-[state=open]:shadow-primary/20 transition-all duration-200'
             >
-              <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-blue-600'>
+              <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-primary'>
                 <div className='flex items-center gap-2'>
                   <span className='text-sm font-medium text-foreground'>
                     🎯 Quest Progress by Category
@@ -66,24 +66,34 @@ export function CategoryProgressOverview({
                         <div className='text-sm font-medium text-foreground mb-2'>
                           {category}
                         </div>
-                        <div className='text-2xl font-bold text-blue-600 mb-2'>
+                        <div className='text-2xl font-bold text-primary mb-2'>
                           {percentage}%
                         </div>
                         <div className='w-full h-2 bg-muted rounded-full mb-2'>
                           <div
                             className={`h-full rounded-full transition-all duration-300 ${
                               percentage >= 100
-                                ? 'bg-blue-500'
+                                ? 'bg-primary'
                                 : percentage >= 75
-                                  ? 'bg-blue-400'
+                                  ? 'bg-primary'
                                   : percentage >= 50
-                                    ? 'bg-blue-300'
+                                    ? 'bg-primary'
                                     : percentage >= 25
-                                      ? 'bg-blue-200'
-                                      : 'bg-muted-foreground/30'
+                                      ? 'bg-primary'
+                                      : 'bg-muted-foreground'
                             }`}
                             style={{
                               width: `${Math.max(percentage, 1)}%`,
+                              opacity:
+                                percentage >= 100
+                                  ? 1
+                                  : percentage >= 75
+                                    ? 0.8
+                                    : percentage >= 50
+                                      ? 0.6
+                                      : percentage >= 25
+                                        ? 0.4
+                                        : 0.3,
                             }}
                           />
                         </div>
@@ -107,9 +117,9 @@ export function CategoryProgressOverview({
           <Accordion type='single' collapsible className='w-full'>
             <AccordionItem
               value='book-category-progress'
-              className='border rounded-lg data-[state=open]:border-green-400 data-[state=open]:shadow-[0_0_0_1px_rgba(34,197,94,0.4)] data-[state=open]:shadow-green-500/20 transition-all duration-200'
+              className='border rounded-lg data-[state=open]:border-secondary data-[state=open]:shadow-[0_0_0_1px_rgba(var(--secondary),0.4)] data-[state=open]:shadow-secondary/20 transition-all duration-200'
             >
-              <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-green-600'>
+              <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-secondary'>
                 <div className='flex items-center gap-2'>
                   <span className='text-sm font-medium text-foreground'>
                     📚 Book Progress by Category
@@ -130,24 +140,34 @@ export function CategoryProgressOverview({
                         <div className='text-sm font-medium text-foreground mb-2'>
                           {category}
                         </div>
-                        <div className='text-2xl font-bold text-green-600 mb-2'>
+                        <div className='text-2xl font-bold text-secondary mb-2'>
                           {percentage}%
                         </div>
                         <div className='w-full h-2 bg-muted rounded-full mb-2'>
                           <div
                             className={`h-full rounded-full transition-all duration-300 ${
                               percentage >= 100
-                                ? 'bg-green-500'
+                                ? 'bg-secondary'
                                 : percentage >= 75
-                                  ? 'bg-green-400'
+                                  ? 'bg-secondary'
                                   : percentage >= 50
-                                    ? 'bg-green-300'
+                                    ? 'bg-secondary'
                                     : percentage >= 25
-                                      ? 'bg-green-200'
-                                      : 'bg-muted-foreground/30'
+                                      ? 'bg-secondary'
+                                      : 'bg-muted-foreground'
                             }`}
                             style={{
                               width: `${Math.max(percentage, 1)}%`,
+                              opacity:
+                                percentage >= 100
+                                  ? 1
+                                  : percentage >= 75
+                                    ? 0.8
+                                    : percentage >= 50
+                                      ? 0.6
+                                      : percentage >= 25
+                                        ? 0.4
+                                        : 0.3,
                             }}
                           />
                         </div>
@@ -171,9 +191,9 @@ export function CategoryProgressOverview({
           <Accordion type='single' collapsible className='w-full'>
             <AccordionItem
               value='course-category-progress'
-              className='border rounded-lg data-[state=open]:border-purple-400 data-[state=open]:shadow-[0_0_0_1px_rgba(168,85,247,0.4)] data-[state=open]:shadow-purple-500/20 transition-all duration-200'
+              className='border rounded-lg data-[state=open]:border-accent data-[state=open]:shadow-[0_0_0_1px_rgba(var(--accent),0.4)] data-[state=open]:shadow-accent/20 transition-all duration-200'
             >
-              <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-purple-600'>
+              <AccordionTrigger className='px-4 py-3 hover:no-underline data-[state=open]:text-accent'>
                 <div className='flex items-center gap-2'>
                   <span className='text-sm font-medium text-foreground'>
                     🎓 Course Progress by Category
@@ -194,24 +214,34 @@ export function CategoryProgressOverview({
                         <div className='text-sm font-medium text-foreground mb-2'>
                           {category}
                         </div>
-                        <div className='text-2xl font-bold text-purple-600 mb-2'>
+                        <div className='text-2xl font-bold text-accent mb-2'>
                           {percentage}%
                         </div>
                         <div className='w-full h-2 bg-muted rounded-full mb-2'>
                           <div
                             className={`h-full rounded-full transition-all duration-300 ${
                               percentage >= 100
-                                ? 'bg-purple-500'
+                                ? 'bg-accent'
                                 : percentage >= 75
-                                  ? 'bg-purple-400'
+                                  ? 'bg-accent'
                                   : percentage >= 50
-                                    ? 'bg-purple-300'
+                                    ? 'bg-accent'
                                     : percentage >= 25
-                                      ? 'bg-purple-200'
-                                      : 'bg-muted-foreground/30'
+                                      ? 'bg-accent'
+                                      : 'bg-muted-foreground'
                             }`}
                             style={{
                               width: `${Math.max(percentage, 1)}%`,
+                              opacity:
+                                percentage >= 100
+                                  ? 1
+                                  : percentage >= 75
+                                    ? 0.8
+                                    : percentage >= 50
+                                      ? 0.6
+                                      : percentage >= 25
+                                        ? 0.4
+                                        : 0.3,
                             }}
                           />
                         </div>

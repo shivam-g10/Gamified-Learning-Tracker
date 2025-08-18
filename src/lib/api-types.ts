@@ -18,10 +18,10 @@ export interface Book {
   description: string | null;
   category: string;
   tags: string[];
-  started_at: Date | null;
-  finished_at: Date | null;
-  created_at: Date;
-  updated_at: Date;
+  started_at: string | null;
+  finished_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Course {
@@ -35,10 +35,10 @@ export interface Course {
   description: string | null;
   category: string;
   tags: string[];
-  started_at: Date | null;
-  finished_at: Date | null;
-  created_at: Date;
-  updated_at: Date;
+  started_at: string | null;
+  finished_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateQuestData {
@@ -128,4 +128,22 @@ export interface ChallengeItem {
   type: 'quest' | 'book' | 'course';
   category: string;
   xp: number;
+}
+
+export interface BulkSetupData {
+  title: string;
+  xp?: number;
+  type?: 'topic' | 'project' | 'bonus';
+  category: string;
+  done?: boolean;
+  author?: string;
+  total_pages?: number;
+  current_page?: number;
+  status?: 'backlog' | 'reading' | 'finished' | 'learning';
+  description?: string;
+  tags?: string[];
+  platform?: string;
+  url?: string;
+  total_units?: number;
+  completed_units?: number;
 }

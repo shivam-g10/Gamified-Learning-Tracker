@@ -138,8 +138,8 @@ export function ProgressOverview({
         </div>
 
         {/* Progress Bar */}
-        <div className='mb-4'>
-          <div className='relative progress-shimmer'>
+        <div className='mb-4 rounded-full'>
+          <div className='relative progress-shimmer rounded-full'>
             {/* Background Track */}
             <div className='w-full h-3 bg-muted/50 rounded-full overflow-hidden'>
               {/* Progress Fill */}
@@ -162,11 +162,11 @@ export function ProgressOverview({
             {/* Progress Ticks - Only show if there's progress */}
             {levelInfo.pct > 0 && (
               <div className='absolute inset-0 flex justify-between items-center pointer-events-none'>
-                {[25, 50, 75, 100].map(tick => (
+                {[25, 50, 75, 100].map((tick, i) => (
                   <div
                     key={tick}
                     className={`w-0.5 h-3 rounded-full ${
-                      levelInfo.pct >= tick
+                      levelInfo.pct >= tick && i !== 0
                         ? 'bg-foreground/20'
                         : 'bg-transparent'
                     }`}

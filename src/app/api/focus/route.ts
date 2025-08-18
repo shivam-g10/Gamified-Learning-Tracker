@@ -47,8 +47,10 @@ export async function GET() {
       if (book) {
         focusState.book = {
           ...book,
-          created_at: book.created_at,
-          updated_at: book.updated_at,
+          created_at: book.created_at.toISOString(),
+          updated_at: book.updated_at.toISOString(),
+          started_at: book.started_at?.toISOString() || null,
+          finished_at: book.finished_at?.toISOString() || null,
         };
       }
     }
@@ -60,8 +62,10 @@ export async function GET() {
       if (course) {
         focusState.course = {
           ...course,
-          created_at: course.created_at,
-          updated_at: course.updated_at,
+          created_at: course.created_at.toISOString(),
+          updated_at: course.updated_at.toISOString(),
+          started_at: course.started_at?.toISOString() || null,
+          finished_at: course.finished_at?.toISOString() || null,
         };
       }
     }

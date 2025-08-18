@@ -48,16 +48,16 @@ cp env.example .env
 **Environment Variables Included:**
 
 - **Database**: PostgreSQL connection with default credentials
-- **Ports**: App (3000) and Database (5433) ports
+- **Ports**: App (3000) and Database (5432) ports
 - **Development Mode**: NODE_ENV=development
 - **Auto-generated DATABASE_URL**: Ready to use connection string
 
 **Quick Start:**
 
 1. Copy `env.example` to `.env`
-2. Start development: `pnpm run docker:dev` (or `docker compose -f docker-compose.dev.yml up`)
+2. Start development database: `cd dev_infra && docker compose up -d`
 3. Access app at: http://localhost:3000
-4. Database accessible at: localhost:5433
+4. Database accessible at: localhost:5432
 
 ### 4. Verify Installation
 
@@ -286,49 +286,49 @@ When contributing to this project:
 
 If you encounter any issues, check the troubleshooting section or open an issue in the repository.
 
-## 🐳 Docker Development
+## 🐳 Docker Development Database
 
 ### Quick Start with Docker
 
-For the fastest development experience using Docker with watch mode:
+For the fastest development experience using Docker for the database:
 
 ```bash
-# Start development environment with automatic rebuilds
-pnpm run docker:dev:watch
+# Start development database
+cd dev_infra && docker compose up -d
 
-# Or start without watch mode
-pnpm run docker:dev
+# Stop database
+cd dev_infra && docker compose down
+
+# Reset database (removes all data)
+cd dev_infra && docker compose down -v && docker compose up -d
 ```
 
 ### Docker Development Features
 
-- **Hot Reloading**: Source code changes are immediately reflected
-- **Watch Mode**: Automatic container rebuilds when files change
-- **Volume Mounting**: Source code mounted for instant updates
-- **Database Access**: PostgreSQL 17 accessible on port 5433
-- **Consistent Environment**: Same setup across all team members
+- **Database Access**: PostgreSQL 17 accessible on port 5432
+- **Consistent Environment**: Same database setup across all team members
+- **Easy Reset**: Simple commands to reset development data
+- **Isolated**: Database runs in its own container
 
-### Docker Scripts
+### Database Setup
 
-| Script                      | Description                       |
-| --------------------------- | --------------------------------- |
-| `pnpm run docker:dev`       | Start development environment     |
-| `pnpm run docker:dev:watch` | Start development with watch mode |
-| `pnpm run docker:prod`      | Start production environment      |
-| `pnpm run docker:down`      | Stop all containers               |
-| `pnpm run docker:clean`     | Clean up volumes and containers   |
+| Command                                  | Description                |
+| ---------------------------------------- | -------------------------- |
+| `cd dev_infra && docker compose up -d`   | Start development database |
+| `cd dev_infra && docker compose down`    | Stop database              |
+| `cd dev_infra && docker compose down -v` | Stop and remove all data   |
 
-### What Gets Watched
+### What Gets Set Up
 
-The Docker watch mode automatically rebuilds when these files change:
+The Docker setup provides:
 
-- **Source Code**: `./src/**/*`
-- **Database Schema**: `./prisma/**/*`
-- **Configuration**: `package.json`, `next.config.js`, `tailwind.config.js`
-- **TypeScript**: `tsconfig.json`
+- **PostgreSQL 17**: Latest stable database version
+- **Database**: `tracker` database for development
+- **Port**: Accessible on localhost:5432
+- **Credentials**: postgres/postgres (development only)
 
 ### Development vs Production
 
-- **Development**: Uses `docker-compose.dev.yml` with hot reloading
-- **Production**: Uses `docker-compose.yml` with optimized builds
+- **Development**: Uses `dev_infra/docker-compose.yml` for database setup
+- **Production**: Uses Dockerfile for optimized builds
 - **Database**: Both use PostgreSQL 17 for consistency

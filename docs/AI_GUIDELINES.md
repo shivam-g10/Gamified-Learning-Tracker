@@ -537,7 +537,7 @@ export function getXpForNextLevel(currentXp: number): number;
 - [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) - UI/UX design system
 - [package.json](../package.json) - Dependencies and scripts
 - [tsconfig.json](../tsconfig.json) - TypeScript configuration
-- [docker-compose.yml](../docker-compose.yml) - Docker configuration
+- [dev_infra/docker-compose.yml](../dev_infra/docker-compose.yml) - Development database setup
 
 ---
 

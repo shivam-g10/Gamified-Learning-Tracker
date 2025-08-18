@@ -47,19 +47,19 @@ Thank you for your interest in contributing to GyaanQuest! This document provide
 
 Testing is currently deferred per the project guidelines. There are no test scripts defined yet.
 
-### Optional: Docker-based Development
+### Optional: Docker-based Development Database
 
-You can run the stack with Docker for a consistent local environment (PostgreSQL 17 + app):
+You can run the development database with Docker for a consistent local environment:
 
 ```bash
-# Start development environment
-pnpm run docker:dev
+# Start development database
+cd dev_infra && docker compose up -d
 
-# Start with watch mode (auto-rebuild on changes)
-pnpm run docker:dev:watch
+# Stop database
+cd dev_infra && docker compose down
 
-# Stop containers
-pnpm run docker:down
+# Reset database (removes all data)
+cd dev_infra && docker compose down -v && docker compose up -d
 ```
 
 ### Issues and Pull Requests

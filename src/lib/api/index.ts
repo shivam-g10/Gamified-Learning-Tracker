@@ -4,3 +4,4 @@ export { CourseAPI } from './course-api';
 export { AppStateAPI } from './app-state-api';
 export { FocusAPI } from './focus-api';
 export { ChallengeAPI } from './challenge-api';
+export { BulkSetupAPI } from './bulk-setup-api';

@@ -18,10 +18,10 @@ export type Book = {
   description: string | null;
   category: string;
   tags: string[];
-  started_at: Date | null;
-  finished_at: Date | null;
-  created_at: Date;
-  updated_at: Date;
+  started_at: string | null;
+  finished_at: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type BookProgressEntry = {
@@ -31,7 +31,7 @@ export type BookProgressEntry = {
   to_page: number;
   pages_read: number;
   notes: string | null;
-  created_at: Date;
+  created_at: string;
 };
 
 export type Course = {
@@ -45,10 +45,10 @@ export type Course = {
   description: string | null;
   category: string;
   tags: string[];
-  started_at: Date | null;
-  finished_at: Date | null;
-  created_at: Date;
-  updated_at: Date;
+  started_at: string | null;
+  finished_at: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type CourseProgressEntry = {
@@ -56,7 +56,7 @@ export type CourseProgressEntry = {
   course_id: string;
   units_delta: number;
   notes: string | null;
-  created_at: Date;
+  created_at: string;
 };
 
 export type AppState = {
@@ -71,7 +71,7 @@ export type FocusSlot = {
   quest_id: string | null;
   book_id: string | null;
   course_id: string | null;
-  updated_at: Date;
+  updated_at: string;
 };
 
 export type FocusState = {

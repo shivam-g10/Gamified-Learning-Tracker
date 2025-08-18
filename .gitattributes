@@ -62,7 +62,7 @@
 
 # Docker files
 Dockerfile text
-docker-compose.yml text
+dev_infra/docker-compose.yml text
 .dockerignore text
 
 # Prisma files

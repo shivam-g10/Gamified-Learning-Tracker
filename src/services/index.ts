@@ -12,6 +12,7 @@ export { FocusService } from './focus-service';
 export { SearchService } from './search-service';
 export { ProgressCalculationService } from './progress-calculation-service';
 export { UIHelperService } from './ui-helper-service';
+export { BulkSetupService } from './bulk-setup-service';
 
 export type { CreateQuestData, UpdateQuestData } from './quest-service';
 export type { UpdateAppStateData } from './app-state-service';

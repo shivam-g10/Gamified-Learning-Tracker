@@ -1,16 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { BulkSetupService } from '@/services/bulk-setup-service';
+import type { BulkSetupData } from '@/lib/api-types';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { type, data } = body;
+    const { type, data, replace } = body as {
+      type: 'quests' | 'books' | 'courses';
+      data: BulkSetupData[];
+      replace?: boolean;
+    };
 
     if (!type || !data || !Array.isArray(data)) {
       return NextResponse.json(
         { error: 'Invalid payload. Expected type and data array.' },
+        { status: 400 }
+      );
+    }
+
+    // Validate the data using the service
+    const validationResult = BulkSetupService.validateBulkSetupData(data, type);
+    if (validationResult._tag === 'Failure') {
+      return NextResponse.json(
+        { error: validationResult.error },
+        { status: 400 }
+      );
+    }
+
+    const validation = validationResult.data;
+    if (!validation.valid) {
+      return NextResponse.json(
+        {
+          error: 'Validation failed',
+          details: validation.errors,
+          warnings: validation.warnings,
+        },
         { status: 400 }
       );
     }
@@ -20,15 +47,19 @@ export async function POST(req: NextRequest) {
 
     switch (type) {
       case 'quests':
-        // Clear existing quests first
-        await prisma.quest.deleteMany();
-        
+        // Clear existing quests if replace mode
+        if (replace !== false) {
+          await prisma.quest.deleteMany();
+        }
+
         // Create new quests
         result = await prisma.quest.createMany({
-          data: data.map((quest: { title: string; xp: number; type: 'topic' | 'project' | 'bonus'; category: string; done?: boolean }) => ({
+          data: data.map((quest: BulkSetupData) => ({
             title: quest.title,
-            xp: quest.xp,
-            type: quest.type,
+            xp: quest.xp || 0,
+            type: (quest.type === 'project' || quest.type === 'bonus'
+              ? quest.type
+              : 'topic') as 'topic' | 'project' | 'bonus',
             category: quest.category,
             done: quest.done || false,
           })),
@@ -37,17 +68,21 @@ export async function POST(req: NextRequest) {
         break;
 
       case 'books':
-        // Clear existing books first
-        await prisma.book.deleteMany();
-        
+        // Clear existing books if replace mode
+        if (replace !== false) {
+          await prisma.book.deleteMany();
+        }
+
         // Create new books
         result = await prisma.book.createMany({
-          data: data.map((book: { title: string; author?: string; total_pages?: number; current_page?: number; status?: 'backlog' | 'reading' | 'finished'; description?: string; category?: string; tags?: string[] }) => ({
+          data: data.map((book: BulkSetupData) => ({
             title: book.title,
             author: book.author,
             total_pages: book.total_pages || 0,
             current_page: book.current_page || 0,
-            status: book.status || 'backlog',
+            status: (book.status === 'reading' || book.status === 'finished'
+              ? book.status
+              : 'backlog') as 'backlog' | 'reading' | 'finished',
             description: book.description,
             category: book.category || 'Uncategorized',
             tags: book.tags || [],
@@ -57,18 +92,23 @@ export async function POST(req: NextRequest) {
         break;
 
       case 'courses':
-        // Clear existing courses first
-        await prisma.course.deleteMany();
-        
+        // Clear existing courses if replace mode
+        if (replace !== false) {
+          await prisma.course.deleteMany();
+        }
+
         // Create new courses
         result = await prisma.course.createMany({
-          data: data.map((course: { title: string; platform?: string; url?: string; total_units?: number; completed_units?: number; status?: 'backlog' | 'learning' | 'finished'; description?: string; category?: string; tags?: string[] }) => ({
+          data: data.map((course: BulkSetupData) => ({
             title: course.title,
             platform: course.platform,
             url: course.url,
             total_units: course.total_units || 0,
             completed_units: course.completed_units || 0,
-            status: course.status || 'backlog',
+            status: (course.status === 'learning' ||
+            course.status === 'finished'
+              ? course.status
+              : 'backlog') as 'backlog' | 'learning' | 'finished',
             description: course.description,
             category: course.category || 'Uncategorized',
             tags: course.tags || [],
@@ -90,7 +130,6 @@ export async function POST(req: NextRequest) {
       count,
       type,
     });
-
   } catch (error) {
     console.error('Bulk setup error:', error);
     return NextResponse.json(
