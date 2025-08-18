@@ -1915,6 +1915,39 @@ User Action → API Endpoint → Service Layer → Database → Response → UI 
 - **Constraint Enforcement**: Database-level validation of focus limits
 - **Transaction Safety**: Atomic operations for complex updates
 
+### UI Component Improvements
+
+#### Dialog Text Overflow Resolution
+
+The system has been enhanced to handle long text content in description dialogs:
+
+- **Width Constraints**: All dialog components use `w-full max-w-full` for proper width management
+- **Text Wrapping**: `whitespace-pre-wrap` preserves formatting while allowing natural text wrapping
+- **Overflow Prevention**: `break-words` and `overflow-hidden` prevent horizontal overflow
+- **Container Management**: `min-w-0` prevents flex items from expanding beyond intended boundaries
+
+**Components Updated:**
+
+- QuestRow description dialogs
+- BooksList description dialogs
+- CoursesList description dialogs
+- FocusRow description dialogs
+- FocusChips description dialogs
+
+**Technical Implementation:**
+
+```tsx
+<DialogContent className='sm:max-w-[500px] w-full max-w-full'>
+  <div className='space-y-4 w-full min-w-0'>
+    <div className='p-3 bg-muted/20 rounded-lg border border-muted-foreground/20 w-full min-w-0 overflow-hidden'>
+      <p className='text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words w-full min-w-0'>
+        {description}
+      </p>
+    </div>
+  </div>
+</DialogContent>
+```
+
 ### Future Enhancements
 
 #### Planned Features

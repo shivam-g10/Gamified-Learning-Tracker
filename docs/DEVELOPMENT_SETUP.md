@@ -327,6 +327,17 @@ The Docker setup provides:
 - **Port**: Accessible on localhost:5432
 - **Credentials**: postgres/postgres (development only)
 
+### Git Configuration
+
+The project includes proper `.gitignore` configuration:
+
+- **Build Artifacts**: `.next`, `dist`, `out` directories
+- **Dependencies**: `node_modules` directory
+- **Environment Files**: `.env*` files (local configuration)
+- **Database Files**: `prisma/dev.db*` files
+- **TypeScript Build Info**: `tsconfig.tsbuildinfo` (prevents tracking of build cache)
+- **Package Manager**: `.pnpm-store` directory
+
 ### Development vs Production
 
 - **Development**: Uses `dev_infra/docker-compose.yml` for database setup
