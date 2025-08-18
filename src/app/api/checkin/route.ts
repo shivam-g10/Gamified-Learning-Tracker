@@ -1,34 +1,33 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/db';
 import { withUserAuth } from '../../../lib/auth-utils';
 import { Result, succeed, fail } from '../../../lib/result';
 
 export const dynamic = 'force-dynamic';
 
+// Returns YYYY-MM-DD in UTC for stable, timezone-agnostic comparisons
+function toUTCDateKey(date: Date): string {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// Returns day difference based on UTC date keys
+function diffDaysUTC(a: Date, b: Date): number {
+  const utcA = Date.UTC(a.getUTCFullYear(), a.getUTCMonth(), a.getUTCDate());
+  const utcB = Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate());
+  const MS_PER_DAY = 1000 * 60 * 60 * 24;
+  return Math.floor((utcA - utcB) / MS_PER_DAY);
+}
+
 async function processCheckin(
-  userId: string,
-  req: NextRequest
+  userId: string
 ): Promise<Result<NextResponse, string>> {
   try {
-    let body: { date?: string } = {};
-
-    // Only try to parse JSON if there's content
-    const contentType = req.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      try {
-        body = await req.json();
-      } catch {
-        // If JSON parsing fails, use empty body
-        body = {};
-      }
-    }
-
-    const { date } = body;
-
-    const checkInDate = date ? new Date(date) : new Date();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    checkInDate.setHours(0, 0, 0, 0);
+    // Always use the current date for check-ins to prevent manipulation
+    const now = new Date();
+    const checkInDate = now; // do not trust client-provided date
 
     // Get current app state
     let appState = await prisma.appState.findUnique({
@@ -36,7 +35,6 @@ async function processCheckin(
     });
 
     if (!appState) {
-      // Create default app state for the user if it doesn't exist
       appState = await prisma.appState.create({
         data: {
           user_id: userId,
@@ -46,33 +44,41 @@ async function processCheckin(
       });
     }
 
-    // Check if this is a consecutive day
-    const lastCheckIn = appState.last_check_in;
-    let newStreak = appState.streak;
-
-    if (lastCheckIn) {
-      const lastCheckInDate = new Date(lastCheckIn);
-      lastCheckInDate.setHours(0, 0, 0, 0);
-
-      const daysDiff = Math.floor(
-        (checkInDate.getTime() - lastCheckInDate.getTime()) /
-          (1000 * 60 * 60 * 24)
-      );
-
-      if (daysDiff === 1) {
-        // Consecutive day
-        newStreak = appState.streak + 1;
-      } else if (daysDiff > 1) {
-        // Break in streak
-        newStreak = 1;
+    // If already checked in today (by UTC date), return early with no change
+    if (appState.last_check_in) {
+      const last = new Date(appState.last_check_in);
+      if (toUTCDateKey(checkInDate) === toUTCDateKey(last)) {
+        return succeed(
+          NextResponse.json({
+            message: 'Already checked in today!',
+            streak: appState.streak,
+            last_check_in: appState.last_check_in,
+            alreadyCheckedIn: true,
+          })
+        );
       }
-      // If daysDiff === 0, it's the same day, keep current streak
-    } else {
-      // First check-in
-      newStreak = 1;
     }
 
-    // Update app state
+    // Compute new streak using UTC-based day difference
+    const lastCheckIn = appState.last_check_in
+      ? new Date(appState.last_check_in)
+      : null;
+    let newStreak = appState.streak;
+    let daysDiff = 0;
+
+    if (lastCheckIn) {
+      daysDiff = diffDaysUTC(checkInDate, lastCheckIn);
+      if (daysDiff === 1) {
+        newStreak = appState.streak + 1; // consecutive day
+      } else if (daysDiff > 1) {
+        newStreak = 1; // break in streak
+      }
+      // daysDiff === 0 handled above
+    } else {
+      newStreak = 1; // first-ever check-in
+    }
+
+    // Persist updated streak and last_check_in (as Date)
     const updatedAppState = await prisma.appState.update({
       where: { user_id: userId },
       data: {
@@ -83,9 +89,13 @@ async function processCheckin(
 
     return succeed(
       NextResponse.json({
-        message: 'Check-in successful',
+        message:
+          daysDiff === 1 ? 'Streak continued! +1 day' : 'New streak started!',
         streak: newStreak,
         last_check_in: updatedAppState.last_check_in,
+        alreadyCheckedIn: false,
+        streakIncremented: daysDiff === 1,
+        streakReset: daysDiff > 1,
       })
     );
   } catch (error) {

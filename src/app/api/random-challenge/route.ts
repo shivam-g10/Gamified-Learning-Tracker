@@ -14,16 +14,29 @@ async function generateRandomChallenge(
       where: { user_id: userId },
     });
 
-    // Determine which types can be added to focus
+    // Resolve actual focused entities to avoid stale IDs
+    const [focusedQuest, focusedBook, focusedCourse] = await Promise.all([
+      focusSlot?.quest_id
+        ? prisma.quest.findUnique({ where: { id: focusSlot.quest_id } })
+        : null,
+      focusSlot?.book_id
+        ? prisma.book.findUnique({ where: { id: focusSlot.book_id } })
+        : null,
+      focusSlot?.course_id
+        ? prisma.course.findUnique({ where: { id: focusSlot.course_id } })
+        : null,
+    ]);
+
+    // Determine which types can be added to focus based on actual entities
     const availableTypes: Array<'quest' | 'book' | 'course'> = [];
 
-    if (!focusSlot?.quest_id) {
+    if (!focusedQuest) {
       availableTypes.push('quest');
     }
-    if (!focusSlot?.book_id) {
+    if (!focusedBook) {
       availableTypes.push('book');
     }
-    if (!focusSlot?.course_id) {
+    if (!focusedCourse) {
       availableTypes.push('course');
     }
 

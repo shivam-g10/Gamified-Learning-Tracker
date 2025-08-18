@@ -526,7 +526,17 @@ function HomePageContent() {
     }
 
     await mutateState();
-    toast.success('🔥 Streak +1 — see you tomorrow!');
+
+    // Provide appropriate feedback based on the check-in result
+    if (result.data.alreadyCheckedIn) {
+      toast.info('✅ Already checked in today! Keep the streak going!');
+    } else if (result.data.streakIncremented) {
+      toast.success('🔥 Streak continued! +1 day — see you tomorrow!');
+    } else if (result.data.streakReset) {
+      toast.success('🔄 New streak started! Keep it going!');
+    } else {
+      toast.success('🎯 First check-in! Welcome to your learning journey!');
+    }
   }, [mutateState]);
 
   const handleRandomChallenge = useCallback(async () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { AppState } from '../lib/api-types';
+import { AppState, CheckInResponse } from '../lib/api-types';
 import { Result, fail } from '../lib/result';
 import { AppStateAPI } from '../lib/api';
 
@@ -14,7 +14,7 @@ export class AppStateService {
   /**
    * Records a daily check-in and updates streak
    */
-  static async recordDailyCheckIn(): Promise<Result<AppState>> {
+  static async recordDailyCheckIn(): Promise<Result<CheckInResponse>> {
     return AppStateAPI.recordDailyCheckIn();
   }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import type { AppState } from '../api-types';
+import type { AppState, CheckInResponse } from '../api-types';
 import { Result, succeed, fail } from '../result';
 
 export class AppStateAPI {
@@ -17,7 +17,7 @@ export class AppStateAPI {
     }
   }
 
-  static async recordDailyCheckIn(): Promise<Result<AppState>> {
+  static async recordDailyCheckIn(): Promise<Result<CheckInResponse>> {
     try {
       const response = await fetch('/api/checkin', {
         method: 'POST',

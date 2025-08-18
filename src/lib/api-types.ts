@@ -119,6 +119,12 @@ export interface AppState {
   focus: string[];
 }
 
+export interface CheckInResponse extends AppState {
+  alreadyCheckedIn: boolean;
+  streakIncremented: boolean;
+  streakReset: boolean;
+}
+
 export interface FocusState {
   quest?: Quest;
   book?: Book;

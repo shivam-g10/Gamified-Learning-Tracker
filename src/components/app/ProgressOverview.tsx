@@ -51,10 +51,11 @@ export function ProgressOverview({
   onCheckIn,
   onRandomChallenge,
 }: ProgressOverviewProps) {
-  const isCheckedInToday =
+  const isCheckedInToday = !!(
     appState?.last_check_in &&
     new Date(appState.last_check_in).toDateString() ===
-      new Date().toDateString();
+      new Date().toDateString()
+  );
 
   // Calculate focus slot status
   const focusSlotsUsed = [
@@ -88,19 +89,20 @@ export function ProgressOverview({
                     onClick={onCheckIn}
                     variant='outline'
                     size='sm'
+                    disabled={isCheckedInToday}
                     className={`transition-all duration-200 focus:ring-1 focus:ring-ring focus:ring-offset-2 ${
                       isCheckedInToday
-                        ? 'bg-green-600 text-white border-green-600 hover:bg-green-700'
+                        ? 'bg-green-600 text-white border-green-600 hover:bg-green-700 cursor-not-allowed opacity-90'
                         : 'hover:bg-muted/50 hover:border-muted-foreground/50'
                     }`}
                   >
-                    Check-in
+                    {isCheckedInToday ? '✅ Checked In' : 'Check-in'}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
                   {isCheckedInToday
-                    ? 'Already checked in today!'
-                    : 'Record your daily progress'}
+                    ? 'Already checked in today! Come back tomorrow to continue your streak!'
+                    : 'Record your daily progress and build your streak!'}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
